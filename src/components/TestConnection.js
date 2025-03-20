@@ -1,80 +1,41 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
-import axiosInstance from './axios-config';
-import { Box, Typography, Button, Paper, CircularProgress, TextField } from '@mui/material';
+import { Box, Typography, Button, Paper, CircularProgress } from '@mui/material';
 
 const TestConnection = () => {
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState(null);
   const [error, setError] = useState(null);
-  const [directUrl, setDirectUrl] = useState('https://zer-backend.onrender.com');
+  
+  // The backend URLs to test
+  const backendUrls = [
+    'https://zer-backend.onrender.com',
+    'https://zerreta-backend-1.onrender.com',
+    process.env.REACT_APP_API_URL || 'http://localhost:5000'
+  ];
 
-  // Test connection using axios instance
-  const testAxiosInstance = async () => {
+  // Test connection to a specific URL
+  const testConnection = async (url) => {
     setLoading(true);
     setError(null);
     setResponse(null);
+    
     try {
-      const res = await axiosInstance.get('/');
-      setResponse(res.data);
-      console.log('Response:', res.data);
-    } catch (err) {
-      setError(err.toString());
-      console.error('Error using axios instance:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Test connection using direct axios to root URL
-  const testDirectAxios = async () => {
-    setLoading(true);
-    setError(null);
-    setResponse(null);
-    try {
-      const res = await axios.get(directUrl);
-      setResponse(res.data);
-      console.log('Direct response:', res.data);
-    } catch (err) {
-      setError(err.toString());
-      console.error('Error with direct axios:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Test health endpoint
-  const testHealthEndpoint = async () => {
-    setLoading(true);
-    setError(null);
-    setResponse(null);
-    try {
-      const res = await axios.get(`${directUrl}/api/health`);
-      setResponse(res.data);
-      console.log('Health response:', res.data);
-    } catch (err) {
-      setError(err.toString());
-      console.error('Error checking health endpoint:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Test echo endpoint
-  const testEchoEndpoint = async () => {
-    setLoading(true);
-    setError(null);
-    setResponse(null);
-    try {
-      const res = await axios.post(`${directUrl}/api/echo`, {
-        message: 'Hello from test page',
-        timestamp: new Date().toISOString()
+      console.log(`Testing connection to: ${url}`);
+      const res = await axios.get(`${url}/api/health`);
+      setResponse({
+        url,
+        data: res.data,
+        status: res.status
       });
-      setResponse(res.data);
-      console.log('Echo response:', res.data);
+      console.log('Response:', res);
     } catch (err) {
-      setError(err.toString());
-      console.error('Error with echo endpoint:', err);
+      console.error(`Error connecting to ${url}:`, err);
+      setError({
+        url,
+        message: err.message,
+        code: err.code
+      });
     } finally {
       setLoading(false);
     }
@@ -84,29 +45,28 @@ const TestConnection = () => {
     <Box sx={{ maxWidth: 600, mx: 'auto', mt: 4, p: 3 }}>
       <Typography variant="h4" gutterBottom>API Connection Tester</Typography>
       
+      <Typography paragraph>
+        Testing connection to backend APIs to help diagnose connection issues.
+      </Typography>
+
       <Box sx={{ mb: 3 }}>
-        <TextField
-          fullWidth
-          label="Backend URL"
-          value={directUrl}
-          onChange={(e) => setDirectUrl(e.target.value)}
-          margin="normal"
-        />
+        <Typography variant="h6">Environment Variables:</Typography>
+        <Paper sx={{ p: 2, mb: 2 }}>
+          <Typography>REACT_APP_API_URL: {process.env.REACT_APP_API_URL || 'Not set'}</Typography>
+        </Paper>
       </Box>
 
-      <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
-        <Button variant="contained" onClick={testAxiosInstance} disabled={loading}>
-          Test Axios Instance
-        </Button>
-        <Button variant="contained" onClick={testDirectAxios} disabled={loading}>
-          Test Direct URL
-        </Button>
-        <Button variant="contained" onClick={testHealthEndpoint} disabled={loading}>
-          Test Health Endpoint
-        </Button>
-        <Button variant="contained" onClick={testEchoEndpoint} disabled={loading}>
-          Test Echo Endpoint
-        </Button>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
+        {backendUrls.map((url) => (
+          <Button 
+            key={url}
+            variant="contained" 
+            onClick={() => testConnection(url)} 
+            disabled={loading}
+          >
+            Test {url}
+          </Button>
+        ))}
       </Box>
 
       {loading && (
@@ -118,27 +78,28 @@ const TestConnection = () => {
       {error && (
         <Paper sx={{ p: 2, bgcolor: '#ffebee', mb: 3 }}>
           <Typography variant="h6" color="error">Error:</Typography>
-          <Typography component="pre" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-            {error}
-          </Typography>
+          <Typography><strong>URL:</strong> {error.url}</Typography>
+          <Typography><strong>Message:</strong> {error.message}</Typography>
+          <Typography><strong>Code:</strong> {error.code}</Typography>
         </Paper>
       )}
 
       {response && (
         <Paper sx={{ p: 2, bgcolor: '#e8f5e9', mb: 3 }}>
-          <Typography variant="h6" color="success.main">Response:</Typography>
-          <Typography component="pre" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-            {JSON.stringify(response, null, 2)}
-          </Typography>
+          <Typography variant="h6" color="success.main">Success!</Typography>
+          <Typography><strong>URL:</strong> {response.url}</Typography>
+          <Typography><strong>Status:</strong> {response.status}</Typography>
+          <Typography variant="h6">Response Data:</Typography>
+          <Box component="pre" sx={{ 
+            p: 2, 
+            bgcolor: '#f5f5f5', 
+            borderRadius: 1,
+            overflowX: 'auto'
+          }}>
+            {JSON.stringify(response.data, null, 2)}
+          </Box>
         </Paper>
       )}
-
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Typography variant="h6">Environment Info:</Typography>
-        <Typography component="pre" sx={{ whiteSpace: 'pre-wrap' }}>
-          {`REACT_APP_API_URL: ${process.env.REACT_APP_API_URL || 'Not set'}`}
-        </Typography>
-      </Paper>
     </Box>
   );
 };
