@@ -1,10 +1,18 @@
 import axios from 'axios';
 
-// Use the environment variable or default to local development
-const baseURL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// Force using HTTPS for the backend URL
+let baseURL = process.env.REACT_APP_API_URL || 'https://zer-backend.onrender.com';
 
-// Log the API URL for debugging purposes
-console.log('API URL being used:', baseURL);
+// Make sure we're using https and not a relative URL
+if (!baseURL.startsWith('http')) {
+  baseURL = 'https://' + baseURL;
+} 
+// Ensure we're not using a localhost URL with the production domain
+if (baseURL.includes('localhost') && window.location.hostname !== 'localhost') {
+  baseURL = 'https://zer-backend.onrender.com';
+}
+
+console.log('Using API URL:', baseURL);
 
 const axiosInstance = axios.create({
   baseURL,
@@ -16,6 +24,7 @@ const axiosInstance = axios.create({
 // Add a request interceptor to include auth token in every request
 axiosInstance.interceptors.request.use(
   (config) => {
+    console.log('Making request to:', config.baseURL + config.url);
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
