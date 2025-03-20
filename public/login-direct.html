@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Direct Login</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .login-container {
+      background-color: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      width: 350px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .error {
+      color: red;
+      margin-top: 15px;
+      text-align: center;
+    }
+    .success {
+      color: green;
+      margin-top: 15px;
+      text-align: center;
+    }
+    .loading {
+      text-align: center;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h1>Login</h1>
+    <div class="form-group">
+      <label for="username">Username:</label>
+      <input type="text" id="username" placeholder="Enter username" value="admin">
+    </div>
+    <div class="form-group">
+      <label for="password">Password:</label>
+      <input type="password" id="password" placeholder="Enter password" value="admin123">
+    </div>
+    <div class="form-group">
+      <label for="role">Role:</label>
+      <select id="role">
+        <option value="admin">Admin</option>
+        <option value="student">Student</option>
+      </select>
+    </div>
+    <button onclick="login()">Login</button>
+    <div id="status" class="loading" style="display: none;">Logging in...</div>
+    <div id="error" class="error" style="display: none;"></div>
+    <div id="success" class="success" style="display: none;"></div>
+  </div>
+
+  <script>
+    function login() {
+      // Get form values
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const role = document.getElementById('role').value;
+      
+      // Show loading indicator
+      document.getElementById('status').style.display = 'block';
+      document.getElementById('error').style.display = 'none';
+      document.getElementById('success').style.display = 'none';
+      
+      // Define the backend URL
+      const backendUrl = 'https://zer-backend.onrender.com';
+      console.log('Sending login request to:', backendUrl + '/login');
+      
+      // Send the login request
+      fetch(`${backendUrl}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, password, role })
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Handle successful login
+        console.log('Login successful:', data);
+        document.getElementById('success').textContent = 'Login successful! Redirecting...';
+        document.getElementById('success').style.display = 'block';
+        
+        // Store token in localStorage
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('role', role);
+        
+        // Redirect after a short delay
+        setTimeout(() => {
+          window.location.href = role === 'admin' ? '/admin' : '/student-dashboard';
+        }, 2000);
+      })
+      .catch(error => {
+        // Handle login error
+        console.error('Login error:', error);
+        document.getElementById('error').textContent = 'Login failed: ' + error.message;
+        document.getElementById('error').style.display = 'block';
+      })
+      .finally(() => {
+        // Hide loading indicator
+        document.getElementById('status').style.display = 'none';
+      });
+    }
+  </script>
+</body>
+</html> 

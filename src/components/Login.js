@@ -134,27 +134,25 @@ function Login() {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
     
-    try {
-      // Force using a working backend URL
-      const backendUrl = 'https://zer-backend.onrender.com';
-      console.log('Sending login request to:', backendUrl + '/login');
-      
-      const response = await axios.post(`${backendUrl}/login`, {
-        ...formData,
-        role
-      });
-      
+    const backendUrl = 'https://zer-backend.onrender.com';
+    console.log('Direct submit to:', backendUrl + '/login');
+    
+    axios.post(`${backendUrl}/login`, {
+      ...formData,
+      role
+    })
+    .then(response => {
       const { token } = response.data;
       localStorage.setItem('token', token);
       localStorage.setItem('role', role);
-      
       window.location.href = role === 'admin' ? '/admin' : '/student-dashboard';
-    } catch (error) {
+    })
+    .catch(error => {
       console.error('Login error:', error);
       if (error.response?.status === 401) {
         setError(error.response?.data?.message || 'Invalid credentials.');
@@ -163,9 +161,10 @@ function Login() {
       } else {
         setError('An unexpected error occurred.');
       }
-    } finally {
+    })
+    .finally(() => {
       setIsLoading(false);
-    }
+    });
   };
 
   return (
