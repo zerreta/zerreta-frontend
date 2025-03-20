@@ -17,6 +17,7 @@ import './App.css';
 import LeaderboardPage from './components/LeaderboardPage';
 import StudentPoints from './components/StudentPoints';
 import AnalyticsSummary from './components/AnalyticsSummary';
+import TestConnection from './components/TestConnection';
 
 // Import the new pages from the pages directory
 import StudentDashboard from './pages/StudentDashboard';
@@ -150,6 +151,8 @@ function App() {
               )
             }
           />
+
+          <Route path="/test-connection" element={<TestConnection />} />
         </Routes>
       </Router>
     </ThemeProvider>
