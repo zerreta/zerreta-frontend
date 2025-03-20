@@ -24,7 +24,13 @@
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
-    <title>Zerreta Learnings</title>
+    <title>Zerreta NEET Prep App</title>
+    <script>
+      // Force redirect login page to our standalone HTML version
+      if (window.location.pathname === '/login') {
+        window.location.href = '/standalone-login.html';
+      }
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
