@@ -26,6 +26,7 @@ import {
   VisibilityOff
 } from '@mui/icons-material';
 import axios from 'axios';
+import axiosInstance from './axios-config';
 import { motion } from 'framer-motion';
 
 const LoginContainer = styled(Box)(({ theme }) => ({
@@ -137,11 +138,10 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
     
     try {
-      const baseUrl = `http://${window.location.hostname}:5000`;
-      
-      const response = await axios.post(`${baseUrl}/login`, {
+      const response = await axiosInstance.post('/login', {
         ...formData,
         role
       });
