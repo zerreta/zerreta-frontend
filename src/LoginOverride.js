@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -12,9 +12,11 @@ import {
   RadioGroup,
   TextField,
   Typography,
-  CircularProgress
+  CircularProgress,
+  Alert
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import axiosInstance from './components/axios-config';
 
 // This is a completely new Login component that bypasses all existing code
 const LoginOverride = () => {
@@ -26,6 +28,12 @@ const LoginOverride = () => {
   const [role, setRole] = useState('admin');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [backendUrl, setBackendUrl] = useState('');
+  
+  // Get the backend URL from axios config
+  useEffect(() => {
+    setBackendUrl(axiosInstance.defaults.baseURL);
+  }, []);
   
   const handleInputChange = (e) => {
     setCredentials({
@@ -54,33 +62,19 @@ const LoginOverride = () => {
     setLoading(true);
     setError('');
     
-    // Hardcoded URL to ensure correct endpoint
-    const backendUrl = 'https://zer-backend.onrender.com';
-    
     console.log(`Sending login request to ${backendUrl}/login with role: ${role}`);
     
-    fetch(`${backendUrl}/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        username: credentials.username,
-        password: credentials.password,
-        role
-      })
+    // Use axiosInstance instead of fetch
+    axiosInstance.post('/login', {
+      username: credentials.username,
+      password: credentials.password,
+      role
     })
     .then(response => {
-      if (!response.ok) {
-        throw new Error(`Login failed: ${response.statusText}`);
-      }
-      return response.json();
-    })
-    .then(data => {
-      console.log('Login successful:', data);
+      console.log('Login successful:', response.data);
       
       // Store token in localStorage
-      localStorage.setItem('token', data.token);
+      localStorage.setItem('token', response.data.token);
       localStorage.setItem('role', role);
       
       // Redirect to dashboard
@@ -92,7 +86,7 @@ const LoginOverride = () => {
     })
     .catch(err => {
       console.error('Login error:', err);
-      setError(err.message || 'Failed to connect to server');
+      setError(err.response?.data?.message || err.message || 'Failed to connect to server');
     })
     .finally(() => {
       setLoading(false);
@@ -107,6 +101,12 @@ const LoginOverride = () => {
             <Typography variant="h4" align="center" gutterBottom>
               Login
             </Typography>
+            
+            {backendUrl && (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                Connecting to: {backendUrl}
+              </Alert>
+            )}
             
             <form onSubmit={handleSubmit}>
               <FormControl fullWidth margin="normal">

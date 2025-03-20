@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, CssBaseline, GlobalStyles } from '@mui/material';
 import LoginOverride from './LoginOverride';
@@ -56,15 +56,23 @@ const globalStyles = (
 );
 
 function App() {
+  // Add state to avoid repeated logging
+  const [authChecked, setAuthChecked] = useState(false);
+  
   const isAuthenticated = () => {
     const token = localStorage.getItem('token');
-    console.log('Checking authentication, token:', token);
+    
+    // Only log on first check
+    if (!authChecked) {
+      console.log('Initial authentication check, token exists:', !!token);
+      setAuthChecked(true);
+    }
+    
     return !!token;
   };
 
   const isAdmin = () => {
     const role = localStorage.getItem('role');
-    console.log('Checking admin role:', role);
     return role === 'admin';
   };
 

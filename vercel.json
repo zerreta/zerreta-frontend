@@ -32,6 +32,6 @@
     }
   ],
   "env": {
-    "REACT_APP_API_URL": "https://zerreta-backend-1.onrender.com"
+    "REACT_APP_API_URL": "https://zer-backend.onrender.com"
   }
 } 
