@@ -26,7 +26,6 @@ import {
   VisibilityOff
 } from '@mui/icons-material';
 import axios from 'axios';
-import axiosInstance from './axios-config';
 import { motion } from 'framer-motion';
 
 const LoginContainer = styled(Box)(({ theme }) => ({
@@ -141,7 +140,11 @@ function Login() {
     setError('');
     
     try {
-      const response = await axiosInstance.post('/login', {
+      // Force using a working backend URL
+      const backendUrl = 'https://zer-backend.onrender.com';
+      console.log('Sending login request to:', backendUrl + '/login');
+      
+      const response = await axios.post(`${backendUrl}/login`, {
         ...formData,
         role
       });
@@ -152,6 +155,7 @@ function Login() {
       
       window.location.href = role === 'admin' ? '/admin' : '/student-dashboard';
     } catch (error) {
+      console.error('Login error:', error);
       if (error.response?.status === 401) {
         setError(error.response?.data?.message || 'Invalid credentials.');
       } else if (error.message === 'Network Error') {

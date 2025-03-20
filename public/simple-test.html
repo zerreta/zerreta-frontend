@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Simple Backend Test</title>
+</head>
+<body>
+  <h1>Simple Backend Test</h1>
+  <button onclick="testBackend('https://zer-backend.onrender.com')">Test Backend 1</button>
+  <button onclick="testBackend('https://zerreta-backend-1.onrender.com')">Test Backend 2</button>
+  <div id="result" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc;"></div>
+
+  <script>
+    function testBackend(url) {
+      document.getElementById('result').innerHTML = 'Testing connection to ' + url + '...';
+      
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('result').innerHTML = 
+            '<div style="color: green;">Success!</div>' +
+            '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+        })
+        .catch(error => {
+          document.getElementById('result').innerHTML = 
+            '<div style="color: red;">Error:</div>' +
+            '<pre>' + error + '</pre>';
+        });
+    }
+  </script>
+</body>
+</html> 
