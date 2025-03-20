@@ -40,6 +40,7 @@ import {
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import axios from 'axios';
+import axiosInstance from '../components/axios-config';
 
 // Styled components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -108,9 +109,7 @@ const StudentDashboard = () => {
     const fetchStudentData = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:5000/student/profile', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await axiosInstance.get('/student/profile');
         
         setStudentData(response.data);
         

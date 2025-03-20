@@ -50,6 +50,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import axiosInstance from './axios-config';
 import { motion } from 'framer-motion';
 
 function TestPage() {
@@ -173,12 +174,7 @@ function TestPage() {
         }
 
         // Fetch questions from the server
-        const response = await axios.get(`http://localhost:5000/student/test?subject=${subject}&stage=${stage}&level=${level}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
+        const response = await axiosInstance.get(`/student/test?subject=${subject}&stage=${stage}&level=${level}`);
 
         console.log("Fetched questions:", response.data);
         

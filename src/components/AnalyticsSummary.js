@@ -29,6 +29,7 @@ import {
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import axios from 'axios';
+import axiosInstance from './axios-config';
 import {
   PieChart,
   Pie,
@@ -180,9 +181,7 @@ function AnalyticsSummary() {
       }
 
       // Get student profile
-      const profileResponse = await axios.get('http://localhost:5000/student/profile', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const profileResponse = await axiosInstance.get('/student/profile');
       
       if (!profileResponse.data) {
         throw new Error('No data received from server');

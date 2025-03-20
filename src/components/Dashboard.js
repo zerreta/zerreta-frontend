@@ -56,6 +56,7 @@ import {
   Cell
 } from 'recharts';
 import axios from 'axios';
+import axiosInstance from './axios-config';
 import Students from './Students';
 
 // Styled components
@@ -192,7 +193,7 @@ function Dashboard() {
     setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.post('http://localhost:5000/admin/add-student', 
+      await axiosInstance.post('/admin/add-student', 
         newStudent,
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -269,7 +270,7 @@ function Dashboard() {
       
       try {
         // Make a test request to verify token
-        await axios.get('http://localhost:5000/admin/students', {
+        await axiosInstance.get('/admin/students', {
           headers: { 
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
