@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, CssBaseline, GlobalStyles } from '@mui/material';
-import Login from './components/Login';
+import LoginOverride from './LoginOverride';
 import AdminDashboard from './components/AdminDashboard';
 import StudentLevels from './components/StudentLevels';
 import Progress from './components/Progress';
@@ -98,7 +98,7 @@ function App() {
                   <Navigate to="/student-dashboard" replace />
                 )
               ) : (
-                <Login />
+                <LoginOverride />
               )
             } 
           />
