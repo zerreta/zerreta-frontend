@@ -18,6 +18,7 @@ import {
 } from '@mui/material';
 import { Search as SearchIcon, EmojiEvents as TrophyIcon } from '@mui/icons-material';
 import axios from 'axios';
+import axiosInstance from './axios-config';
 
 const StudentPoints = () => {
   const [students, setStudents] = useState([]);
@@ -32,7 +33,7 @@ const StudentPoints = () => {
         const token = localStorage.getItem('token');
         
         // First, get all students
-        const response = await axios.get('http://localhost:5000/admin/students', {
+        const response = await axios.get(`/admin/students`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         

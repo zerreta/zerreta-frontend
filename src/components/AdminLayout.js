@@ -28,7 +28,8 @@ import {
   ChevronLeft as ChevronLeftIcon,
   QuestionAnswer as QuestionIcon,
   Person as PersonIcon,
-  EmojiEvents as TrophyIcon
+  EmojiEvents as TrophyIcon,
+  Settings as SettingsIcon
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 
@@ -108,6 +109,11 @@ const menuItems = [
   { path: '/admin/student-data', label: 'Student Data', icon: PeopleIcon },
 ];
 
+// System menu items
+const systemMenuItems = [
+  { path: '/test-connection', label: 'Connection Test', icon: SettingsIcon },
+];
+
 const AdminLayout = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
@@ -159,6 +165,27 @@ const AdminLayout = () => {
           ))}
         </List>
       </Box>
+
+      <Divider sx={{ mt: 2, mb: 1 }} />
+      <Typography variant="caption" color="text.secondary" sx={{ px: 3, py: 1, display: 'block' }}>
+        System
+      </Typography>
+      
+      <List>
+        {systemMenuItems.map((item) => (
+          <MenuItemContainer
+            button
+            key={item.path}
+            active={location.pathname === item.path}
+            onClick={() => navigate(item.path)}
+          >
+            <StyledListItemIcon active={location.pathname === item.path}>
+              <item.icon />
+            </StyledListItemIcon>
+            <StyledListItemText active={location.pathname === item.path} primary={item.label} />
+          </MenuItemContainer>
+        ))}
+      </List>
 
       <Box sx={{ position: 'absolute', bottom: 0, width: '100%', p: 2 }}>
         <Divider sx={{ mb: 2 }} />

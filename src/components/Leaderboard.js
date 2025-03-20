@@ -35,6 +35,7 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import PersonIcon from '@mui/icons-material/Person';
 import axios from 'axios';
+import axiosInstance from './axios-config';
 
 function Leaderboard() {
   const theme = useTheme();
@@ -100,7 +101,7 @@ function Leaderboard() {
       }
       
       const response = await axios.get(
-        'http://localhost:5000/student/leaderboard',
+        `/student/leaderboard`,
         {
           headers: { 
             'Authorization': `Bearer ${token}`,
@@ -115,7 +116,7 @@ function Leaderboard() {
       if (!studentsData || studentsData.length === 0) {
         // Fallback to admin student list if leaderboard API not yet implemented
         const adminResponse = await axios.get(
-          'http://localhost:5000/admin/students',
+          `/admin/students`,
           {
             headers: { 
               'Authorization': `Bearer ${token}`,

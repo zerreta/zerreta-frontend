@@ -22,6 +22,7 @@ import {
   Visibility as VisibilityIcon
 } from '@mui/icons-material';
 import axios from 'axios';
+import axiosInstance from './axios-config';
 
 function StudentPages() {
   const [pages, setPages] = useState([]);
@@ -42,7 +43,7 @@ function StudentPages() {
   const fetchPages = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/admin/student-pages', {
+      const response = await axios.get(`/admin/student-pages`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setPages(response.data);
@@ -88,13 +89,13 @@ function StudentPages() {
       const token = localStorage.getItem('token');
       if (selectedPage) {
         await axios.put(
-          `http://localhost:5000/admin/student-pages/${selectedPage._id}`,
+          `/admin/student-pages/${selectedPage._id}`,
           formData,
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } else {
         await axios.post(
-          'http://localhost:5000/admin/student-pages',
+          `/admin/student-pages`,
           formData,
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -110,7 +111,7 @@ function StudentPages() {
     if (window.confirm('Are you sure you want to delete this page?')) {
       try {
         const token = localStorage.getItem('token');
-        await axios.delete(`http://localhost:5000/admin/student-pages/${pageId}`, {
+        await axios.delete(`/admin/student-pages/${pageId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         fetchPages();

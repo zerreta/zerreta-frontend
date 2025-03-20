@@ -52,6 +52,7 @@ import { motion } from 'framer-motion';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
+import axiosInstance from './axios-config';
 
 // Subject configuration with icons and colors
 const subjects = [
@@ -509,7 +510,7 @@ function Progress() {
         return;
       }
 
-      const response = await axios.get('http://localhost:5000/student/profile', {
+      const response = await axios.get(`/student/profile`, {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -540,7 +541,7 @@ function Progress() {
       }
 
       // In a real application, use this API call:
-      const response = await axios.get('http://localhost:5000/student/test-history', {
+      const response = await axios.get(`/student/test-history`, {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

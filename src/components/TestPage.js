@@ -78,8 +78,11 @@ function TestPage() {
       return url;
     }
     
+    // Get the base URL from the axiosInstance
+    const baseApiUrl = axiosInstance.defaults.baseURL;
+    
     // If it's a relative URL, prepend the backend server URL
-    const formattedUrl = `http://localhost:5000${url.startsWith('/') ? url : `/${url}`}`;
+    const formattedUrl = `${baseApiUrl}${url.startsWith('/') ? url : `/${url}`}`;
     console.log('Formatted URL:', formattedUrl);
     return formattedUrl;
   };
@@ -118,38 +121,16 @@ function TestPage() {
   const fetchLeaderboard = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
-      
       if (!token) {
-        console.error('Authentication token missing');
+        console.error('No token found in localStorage');
         return;
       }
       
-      // In a real application, fetch from server
-      // For now, we'll use mock data
-      setLeaderboard([
-        { studentId: 'STU001', name: 'John Doe', totalPoints: 175, levelsCleared: 7 },
-        { studentId: 'STU002', name: 'Jane Smith', totalPoints: 225, levelsCleared: 9 },
-        { studentId: 'STU003', name: 'Alex Johnson', totalPoints: 150, levelsCleared: 6 },
-        { studentId: 'STU004', name: 'Sam Williams', totalPoints: 200, levelsCleared: 8 },
-        { studentId: 'STU005', name: 'Taylor Brown', totalPoints: 125, levelsCleared: 5 },
-      ]);
-      
-      // Example of how to fetch from server:
-      /*
-      const response = await axios.get(
-        'http://localhost:5000/student/leaderboard',
-        {
-          headers: { 
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-      
+      // Update to use axiosInstance
+      const response = await axiosInstance.get('/student/leaderboard');
       setLeaderboard(response.data);
-      */
-    } catch (err) {
-      console.error("Error fetching leaderboard:", err);
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error);
     }
   }, []);
 
@@ -257,29 +238,14 @@ function TestPage() {
         return;
       }
       
-      // In a real application, fetch from server
-      // For now, we'll use mock data
-      setPreviousAttempts([
-        { date: '2023-07-15', score: 80, total: 100 },
-        { date: '2023-07-10', score: 65, total: 100 }
-      ]);
-      
-      // Example of how to fetch from server:
-      /*
-      const response = await axios.get(
-        `http://localhost:5000/student/test-history?subject=${subject}&stage=${stage}&level=${level}`,
-        {
-          headers: { 
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
+      // Update to use axiosInstance
+      const response = await axiosInstance.get(
+        `/student/test-history?subject=${subject}&stage=${stage}&level=${level}`
       );
       
       setPreviousAttempts(response.data);
-      */
-    } catch (err) {
-      console.error("Error fetching previous attempts:", err);
+    } catch (error) {
+      console.error('Error fetching previous attempts:', error);
     }
   }, [subject, stage, level]);
 
@@ -353,17 +319,18 @@ function TestPage() {
       
       console.log("Submitting test answers:", submissionData);
       
-      // Submit the test to the backend
-      const response = await axios.post(
-        'http://localhost:5000/student/test/submit',
-        submissionData,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      // Update to use axiosInstance
+      const response = await axiosInstance.post('/student/test/submit', {
+        testDetails: {
+          subject,
+          stage,
+          level,
+          timeSpent: 2700 - timeLeft,
+          questionTimers
+        },
+        answers: confirmedAnswers,
+        isComplete: true
+      });
       
       console.log("Test submission response:", response.data);
       

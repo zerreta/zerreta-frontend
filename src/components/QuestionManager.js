@@ -44,6 +44,7 @@ import {
   DeleteForever as DeleteForeverIcon
 } from '@mui/icons-material';
 import axios from 'axios';
+import axiosInstance from './axios-config';
 
 function QuestionManager() {
   const [questions, setQuestions] = useState([]);
@@ -122,14 +123,8 @@ function QuestionManager() {
       if (filters.stage) queryParams.append('stage', filters.stage);
       if (filters.level) queryParams.append('level', filters.level);
       
-      const response = await axios.get(
-        `http://localhost:5000/admin/questions?${queryParams.toString()}`, 
-        {
-          headers: { 
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
+      const response = await axiosInstance.get(
+        `/admin/questions?${queryParams.toString()}`
       );
       
       setQuestions(response.data);
@@ -252,8 +247,8 @@ function QuestionManager() {
       
       // Create or update the question
       const response = currentQuestion
-        ? await axios.put(
-            `http://localhost:5000/admin/questions/${currentQuestion._id}`,
+        ? await axiosInstance.put(
+            `/admin/questions/${currentQuestion._id}`,
             formData,
             {
               headers: { 
@@ -262,8 +257,8 @@ function QuestionManager() {
               }
             }
           )
-        : await axios.post(
-            'http://localhost:5000/admin/questions',
+        : await axiosInstance.post(
+            `/admin/questions`,
             formData,
             {
               headers: { 
@@ -304,8 +299,8 @@ function QuestionManager() {
         return;
       }
 
-      await axios.delete(
-        `http://localhost:5000/admin/questions/${questionId}`,
+      await axiosInstance.delete(
+        `/admin/questions/${questionId}`,
         {
           headers: { 
             'Authorization': `Bearer ${token}`,
@@ -426,8 +421,8 @@ function QuestionManager() {
       
       // Upload questions
       try {
-        const response = await axios.post(
-          'http://localhost:5000/admin/questions/bulk',
+        const response = await axiosInstance.post(
+          `/admin/questions/bulk`,
           { questions: parsedQuestions },
           {
             headers: { 
@@ -566,8 +561,8 @@ function QuestionManager() {
         }
         
         // Upload questions
-        const response = await axios.post(
-          'http://localhost:5000/admin/questions/bulk',
+        const response = await axiosInstance.post(
+          `/admin/questions/bulk`,
           { questions },
           {
             headers: { 
@@ -638,8 +633,8 @@ function QuestionManager() {
       const formData = new FormData();
       formData.append('image', file);
 
-      const response = await axios.post(
-        'http://localhost:5000/admin/upload-image',
+      const response = await axiosInstance.post(
+        `/admin/upload-image`,
         formData,
         {
           headers: { 

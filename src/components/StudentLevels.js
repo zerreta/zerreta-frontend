@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axiosInstance from './axios-config';
 import {
   Box,
   Typography,
@@ -67,7 +68,7 @@ function StudentLevels() {
 
   const fetchStudents = async () => {
     try {
-      const response = await fetch('http://localhost:5000/admin/students', {
+      const response = await fetch(`/admin/students`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },

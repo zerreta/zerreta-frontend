@@ -38,6 +38,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import axiosInstance from './axios-config';
 
 function StudentData() {
   const navigate = useNavigate();
@@ -82,7 +83,7 @@ function StudentData() {
   const fetchStudents = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/admin/students', {
+      const response = await axios.get(`/admin/students`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setStudents(response.data);
@@ -186,13 +187,13 @@ function StudentData() {
       const token = localStorage.getItem('token');
       if (selectedStudent) {
         await axios.put(
-          `http://localhost:5000/admin/students/${selectedStudent._id}`,
+          `/admin/students/${selectedStudent._id}`,
           formData,
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } else {
         await axios.post(
-          'http://localhost:5000/admin/students',
+          `/admin/students`,
           formData,
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -208,7 +209,7 @@ function StudentData() {
     if (window.confirm('Are you sure you want to delete this student?')) {
       try {
         const token = localStorage.getItem('token');
-        await axios.delete(`http://localhost:5000/admin/students/${studentId}`, {
+        await axios.delete(`/admin/students/${studentId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         fetchStudents();

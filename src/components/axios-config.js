@@ -7,9 +7,11 @@ let baseURL = process.env.REACT_APP_API_URL || 'https://zer-backend.onrender.com
 if (!baseURL.startsWith('http')) {
   baseURL = 'https://' + baseURL;
 } 
-// Ensure we're not using a localhost URL with the production domain
-if (baseURL.includes('localhost') && window.location.hostname !== 'localhost') {
+
+// When deployed on Vercel, always use the render.com backend
+if (window.location.hostname.includes('vercel.app')) {
   baseURL = 'https://zer-backend.onrender.com';
+  console.log('Deployed on Vercel, forcing backend URL to:', baseURL);
 }
 
 console.log('Using API URL:', baseURL);
@@ -19,6 +21,8 @@ const axiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  // Increase timeout for potentially slow render.com free tier
+  timeout: 30000,
 });
 
 // Add a request interceptor to include auth token in every request

@@ -26,6 +26,7 @@ import {
 } from '@mui/icons-material';
 import axios from 'axios';
 import { motion } from 'framer-motion';
+import axiosInstance from './axios-config';
 
 function LeaderboardPage() {
   const [loading, setLoading] = useState(true);
@@ -54,7 +55,7 @@ function LeaderboardPage() {
 
       // Fetch real data from server
       const response = await axios.get(
-        'http://localhost:5000/student/leaderboard',
+        `/student/leaderboard`,
         {
           headers: { 
             'Authorization': `Bearer ${token}`,

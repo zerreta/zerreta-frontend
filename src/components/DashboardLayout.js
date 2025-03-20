@@ -35,10 +35,12 @@ import {
   MenuBook as MenuBookIcon,
   Lightbulb as LightbulbIcon,
   EmojiEvents as TrophyIcon,
-  Psychology as PsychologyIcon
+  Psychology as PsychologyIcon,
+  Settings as SettingsIcon
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import axios from 'axios';
+import axiosInstance from './axios-config';
 
 const drawerWidth = 260;
 
@@ -126,6 +128,11 @@ const menuItems = [
   }
 ];
 
+// Settings and system menu items
+const systemMenuItems = [
+  { text: 'Connection Test', icon: <SettingsIcon />, path: '/test-connection' },
+];
+
 const DashboardLayout = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userData, setUserData] = useState({ name: 'Loading...' });
@@ -139,7 +146,7 @@ const DashboardLayout = () => {
         const token = localStorage.getItem('token');
         if (!token) return;
 
-        const response = await axios.get('http://localhost:5000/student/profile', {
+        const response = await axios.get(`/student/profile`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -200,6 +207,27 @@ const DashboardLayout = () => {
           ))}
         </List>
       </Box>
+      
+      <Divider sx={{ mt: 2, mb: 1 }} />
+      <Typography variant="caption" color="text.secondary" sx={{ px: 3, py: 1, display: 'block' }}>
+        System
+      </Typography>
+      
+      <List>
+        {systemMenuItems.map((item) => (
+          <MenuItemContainer
+            button
+            key={item.path}
+            active={location.pathname === item.path}
+            onClick={() => navigate(item.path)}
+          >
+            <StyledListItemIcon active={location.pathname === item.path}>
+              {item.icon}
+            </StyledListItemIcon>
+            <StyledListItemText active={location.pathname === item.path} primary={item.text} />
+          </MenuItemContainer>
+        ))}
+      </List>
 
       <Box sx={{ position: 'absolute', bottom: 0, width: '100%', p: 2 }}>
         <Divider sx={{ mb: 2 }} />

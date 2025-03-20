@@ -38,6 +38,7 @@ import {
   VisibilityOff as VisibilityOffIcon
 } from '@mui/icons-material';
 import axios from 'axios';
+import axiosInstance from './axios-config';
 
 function AdminDashboard() {
   const [students, setStudents] = useState([]);
@@ -78,7 +79,7 @@ function AdminDashboard() {
         return;
       }
 
-      const response = await axios.get('http://localhost:5000/admin/students', {
+      const response = await axios.get(`/admin/students`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -213,7 +214,7 @@ function AdminDashboard() {
       let response;
       if (selectedStudent) {
         response = await axios.put(
-          `http://localhost:5000/admin/students/${selectedStudent._id}`,
+          `/admin/students/${selectedStudent._id}`,
           formattedData,
           { 
             headers: { 
@@ -225,7 +226,7 @@ function AdminDashboard() {
         console.log('Update response:', response.data);
       } else {
         response = await axios.post(
-          'http://localhost:5000/admin/students',
+          `/admin/students`,
           formattedData,
           { 
             headers: { 
@@ -267,7 +268,7 @@ function AdminDashboard() {
     if (window.confirm('Are you sure you want to delete this student?')) {
       try {
         const token = localStorage.getItem('token');
-        await axios.delete(`http://localhost:5000/admin/students/${studentId}`, {
+        await axios.delete(`/admin/students/${studentId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         fetchStudents();

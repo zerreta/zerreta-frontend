@@ -44,6 +44,7 @@ import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import AssessmentIcon from '@mui/icons-material/Assessment';
+import axiosInstance from './axios-config';
 
 // Define the subjects
 const subjects = [
@@ -121,7 +122,7 @@ function Analytics() {
       }
 
       console.log('Fetching student data...');
-      const response = await axios.get('http://localhost:5000/student/profile', {
+      const response = await axios.get(`/student/profile`, {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

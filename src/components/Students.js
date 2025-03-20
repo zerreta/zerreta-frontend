@@ -39,6 +39,7 @@ import {
 import { styled } from '@mui/material/styles';
 import { motion } from 'framer-motion';
 import axios from 'axios';
+import axiosInstance from './axios-config';
 
 // Styled components
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
@@ -110,7 +111,7 @@ function Students() {
       const authHeader = `Bearer ${token}`;
       console.log('Authorization header:', authHeader);
       
-      const response = await axios.get('http://localhost:5000/admin/students', {
+      const response = await axios.get(`/admin/students`, {
         headers: { 
           'Authorization': authHeader,
           'Content-Type': 'application/json'
@@ -163,7 +164,7 @@ function Students() {
       
       const authHeader = `Bearer ${token}`;
       
-      await axios.post('http://localhost:5000/admin/add-student', 
+      await axios.post(`/admin/add-student`, 
         newStudent,
         {
           headers: { 
@@ -201,7 +202,7 @@ function Students() {
       
       const authHeader = `Bearer ${token}`;
       
-      await axios.put(`http://localhost:5000/admin/update-student/${editStudent.id}`, 
+      await axios.put(`/admin/update-student/${editStudent.id}`, 
         { password: editStudent.newPassword },
         {
           headers: { 
@@ -239,7 +240,7 @@ function Students() {
       
       const authHeader = `Bearer ${token}`;
       
-      await axios.delete(`http://localhost:5000/admin/delete-student/${deleteStudent.id}`, {
+      await axios.delete(`/admin/delete-student/${deleteStudent.id}`, {
         headers: { 
           'Authorization': authHeader,
           'Content-Type': 'application/json'
