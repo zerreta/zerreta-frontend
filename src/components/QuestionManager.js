@@ -43,7 +43,6 @@ import {
   Image as ImageIcon,
   DeleteForever as DeleteForeverIcon
 } from '@mui/icons-material';
-import axios from 'axios';
 import axiosInstance from './axios-config';
 
 function QuestionManager() {
@@ -107,37 +106,25 @@ function QuestionManager() {
   }, [filters]);
 
   const fetchQuestions = async () => {
+    setLoading(true);
+    setError('');
+    
     try {
-      setLoading(true);
-      const token = localStorage.getItem('token');
-      
-      if (!token) {
-        setError('Authentication token missing. Please log in again.');
-        setLoading(false);
-        return;
-      }
-
-      // Build query string for filters
       const queryParams = new URLSearchParams();
+      
       if (filters.subject) queryParams.append('subject', filters.subject);
       if (filters.stage) queryParams.append('stage', filters.stage);
       if (filters.level) queryParams.append('level', filters.level);
       
-      const response = await axiosInstance.get(
-        `/admin/questions?${queryParams.toString()}`
-      );
+      console.log('Fetching questions with params:', queryParams.toString());
+      const response = await axiosInstance.get(`/admin/questions?${queryParams.toString()}`);
+      console.log('Questions received:', response.data.length);
       
       setQuestions(response.data);
-      setLoading(false);
     } catch (err) {
-      console.error("Error fetching questions:", err);
-      if (err.response) {
-        setError(`Failed to fetch questions: ${err.response.data.message || err.response.statusText}`);
-      } else if (err.request) {
-        setError('Failed to fetch questions: No response from server. Please check your connection.');
-      } else {
-        setError(`Failed to fetch questions: ${err.message}`);
-      }
+      console.error('Error fetching questions:', err);
+      setError('Failed to load questions. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
@@ -258,7 +245,7 @@ function QuestionManager() {
             }
           )
         : await axiosInstance.post(
-            `/admin/questions`,
+            '/admin/questions',
             formData,
             {
               headers: { 
@@ -422,7 +409,7 @@ function QuestionManager() {
       // Upload questions
       try {
         const response = await axiosInstance.post(
-          `/admin/questions/bulk`,
+          '/admin/questions/bulk',
           { questions: parsedQuestions },
           {
             headers: { 
@@ -562,7 +549,7 @@ function QuestionManager() {
         
         // Upload questions
         const response = await axiosInstance.post(
-          `/admin/questions/bulk`,
+          '/admin/questions/bulk',
           { questions },
           {
             headers: { 
@@ -634,7 +621,7 @@ function QuestionManager() {
       formData.append('image', file);
 
       const response = await axiosInstance.post(
-        `/admin/upload-image`,
+        '/admin/upload-image',
         formData,
         {
           headers: { 

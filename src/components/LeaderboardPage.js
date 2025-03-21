@@ -25,8 +25,8 @@ import {
   CheckCircle as CheckCircleIcon
 } from '@mui/icons-material';
 import axios from 'axios';
-import { motion } from 'framer-motion';
 import axiosInstance from './axios-config';
+import { motion } from 'framer-motion';
 
 function LeaderboardPage() {
   const [loading, setLoading] = useState(true);
@@ -54,15 +54,7 @@ function LeaderboardPage() {
       }
 
       // Fetch real data from server
-      const response = await axios.get(
-        `/student/leaderboard`,
-        {
-          headers: { 
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const response = await axiosInstance.get('/student/leaderboard');
       
       if (response.data && Array.isArray(response.data)) {
         // Process the data to calculate N.POINTS per subject

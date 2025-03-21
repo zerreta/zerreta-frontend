@@ -143,16 +143,26 @@ let theme = createTheme({
           padding: '8px 16px',
           textTransform: 'none',
           fontWeight: 600,
+          '&:hover': {
+            backgroundColor: 'transparent',
+            '& .MuiButton-label': {
+              color: 'inherit',
+            },
+          },
         },
         containedPrimary: {
           backgroundColor: '#7445f8',
           '&:hover': {
-            backgroundColor: '#5c33d4',
+            backgroundColor: '#7445f8',
           },
         },
         outlinedPrimary: {
           borderColor: '#7445f8',
           color: '#7445f8',
+          '&:hover': {
+            backgroundColor: 'transparent',
+            borderColor: '#7445f8',
+          },
         },
       },
     },
@@ -200,6 +210,13 @@ let theme = createTheme({
           textTransform: 'none',
           fontWeight: 600,
           minHeight: 48,
+          '&:hover': {
+            backgroundColor: 'transparent',
+            color: 'inherit',
+          },
+          '&.Mui-selected': {
+            color: '#7445f8',
+          },
         },
       },
     },
@@ -207,10 +224,17 @@ let theme = createTheme({
       styleOverrides: {
         root: {
           fontWeight: 500,
+          '&:hover': {
+            backgroundColor: 'inherit',
+            boxShadow: 'none',
+          },
         },
         colorPrimary: {
           backgroundColor: 'rgba(116, 69, 248, 0.1)',
           color: '#7445f8',
+          '&:hover': {
+            backgroundColor: 'rgba(116, 69, 248, 0.1)',
+          },
         },
       },
     },
@@ -276,6 +300,69 @@ let theme = createTheme({
         '::selection': {
           backgroundColor: 'rgba(116, 69, 248, 0.1)',
           color: '#7445f8',
+        },
+      },
+    },
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          '&:hover': {
+            backgroundColor: 'transparent',
+          },
+        },
+      },
+    },
+    MuiListItem: {
+      styleOverrides: {
+        root: {
+          '&:hover': {
+            backgroundColor: 'transparent',
+          },
+        },
+        button: {
+          '&:hover': {
+            backgroundColor: 'transparent',
+          },
+        },
+      },
+    },
+    MuiMenuItem: {
+      styleOverrides: {
+        root: {
+          '&:hover': {
+            backgroundColor: 'transparent',
+          },
+        },
+      },
+    },
+    MuiLink: {
+      styleOverrides: {
+        root: {
+          '&:hover': {
+            backgroundColor: 'transparent',
+            textDecoration: 'none',
+          },
+        },
+      },
+    },
+    MuiCardActionArea: {
+      styleOverrides: {
+        root: {
+          '&:hover': {
+            backgroundColor: 'transparent',
+          },
+        },
+      },
+    },
+    MuiButtonBase: {
+      defaultProps: {
+        disableRipple: true,
+      },
+      styleOverrides: {
+        root: {
+          '&:hover': {
+            backgroundColor: 'transparent !important',
+          },
         },
       },
     },

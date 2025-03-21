@@ -37,7 +37,6 @@ import {
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon
 } from '@mui/icons-material';
-import axios from 'axios';
 import axiosInstance from './axios-config';
 
 function AdminDashboard() {
@@ -79,15 +78,15 @@ function AdminDashboard() {
         return;
       }
 
-      const response = await axios.get(`/admin/students`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      console.log('Fetching students from backend...');
+      const response = await axiosInstance.get('/admin/students');
       
+      console.log('Student data received:', response.data);
       setStudents(response.data);
       setLoading(false);
     } catch (err) {
       console.error('Error fetching students:', err);
-      setError('Failed to fetch students');
+      setError('Failed to fetch students: ' + (err.response?.data?.message || err.message));
       setLoading(false);
     }
   };
@@ -213,7 +212,7 @@ function AdminDashboard() {
 
       let response;
       if (selectedStudent) {
-        response = await axios.put(
+        response = await axiosInstance.put(
           `/admin/students/${selectedStudent._id}`,
           formattedData,
           { 
@@ -225,8 +224,8 @@ function AdminDashboard() {
         );
         console.log('Update response:', response.data);
       } else {
-        response = await axios.post(
-          `/admin/students`,
+        response = await axiosInstance.post(
+          '/admin/students',
           formattedData,
           { 
             headers: { 
@@ -268,7 +267,7 @@ function AdminDashboard() {
     if (window.confirm('Are you sure you want to delete this student?')) {
       try {
         const token = localStorage.getItem('token');
-        await axios.delete(`/admin/students/${studentId}`, {
+        await axiosInstance.delete(`/admin/students/${studentId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         fetchStudents();

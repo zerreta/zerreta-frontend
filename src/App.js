@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, CssBaseline, GlobalStyles } from '@mui/material';
-import LoginOverride from './LoginOverride';
+import Login from './components/Login';
 import AdminDashboard from './components/AdminDashboard';
 import StudentLevels from './components/StudentLevels';
 import Progress from './components/Progress';
@@ -17,7 +17,8 @@ import './App.css';
 import LeaderboardPage from './components/LeaderboardPage';
 import StudentPoints from './components/StudentPoints';
 import AnalyticsSummary from './components/AnalyticsSummary';
-import TestConnection from './components/TestConnection';
+import TestHistory from './components/TestHistory';
+import TestResults from './components/TestResults';
 
 // Import the new pages from the pages directory
 import StudentDashboard from './pages/StudentDashboard';
@@ -56,23 +57,15 @@ const globalStyles = (
 );
 
 function App() {
-  // Add state to avoid repeated logging
-  const [authChecked, setAuthChecked] = useState(false);
-  
   const isAuthenticated = () => {
     const token = localStorage.getItem('token');
-    
-    // Only log on first check
-    if (!authChecked) {
-      console.log('Initial authentication check, token exists:', !!token);
-      setAuthChecked(true);
-    }
-    
+    console.log('Checking authentication, token:', token);
     return !!token;
   };
 
   const isAdmin = () => {
     const role = localStorage.getItem('role');
+    console.log('Checking admin role:', role);
     return role === 'admin';
   };
 
@@ -106,7 +99,7 @@ function App() {
                   <Navigate to="/student-dashboard" replace />
                 )
               ) : (
-                <LoginOverride />
+                <Login />
               )
             } 
           />
@@ -147,7 +140,22 @@ function App() {
             <Route path="analytics-summary" element={<AnalyticsSummary />} />
             <Route path="ai-help" element={<AIHelp />} />
             <Route path="leaderboard" element={<LeaderboardPage />} />
+            {/* <Route path="test-history" element={<TestHistory />} /> */}
           </Route>
+          
+          
+          
+          {/* TestResults route moved outside DashboardLayout */}
+          <Route
+            path="/student-dashboard/test-results/:testId"
+            element={
+              isAuthenticated() && !isAdmin() ? (
+                <TestResults />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
           
           <Route
             path="/test"
@@ -159,8 +167,6 @@ function App() {
               )
             }
           />
-
-          <Route path="/test-connection" element={<TestConnection />} />
         </Routes>
       </Router>
     </ThemeProvider>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -27,7 +27,13 @@ import {
   List,
   ListItem,
   ListItemText,
-  ListItemIcon
+  ListItemIcon,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow
 } from '@mui/material';
 import {
   Lock as LockIcon,
@@ -50,9 +56,9 @@ import {
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import axios from 'axios';
+import axiosInstance from './axios-config';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
-import axiosInstance from './axios-config';
 
 // Subject configuration with icons and colors
 const subjects = [
@@ -510,12 +516,7 @@ function Progress() {
         return;
       }
 
-      const response = await axios.get(`/student/profile`, {
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await axiosInstance.get('/student/profile');
       
       setStudentData(response.data);
       setLoading(false);
@@ -541,12 +542,7 @@ function Progress() {
       }
 
       // In a real application, use this API call:
-      const response = await axios.get(`/student/test-history`, {
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await axiosInstance.get('/student/test-history');
       
       setTestHistory(response.data);
       

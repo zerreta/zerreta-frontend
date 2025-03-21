@@ -56,7 +56,6 @@ import {
   Cell
 } from 'recharts';
 import axios from 'axios';
-import axiosInstance from './axios-config';
 import Students from './Students';
 
 // Styled components
@@ -193,7 +192,7 @@ function Dashboard() {
     setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
-      await axiosInstance.post('/admin/add-student', 
+      await axios.post('http://localhost:5000/admin/add-student', 
         newStudent,
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -270,7 +269,7 @@ function Dashboard() {
       
       try {
         // Make a test request to verify token
-        await axiosInstance.get('/admin/students', {
+        await axios.get('http://localhost:5000/admin/students', {
           headers: { 
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -322,62 +321,6 @@ function Dashboard() {
           </Box>
           
           <Box sx={{ flexGrow: 0 }}>
-            <Tooltip title="Notifications">
-              <IconButton 
-                color="inherit" 
-                onClick={handleNotificationOpen}
-                aria-controls="notification-menu"
-                aria-haspopup="true"
-              >
-                <Badge badgeContent={3} color="error">
-                  <NotificationsIcon />
-                </Badge>
-              </IconButton>
-            </Tooltip>
-            <Menu
-              id="notification-menu"
-              anchorEl={notificationAnchorEl}
-              open={Boolean(notificationAnchorEl)}
-              onClose={handleNotificationClose}
-              TransitionComponent={Fade}
-              PaperProps={{
-                elevation: 3,
-                sx: { width: 320, maxHeight: 400, borderRadius: 2 }
-              }}
-            >
-              <Box sx={{ p: 2 }}>
-                <Typography variant="subtitle1" fontWeight="bold">Notifications</Typography>
-              </Box>
-              <Divider />
-              <MenuItem onClick={handleNotificationClose}>
-                <ListItemIcon>
-                  <PersonIcon fontSize="small" color="primary" />
-                </ListItemIcon>
-                <ListItemText 
-                  primary="New student registered" 
-                  secondary="John Doe just joined the platform"
-                />
-              </MenuItem>
-              <MenuItem onClick={handleNotificationClose}>
-                <ListItemIcon>
-                  <SchoolIcon fontSize="small" color="primary" />
-                </ListItemIcon>
-                <ListItemText 
-                  primary="Course update" 
-                  secondary="New course materials available"
-                />
-              </MenuItem>
-              <MenuItem onClick={handleNotificationClose}>
-                <ListItemIcon>
-                  <SettingsIcon fontSize="small" color="primary" />
-                </ListItemIcon>
-                <ListItemText 
-                  primary="System update" 
-                  secondary="Platform maintenance scheduled"
-                />
-              </MenuItem>
-            </Menu>
-            
             <Tooltip title="Account settings">
               <IconButton 
                 color="inherit" 

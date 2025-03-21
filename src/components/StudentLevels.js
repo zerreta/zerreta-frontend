@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import axiosInstance from './axios-config';
 import {
   Box,
   Typography,
@@ -21,6 +20,7 @@ import {
   Star as StarIcon,
   EmojiEvents as TrophyIcon,
 } from '@mui/icons-material';
+import axiosInstance from './axios-config';
 
 const subjects = [
   { id: 'physics', name: 'Physics' },
@@ -68,13 +68,10 @@ function StudentLevels() {
 
   const fetchStudents = async () => {
     try {
-      const response = await fetch(`/admin/students`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      const data = await response.json();
-      setStudents(data);
+      console.log('Fetching students for level management...');
+      const response = await axiosInstance.get('/admin/students');
+      console.log('Student data received:', response.data);
+      setStudents(response.data);
     } catch (error) {
       console.error('Error fetching students:', error);
     } finally {

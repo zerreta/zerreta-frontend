@@ -35,11 +35,9 @@ import {
   MenuBook as MenuBookIcon,
   Lightbulb as LightbulbIcon,
   EmojiEvents as TrophyIcon,
-  Psychology as PsychologyIcon,
-  Settings as SettingsIcon
+  Psychology as PsychologyIcon
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
-import axios from 'axios';
 import axiosInstance from './axios-config';
 
 const drawerWidth = 260;
@@ -81,7 +79,7 @@ const MenuItemContainer = styled(ListItem)(({ theme, active }) => ({
   position: 'relative',
   background: active ? 'rgba(116, 69, 248, 0.08)' : 'transparent',
   '&:hover': {
-    background: 'rgba(116, 69, 248, 0.05)',
+    background: 'transparent',
   },
   '&::before': {
     content: '""',
@@ -114,23 +112,9 @@ const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/student-dashboard' },
   { text: 'My Progress', icon: <SchoolIcon />, path: '/student-dashboard/progress' },
   { text: 'Analytics', icon: <AnalyticsIcon />, path: '/student-dashboard/analytics' },
-  { text: 'AI Summary', icon: <PsychologyIcon />, path: '/student-dashboard/analytics-summary' },
+  { text: 'Analytics Summary', icon: <AnalyticsIcon />, path: '/student-dashboard/analytics-summary' },
   { text: 'AI Help', icon: <LightbulbIcon />, path: '/student-dashboard/ai-help' },
-  { text: 'Leaderboard', icon: <TrophyIcon />, path: '/student-dashboard/leaderboard' },
-  { 
-    text: 'Other Options', 
-    icon: <MenuBookIcon />, 
-    path: '/student-dashboard/other-options',
-    subItems: [
-      { text: 'Take Tests', icon: <AssignmentIcon />, path: '/student-dashboard/test' },
-      { text: 'Study Materials', icon: <MenuBookIcon />, path: '/student-dashboard/study' }
-    ]
-  }
-];
-
-// Settings and system menu items
-const systemMenuItems = [
-  { text: 'Connection Test', icon: <SettingsIcon />, path: '/test-connection' },
+  { text: 'Leaderboard', icon: <TrophyIcon />, path: '/student-dashboard/leaderboard' }
 ];
 
 const DashboardLayout = () => {
@@ -146,9 +130,7 @@ const DashboardLayout = () => {
         const token = localStorage.getItem('token');
         if (!token) return;
 
-        const response = await axios.get(`/student/profile`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await axiosInstance.get('/student/profile');
         
         if (response.data) {
           setUserData({ name: response.data.name || 'Student' });
@@ -181,7 +163,12 @@ const DashboardLayout = () => {
         </Typography>
         <IconButton 
           size="small" 
-          sx={{ color: 'white' }}
+          sx={{ 
+            color: 'white',
+            '&:hover': {
+              backgroundColor: 'transparent',
+            }
+          }}
           onClick={handleDrawerToggle}
           display={{ xs: 'block', sm: 'none' }}
         >
@@ -207,27 +194,6 @@ const DashboardLayout = () => {
           ))}
         </List>
       </Box>
-      
-      <Divider sx={{ mt: 2, mb: 1 }} />
-      <Typography variant="caption" color="text.secondary" sx={{ px: 3, py: 1, display: 'block' }}>
-        System
-      </Typography>
-      
-      <List>
-        {systemMenuItems.map((item) => (
-          <MenuItemContainer
-            button
-            key={item.path}
-            active={location.pathname === item.path}
-            onClick={() => navigate(item.path)}
-          >
-            <StyledListItemIcon active={location.pathname === item.path}>
-              {item.icon}
-            </StyledListItemIcon>
-            <StyledListItemText active={location.pathname === item.path} primary={item.text} />
-          </MenuItemContainer>
-        ))}
-      </List>
 
       <Box sx={{ position: 'absolute', bottom: 0, width: '100%', p: 2 }}>
         <Divider sx={{ mb: 2 }} />
@@ -253,7 +219,7 @@ const DashboardLayout = () => {
             borderRadius: 8,
             '&:hover': {
               borderColor: '#5c33d4',
-              background: 'rgba(116, 69, 248, 0.05)',
+              background: 'transparent',
             }
           }}
         >
@@ -267,30 +233,41 @@ const DashboardLayout = () => {
     <Box sx={{ display: 'flex' }}>
       <StyledAppBar position="fixed">
         <Toolbar>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <img 
+              src="/zer-logo.png" 
+              alt="Zerreta Logo" 
+              style={{ 
+                height: '36px', 
+                marginRight: '10px' 
+              }} 
+            />
+            <Typography variant="h6" component="div" sx={{ flexGrow: 0, mr: 2 }}>
+              ZERRETA LEARNINGS
+            </Typography>
+          </Box>
+          
           <IconButton
             color="inherit"
             aria-label="open drawer"
             edge="start"
             onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}
+            sx={{ 
+              mr: 2, 
+              display: { sm: 'none' },
+              '&:hover': {
+                backgroundColor: 'transparent',
+              }
+            }}
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            ZERRETA LEARNINGS
-          </Typography>
-          <IconButton color="inherit" sx={{ mr: 2 }}>
-            <Badge badgeContent={3} color="error">
-              <NotificationsIcon />
-            </Badge>
-          </IconButton>
-          <Button 
-            color="inherit"
-            startIcon={<Avatar sx={{ width: 28, height: 28 }} src="/student-avatar.jpg" />}
-            sx={{ textTransform: 'none' }}
-          >
-            {userData.name || 'User'}
-          </Button>
+          
+          <Box sx={{ flexGrow: 1 }} />
+          
+          
+          
+          {/* Profile button removed */}
         </Toolbar>
       </StyledAppBar>
 

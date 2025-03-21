@@ -100,30 +100,14 @@ function Leaderboard() {
         return;
       }
       
-      const response = await axios.get(
-        `/student/leaderboard`,
-        {
-          headers: { 
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const response = await axiosInstance.get('/student/leaderboard');
       
       // If API is not yet implemented, fetch student list from admin API
       let studentsData = response.data;
       
       if (!studentsData || studentsData.length === 0) {
         // Fallback to admin student list if leaderboard API not yet implemented
-        const adminResponse = await axios.get(
-          `/admin/students`,
-          {
-            headers: { 
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
+        const adminResponse = await axiosInstance.get('/admin/students');
         
         studentsData = adminResponse.data;
       }

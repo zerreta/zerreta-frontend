@@ -54,5 +54,28 @@ html {
 
 /* Focus outline */
 :focus {
-  outline-color: #4F46E5;
+  outline: none !important;
+}
+
+button:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Force remove outline for all clickable elements */
+*:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Custom focus styles for accessibility */
+.MuiButtonBase-root:focus-visible {
+  outline: 2px solid rgba(79, 70, 229, 0.5);
+  outline-offset: 2px;
+}
+
+/* Remove focus ring for mouse users */
+.MuiButtonBase-root:focus:not(:focus-visible) {
+  outline: none !important;
+  box-shadow: none !important;
 }

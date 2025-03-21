@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import axios from 'axios';
+import axiosInstance from './axios-config';
 import { 
   PieChart, 
   Pie, 
@@ -44,7 +45,6 @@ import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import AssessmentIcon from '@mui/icons-material/Assessment';
-import axiosInstance from './axios-config';
 
 // Define the subjects
 const subjects = [
@@ -122,12 +122,7 @@ function Analytics() {
       }
 
       console.log('Fetching student data...');
-      const response = await axios.get(`/student/profile`, {
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await axiosInstance.get('/student/profile');
       
       console.log('Student data received:', response.data);
       

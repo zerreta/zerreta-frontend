@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -27,6 +27,8 @@ import {
 } from '@mui/icons-material';
 import axios from 'axios';
 import { motion } from 'framer-motion';
+import axiosInstance from './axios-config';
+import './Login.css';
 
 const LoginContainer = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
@@ -41,10 +43,43 @@ const LoginLeft = styled(Box)(({ theme }) => ({
   alignItems: 'center',
   justifyContent: 'center',
   backgroundColor: '#7445f8',
+  position: 'relative',
+  overflow: 'hidden',
   [theme.breakpoints.down('md')]: {
     display: 'none'
   }
 }));
+
+const QuoteImage = styled('img')({
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  maxWidth: '90%',
+  maxHeight: '90%',
+  objectFit: 'contain',
+  zIndex: 2
+});
+
+const SunImage = styled('img')({
+  position: 'absolute',
+  top: '-7%',
+  right: '10%',
+  maxWidth: '350px',
+  maxHeight: '350px',
+  objectFit: 'contain',
+  zIndex: 1
+});
+
+const KidQuoteImage = styled('img')({
+  position: 'absolute',
+  top: '60%',
+  left: '2%',
+  maxWidth: '600px',
+  maxHeight: '600px',
+  objectFit: 'contain',
+  zIndex: 1
+});
 
 const LoginRight = styled(Box)(({ theme }) => ({
   width: '50%',
@@ -99,6 +134,7 @@ const Logo = styled('div')(({ theme }) => ({
 function Login() {
   const navigate = useNavigate();
   const theme = useTheme();
+  const [backendUrl, setBackendUrl] = useState('');
   
   const [formData, setFormData] = useState({
     username: '',
@@ -109,6 +145,10 @@ function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [role, setRole] = useState('student');
   const [rememberMe, setRememberMe] = useState(false);
+
+  useEffect(() => {
+    setBackendUrl(axiosInstance.defaults.baseURL);
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -134,25 +174,28 @@ function Login() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
     
-    const backendUrl = 'https://zer-backend.onrender.com';
-    console.log('Direct submit to:', backendUrl + '/login');
-    
-    axios.post(`${backendUrl}/login`, {
-      ...formData,
-      role
-    })
-    .then(response => {
-      const { token } = response.data;
-      localStorage.setItem('token', token);
+    try {
+      console.log('Sending login request to:', backendUrl);
+      
+      const response = await axiosInstance.post('/login', {
+        username: formData.username,
+        password: formData.password,
+        role
+      });
+      
+      console.log('Login successful:', response.data);
+      
+      // Store token in localStorage
+      localStorage.setItem('token', response.data.token);
       localStorage.setItem('role', role);
+      
+      // Force direct navigation
       window.location.href = role === 'admin' ? '/admin' : '/student-dashboard';
-    })
-    .catch(error => {
+    } catch (error) {
       console.error('Login error:', error);
       if (error.response?.status === 401) {
         setError(error.response?.data?.message || 'Invalid credentials.');
@@ -161,16 +204,18 @@ function Login() {
       } else {
         setError('An unexpected error occurred.');
       }
-    })
-    .finally(() => {
+    } finally {
       setIsLoading(false);
-    });
+    }
   };
 
   return (
     <LoginContainer>
       <LoginLeft>
-        {/* Empty purple section */}
+        {/* Images for the left side */}
+        <QuoteImage src="https://zerreta-learnings-3cgnnt19k-pratheep-bits-projects.vercel.app/assets/quote.png" alt="Inspirational Quote" />
+        <SunImage src="https://zerreta-learnings-3cgnnt19k-pratheep-bits-projects.vercel.app/assets/sun.png" alt="Sun" />
+        <KidQuoteImage src="https://zerreta-learnings-3cgnnt19k-pratheep-bits-projects.vercel.app/assets/kid-quote.png" alt="Kid Quote" />
       </LoginLeft>
       
       <LoginRight>

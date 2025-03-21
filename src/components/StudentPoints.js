@@ -17,7 +17,6 @@ import {
   Chip,
 } from '@mui/material';
 import { Search as SearchIcon, EmojiEvents as TrophyIcon } from '@mui/icons-material';
-import axios from 'axios';
 import axiosInstance from './axios-config';
 
 const StudentPoints = () => {
@@ -30,12 +29,10 @@ const StudentPoints = () => {
     const fetchStudents = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem('token');
         
+        console.log('Fetching students for N.POINTS calculation...');
         // First, get all students
-        const response = await axios.get(`/admin/students`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await axiosInstance.get('/admin/students');
         
         // Process the student data to calculate N.POINTS
         const processedStudents = response.data.map(student => {
@@ -72,11 +69,12 @@ const StudentPoints = () => {
         // Sort students by N.POINTS in descending order
         processedStudents.sort((a, b) => b.nPoints - a.nPoints);
         
+        console.log(`Processed ${processedStudents.length} students with N.POINTS`);
         setStudents(processedStudents);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching students:', err);
-        setError('Failed to fetch students. Please try again later.');
+        setError('Failed to fetch students: ' + (err.response?.data?.message || err.message));
         setLoading(false);
       }
     };

@@ -77,11 +77,14 @@ const LoginOverride = () => {
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('role', role);
       
+      // Force navigation
+      console.log('Redirecting to', role === 'admin' ? '/admin' : '/student-dashboard');
+      
       // Redirect to dashboard
       if (role === 'admin') {
-        navigate('/admin');
+        window.location.href = '/admin';
       } else {
-        navigate('/student-dashboard');
+        window.location.href = '/student-dashboard';
       }
     })
     .catch(err => {

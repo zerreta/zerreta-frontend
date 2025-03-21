@@ -39,7 +39,6 @@ import {
   EmojiEvents as TrophyIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
-import axios from 'axios';
 import axiosInstance from '../components/axios-config';
 
 // Styled components
@@ -108,9 +107,9 @@ const StudentDashboard = () => {
   useEffect(() => {
     const fetchStudentData = async () => {
       try {
-        const token = localStorage.getItem('token');
+        console.log('Fetching student profile data...');
         const response = await axiosInstance.get('/student/profile');
-        
+        console.log('Student profile data received:', response.data);
         setStudentData(response.data);
         
         // Calculate N.POINTS based on levels cleared
