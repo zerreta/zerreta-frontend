@@ -19,6 +19,7 @@ import StudentPoints from './components/StudentPoints';
 import AnalyticsSummary from './components/AnalyticsSummary';
 import TestHistory from './components/TestHistory';
 import TestResults from './components/TestResults';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 // Import the new pages from the pages directory
 import StudentDashboard from './pages/StudentDashboard';
@@ -74,6 +75,7 @@ function App() {
       <CssBaseline />
       {globalStyles}
       <Router>
+        <PWAInstallPrompt />
         <Routes>
           <Route 
             path="/" 
