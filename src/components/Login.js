@@ -29,6 +29,10 @@ import axios from 'axios';
 import { motion } from 'framer-motion';
 import axiosInstance from './axios-config';
 import './Login.css';
+// Import images directly
+import quoteImg from '../assets/quote.png';
+import sunImg from '../assets/sun.png';
+import kidQuoteImg from '../assets/kid-quote.png';
 
 const LoginContainer = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
@@ -213,9 +217,9 @@ function Login() {
     <LoginContainer>
       <LoginLeft>
         {/* Images for the left side */}
-        <QuoteImage src="https://zerreta-learnings-3cgnnt19k-pratheep-bits-projects.vercel.app/assets/quote.png" alt="Inspirational Quote" />
-        <SunImage src="https://zerreta-learnings-3cgnnt19k-pratheep-bits-projects.vercel.app/assets/sun.png" alt="Sun" />
-        <KidQuoteImage src="https://zerreta-learnings-3cgnnt19k-pratheep-bits-projects.vercel.app/assets/kid-quote.png" alt="Kid Quote" />
+        <QuoteImage src={quoteImg} alt="Inspirational Quote" />
+        <SunImage src={sunImg} alt="Sun" />
+        <KidQuoteImage src={kidQuoteImg} alt="Kid Quote" />
       </LoginLeft>
       
       <LoginRight>
