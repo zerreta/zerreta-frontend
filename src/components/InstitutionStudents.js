@@ -40,9 +40,10 @@ import axiosInstance from './axios-config';
 function InstitutionStudents() {
   const { institution } = useParams();
   const navigate = useNavigate();
-  const decodedInstitution = decodeURIComponent(institution);
+  const decodedInstitution = decodeURIComponent(institution || localStorage.getItem('currentInstitution') || 'Default Institution');
   
   const [students, setStudents] = useState([]);
+  const [allStudents, setAllStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
@@ -78,8 +79,18 @@ function InstitutionStudents() {
   const fetchStudents = async () => {
     try {
       setLoading(true);
-      const response = await axiosInstance.get(`/admin/students/institution/${decodedInstitution}`);
-      setStudents(response.data);
+      
+      // Get all students and filter client-side
+      const response = await axiosInstance.get('/admin/students');
+      const allStudentsData = response.data;
+      setAllStudents(allStudentsData);
+      
+      // Filter for the current institution
+      const filteredStudents = allStudentsData.filter(
+        student => (student.institution || 'Default Institution') === decodedInstitution
+      );
+      
+      setStudents(filteredStudents);
       setLoading(false);
     } catch (err) {
       console.error('Error fetching students:', err);
@@ -180,6 +191,22 @@ function InstitutionStudents() {
       }
       
       if (response && response.data) {
+        // Immediately update local state to avoid refetching
+        if (selectedStudent) {
+          // Update the student in both arrays
+          const updatedStudent = { ...selectedStudent, ...formData };
+          setAllStudents(allStudents.map(s => s._id === selectedStudent._id ? updatedStudent : s));
+          setStudents(students.map(s => s._id === selectedStudent._id ? updatedStudent : s));
+        } else {
+          // Add the new student to both arrays if it belongs to this institution
+          const newStudent = response.data.student;
+          setAllStudents([...allStudents, newStudent]);
+          if (newStudent.institution === decodedInstitution) {
+            setStudents([...students, newStudent]);
+          }
+        }
+        
+        // Also refresh the whole list
         fetchStudents();
         handleCloseDialog();
       } else {
@@ -195,7 +222,10 @@ function InstitutionStudents() {
     if (window.confirm('Are you sure you want to delete this student?')) {
       try {
         await axiosInstance.delete(`/admin/students/${studentId}`);
-        fetchStudents();
+        
+        // Update local state
+        setAllStudents(allStudents.filter(s => s._id !== studentId));
+        setStudents(students.filter(s => s._id !== studentId));
       } catch (err) {
         console.error('Error deleting student:', err);
         setError('Failed to delete student: ' + (err.response?.data?.message || err.message));

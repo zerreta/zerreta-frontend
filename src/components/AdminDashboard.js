@@ -96,10 +96,23 @@ function AdminDashboard() {
 
   const fetchInstitutions = async () => {
     try {
-      const response = await axiosInstance.get('/admin/institutions');
-      setInstitutions(response.data);
+      // First try to get from the dedicated API endpoint
+      try {
+        const response = await axiosInstance.get('/admin/institutions');
+        setInstitutions(response.data);
+      } catch (err) {
+        console.error('Fallback: Getting institutions from students data');
+        // Fallback: derive institutions from students data
+        const studentsResponse = await axiosInstance.get('/admin/students');
+        const uniqueInstitutions = [...new Set(
+          studentsResponse.data.map(student => student.institution || 'Default Institution')
+        )];
+        setInstitutions(uniqueInstitutions);
+      }
     } catch (err) {
       console.error('Error fetching institutions:', err);
+      // Set a default value so UI isn't broken
+      setInstitutions(['Default Institution']);
     }
   };
 
