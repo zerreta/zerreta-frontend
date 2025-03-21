@@ -152,6 +152,10 @@ function Login() {
 
   useEffect(() => {
     setBackendUrl(axiosInstance.defaults.baseURL);
+    
+    // Clear any existing tokens on login page load
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
   }, []);
 
   const handleChange = (e) => {
@@ -196,6 +200,14 @@ function Login() {
       // Store token in localStorage
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('role', role);
+      
+      if (rememberMe) {
+        // If remember me is checked, store credential preference
+        localStorage.setItem('rememberMe', 'true');
+      } else {
+        // Otherwise, ensure it's cleared
+        localStorage.removeItem('rememberMe');
+      }
       
       // Force direct navigation
       window.location.href = role === 'admin' ? '/admin' : '/student-dashboard';

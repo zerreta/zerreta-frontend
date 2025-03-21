@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, CssBaseline, GlobalStyles } from '@mui/material';
 import Login from './components/Login';
@@ -58,15 +58,29 @@ const globalStyles = (
 );
 
 function App() {
+  // Clear any potential stored auth data when the app loads for the first time in a session
+  useEffect(() => {
+    // Check if this is the first load in this browser session
+    const isFirstLoadInSession = !sessionStorage.getItem('appInitialized');
+    
+    if (isFirstLoadInSession) {
+      // Clear authentication data to force login
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      
+      // Mark that the app has been initialized in this session
+      sessionStorage.setItem('appInitialized', 'true');
+    }
+  }, []);
+  
   const isAuthenticated = () => {
     const token = localStorage.getItem('token');
-    console.log('Checking authentication, token:', token);
+    // Additional validation could be added here to check token validity
     return !!token;
   };
 
   const isAdmin = () => {
     const role = localStorage.getItem('role');
-    console.log('Checking admin role:', role);
     return role === 'admin';
   };
 
@@ -79,17 +93,7 @@ function App() {
         <Routes>
           <Route 
             path="/" 
-            element={
-              !isAuthenticated() ? (
-                <Navigate to="/login" replace />
-              ) : (
-                isAdmin() ? (
-                  <Navigate to="/admin" replace />
-                ) : (
-                  <Navigate to="/student-dashboard" replace />
-                )
-              )
-            } 
+            element={<Navigate to="/login" replace />} 
           />
           <Route 
             path="/login" 
