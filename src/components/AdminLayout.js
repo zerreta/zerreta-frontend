@@ -31,6 +31,7 @@ import {
   EmojiEvents as TrophyIcon
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
+import zerLogo from '../assets/zer-logo.png';
 
 const drawerWidth = 260;
 
@@ -49,6 +50,7 @@ const StyledDrawer = styled(Drawer)(({ theme }) => ({
     boxSizing: 'border-box',
     borderRight: 'none',
     boxShadow: '2px 0 20px rgba(0, 0, 0, 0.05)',
+    overflowX: 'hidden',
   },
 }));
 
@@ -190,9 +192,19 @@ const AdminLayout = () => {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            ADMIN
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+            <img 
+              src={zerLogo} 
+              alt="Zerreta Logo" 
+              style={{ 
+                height: '36px', 
+                marginRight: '10px' 
+              }} 
+            />
+            <Typography variant="h6" component="div">
+              ADMIN
+            </Typography>
+          </Box>
           <IconButton color="inherit">
             <PersonIcon />
           </IconButton>
@@ -208,7 +220,7 @@ const AdminLayout = () => {
           ModalProps={{ keepMounted: true }}
           sx={{
             display: { xs: 'block', sm: 'none' },
-            '& .MuiDrawer-paper': { width: drawerWidth, boxSizing: 'border-box' },
+            '& .MuiDrawer-paper': { width: drawerWidth, boxSizing: 'border-box', overflowX: 'hidden' },
           }}
         >
           {drawer}
@@ -234,7 +246,8 @@ const AdminLayout = () => {
           mt: 8, // Add space for the AppBar
           backgroundColor: '#f8f9fa',
           minHeight: '100vh',
-          overflow: 'auto'
+          overflow: 'auto',
+          overflowX: 'hidden'
         }}
       >
         <Outlet />

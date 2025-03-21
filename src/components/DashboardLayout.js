@@ -39,6 +39,7 @@ import {
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import axiosInstance from './axios-config';
+import zerLogo from '../assets/zer-logo.png';
 
 const drawerWidth = 260;
 
@@ -57,6 +58,7 @@ const StyledDrawer = styled(Drawer)(({ theme }) => ({
     boxSizing: 'border-box',
     borderRight: 'none',
     boxShadow: '2px 0 20px rgba(0, 0, 0, 0.05)',
+    overflowX: 'hidden',
   },
 }));
 
@@ -235,7 +237,7 @@ const DashboardLayout = () => {
         <Toolbar>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <img 
-              src="/zer-logo.png" 
+              src={zerLogo} 
               alt="Zerreta Logo" 
               style={{ 
                 height: '36px', 
@@ -280,7 +282,7 @@ const DashboardLayout = () => {
           ModalProps={{ keepMounted: true }}
           sx={{
             display: { xs: 'block', sm: 'none' },
-            '& .MuiDrawer-paper': { width: drawerWidth, boxSizing: 'border-box' },
+            '& .MuiDrawer-paper': { width: drawerWidth, boxSizing: 'border-box', overflowX: 'hidden' },
           }}
         >
           {drawer}
@@ -306,6 +308,7 @@ const DashboardLayout = () => {
           mt: 8, // Add space for the AppBar
           backgroundColor: '#f8f9fa',
           minHeight: '100vh',
+          overflowX: 'hidden', // Prevent horizontal scrolling
         }}
       >
         <Outlet />
