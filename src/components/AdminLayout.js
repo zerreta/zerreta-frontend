@@ -104,6 +104,7 @@ const StyledListItemText = styled(ListItemText)(({ active, theme }) => ({
 
 const menuItems = [
   { path: '/admin', label: 'Dashboard', icon: DashboardIcon },
+  { path: '/admin/institutions', label: 'Institutions', icon: SchoolIcon },
   { path: '/admin/questions', label: 'Question Manager', icon: QuestionIcon },
   { path: '/admin/student-levels', label: 'Student Levels', icon: SchoolIcon },
   { path: '/admin/student-points', label: 'Student N.POINTS', icon: TrophyIcon },

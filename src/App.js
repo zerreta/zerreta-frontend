@@ -24,6 +24,9 @@ import PWAInstallPrompt from './components/PWAInstallPrompt';
 // Import the new pages from the pages directory
 import StudentDashboard from './pages/StudentDashboard';
 import StudentProfile from './pages/StudentProfile';
+import StudentData from './components/StudentData';
+import InstitutionsList from './components/InstitutionsList';
+import InstitutionStudents from './components/InstitutionStudents';
 
 // Create a simple TestSelection component
 const TestSelection = () => {
@@ -122,10 +125,12 @@ function App() {
             }
           >
             <Route index element={<AdminDashboard />} />
-            <Route path="student-levels" element={<StudentLevels />} />
             <Route path="questions" element={<QuestionManager />} />
+            <Route path="student-levels" element={<StudentLevels />} />
             <Route path="student-points" element={<StudentPoints />} />
-            <Route path="student-data" element={<div>Student Data Coming Soon</div>} />
+            <Route path="student-data" element={<StudentData />} />
+            <Route path="institutions" element={<InstitutionsList />} />
+            <Route path="institutions/:institution" element={<InstitutionStudents />} />
           </Route>
           
           {/* Student Dashboard routes */}

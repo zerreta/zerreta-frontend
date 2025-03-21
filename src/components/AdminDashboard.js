@@ -46,11 +46,13 @@ function AdminDashboard() {
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [showPasswords, setShowPasswords] = useState({});
+  const [institutions, setInstitutions] = useState([]);
   const [formData, setFormData] = useState({
     studentId: '',
     name: '',
     username: '',
     password: '',
+    institution: 'Default Institution',
     subjects: {
       physics: { level: '', stage: '' },
       chemistry: { level: '', stage: '' },
@@ -66,6 +68,7 @@ function AdminDashboard() {
 
   useEffect(() => {
     fetchStudents();
+    fetchInstitutions();
   }, []);
 
   const fetchStudents = async () => {
@@ -91,6 +94,15 @@ function AdminDashboard() {
     }
   };
 
+  const fetchInstitutions = async () => {
+    try {
+      const response = await axiosInstance.get('/admin/institutions');
+      setInstitutions(response.data);
+    } catch (err) {
+      console.error('Error fetching institutions:', err);
+    }
+  };
+
   const handleOpenDialog = (student = null) => {
     if (student) {
       setSelectedStudent(student);
@@ -99,6 +111,7 @@ function AdminDashboard() {
         name: student.name || '',
         username: student.username || '',
         password: student.password || '',
+        institution: student.institution || 'Default Institution',
         subjects: student.subjects || {
           physics: { level: '1', stage: '1' },
           chemistry: { level: '1', stage: '1' },
@@ -118,6 +131,7 @@ function AdminDashboard() {
         name: '',
         username: '',
         password: '',
+        institution: 'Default Institution',
         subjects: {
           physics: { level: '1', stage: '1' },
           chemistry: { level: '1', stage: '1' },
@@ -142,6 +156,7 @@ function AdminDashboard() {
       name: '',
       username: '',
       password: '',
+      institution: 'Default Institution',
       subjects: {
         physics: { level: '', stage: '' },
         chemistry: { level: '', stage: '' },
@@ -308,6 +323,32 @@ function AdminDashboard() {
       )}
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ borderRadius: 2, boxShadow: 3 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" color="text.secondary">
+                Total Students
+              </Typography>
+              <Typography variant="h3" sx={{ mt: 1, fontWeight: 'bold' }}>
+                {loading ? <CircularProgress size={24} /> : students.length}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ borderRadius: 2, boxShadow: 3 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" color="text.secondary">
+                Institutions
+              </Typography>
+              <Typography variant="h3" sx={{ mt: 1, fontWeight: 'bold' }}>
+                {loading ? <CircularProgress size={24} /> : institutions.length}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        
         {stats.map((stat, index) => (
           <Grid item xs={12} sm={6} md={3} key={index}>
             <Card 
@@ -436,157 +477,162 @@ function AdminDashboard() {
           {selectedStudent ? 'Edit Student' : 'Add New Student'}
         </DialogTitle>
         <DialogContent>
-          <TextField
-            fullWidth
-            label="Student ID"
-            name="studentId"
-            value={formData.studentId}
-            onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
-            margin="normal"
-            required
-          />
-          <TextField
-            fullWidth
-            label="Name"
-            name="name"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            margin="normal"
-            required
-          />
-          <TextField
-            fullWidth
-            label="Username"
-            name="username"
-            value={formData.username}
-            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-            margin="normal"
-            required
-          />
-          <TextField
-            fullWidth
-            label="Password"
-            name="password"
-            value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            margin="normal"
-            required
-            type={showPasswords.new ? "text" : "password"}
-            InputProps={{
-              endAdornment: (
-                <IconButton
-                  onClick={() => setShowPasswords({...showPasswords, new: !showPasswords.new})}
-                  edge="end"
-                >
-                  {showPasswords.new ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                </IconButton>
-              )
-            }}
-          />
-          
-          <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
-            Subject Levels and Stages
-          </Typography>
-          
-          <Grid container spacing={2}>
-            {subjects.map((subject) => (
-              <Grid item xs={12} sm={6} md={3} key={subject}>
-                <Typography variant="subtitle1" gutterBottom>
-                  {subject.charAt(0).toUpperCase() + subject.slice(1)}
+          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  margin="dense"
+                  label="Student ID"
+                  fullWidth
+                  value={formData.studentId}
+                  onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  margin="dense"
+                  label="Name"
+                  fullWidth
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  margin="dense"
+                  label="Username"
+                  fullWidth
+                  value={formData.username}
+                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  margin="dense"
+                  label="Password"
+                  fullWidth
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  margin="dense"
+                  label="Institution"
+                  fullWidth
+                  value={formData.institution}
+                  onChange={(e) => setFormData({ ...formData, institution: e.target.value })}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
+                  Subject Levels and Stages
                 </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={6}>
-                    <FormControl fullWidth size="small">
-                      <InputLabel>Level</InputLabel>
-                      <Select
-                        value={formData.subjects[subject].level}
-                        onChange={(e) => handleSubjectChange(subject, 'level', e.target.value)}
-                        label="Level"
-                      >
-                        <MenuItem value="">None</MenuItem>
-                        {levels.map((level) => (
-                          <MenuItem key={level} value={level}>Level {level}</MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <FormControl fullWidth size="small">
-                      <InputLabel>Stage</InputLabel>
-                      <Select
-                        value={formData.subjects[subject].stage}
-                        onChange={(e) => handleSubjectChange(subject, 'stage', e.target.value)}
-                        label="Stage"
-                        disabled={!formData.subjects[subject].level}
-                      >
-                        <MenuItem value="">None</MenuItem>
-                        {stages.map((stage) => (
-                          <MenuItem key={stage} value={stage}>Stage {stage}</MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
+              </Grid>
+              {subjects.map((subject) => (
+                <Grid item xs={12} sm={6} md={3} key={subject}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    {subject.charAt(0).toUpperCase() + subject.slice(1)}
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Level</InputLabel>
+                        <Select
+                          value={formData.subjects[subject].level}
+                          onChange={(e) => handleSubjectChange(subject, 'level', e.target.value)}
+                          label="Level"
+                        >
+                          <MenuItem value="">None</MenuItem>
+                          {levels.map((level) => (
+                            <MenuItem key={level} value={level}>Level {level}</MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Stage</InputLabel>
+                        <Select
+                          value={formData.subjects[subject].stage}
+                          onChange={(e) => handleSubjectChange(subject, 'stage', e.target.value)}
+                          label="Stage"
+                          disabled={!formData.subjects[subject].level}
+                        >
+                          <MenuItem value="">None</MenuItem>
+                          {stages.map((stage) => (
+                            <MenuItem key={stage} value={stage}>Stage {stage}</MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Grid>
                   </Grid>
                 </Grid>
+              ))}
+              <Grid item xs={12}>
+                <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
+                  Additional Fields (Optional)
+                </Typography>
               </Grid>
-            ))}
-          </Grid>
-          
-          <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
-            Additional Fields (Optional)
-          </Typography>
-          
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6} md={4}>
-              <TextField
-                fullWidth
-                label="Field 1"
-                name="column1"
-                value={formData.column1}
-                onChange={(e) => setFormData({ ...formData, column1: e.target.value })}
-                size="small"
-              />
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6} md={4}>
+                  <TextField
+                    fullWidth
+                    label="Field 1"
+                    name="column1"
+                    value={formData.column1}
+                    onChange={(e) => setFormData({ ...formData, column1: e.target.value })}
+                    size="small"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6} md={4}>
+                  <TextField
+                    fullWidth
+                    label="Field 2"
+                    name="column2"
+                    value={formData.column2}
+                    onChange={(e) => setFormData({ ...formData, column2: e.target.value })}
+                    size="small"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6} md={4}>
+                  <TextField
+                    fullWidth
+                    label="Field 3"
+                    name="column3"
+                    value={formData.column3}
+                    onChange={(e) => setFormData({ ...formData, column3: e.target.value })}
+                    size="small"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6} md={4}>
+                  <TextField
+                    fullWidth
+                    label="Field 4"
+                    name="column4"
+                    value={formData.column4}
+                    onChange={(e) => setFormData({ ...formData, column4: e.target.value })}
+                    size="small"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6} md={4}>
+                  <TextField
+                    fullWidth
+                    label="Field 5"
+                    name="column5"
+                    value={formData.column5}
+                    onChange={(e) => setFormData({ ...formData, column5: e.target.value })}
+                    size="small"
+                  />
+                </Grid>
+              </Grid>
             </Grid>
-            <Grid item xs={12} sm={6} md={4}>
-              <TextField
-                fullWidth
-                label="Field 2"
-                name="column2"
-                value={formData.column2}
-                onChange={(e) => setFormData({ ...formData, column2: e.target.value })}
-                size="small"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={4}>
-              <TextField
-                fullWidth
-                label="Field 3"
-                name="column3"
-                value={formData.column3}
-                onChange={(e) => setFormData({ ...formData, column3: e.target.value })}
-                size="small"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={4}>
-              <TextField
-                fullWidth
-                label="Field 4"
-                name="column4"
-                value={formData.column4}
-                onChange={(e) => setFormData({ ...formData, column4: e.target.value })}
-                size="small"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={4}>
-              <TextField
-                fullWidth
-                label="Field 5"
-                name="column5"
-                value={formData.column5}
-                onChange={(e) => setFormData({ ...formData, column5: e.target.value })}
-                size="small"
-              />
-            </Grid>
-          </Grid>
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
