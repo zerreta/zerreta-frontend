@@ -339,6 +339,9 @@ function TestPage() {
         const isCorrect = selectedOption === question.correctOption;
         if (isCorrect) correctCount++;
         
+        // Log the explanation for debugging
+        console.log(`Question ${questionId} explanation:`, question.explanation);
+        
         // Include the allocatedTime from the question data
         processedQuestions.push({
           questionId: questionId,
@@ -353,7 +356,9 @@ function TestPage() {
           optionA: question.optionA,
           optionB: question.optionB,
           optionC: question.optionC,
-          optionD: question.optionD
+          optionD: question.optionD,
+          // Ensure questionText is included
+          questionText: question.questionText || question.question
         });
       });
       

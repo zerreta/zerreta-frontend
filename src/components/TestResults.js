@@ -61,6 +61,17 @@ function TestResults() {
                 // Log how many questions have explanations
                 const questionsWithExplanations = parsedData.questions.filter(q => q.explanation && q.explanation.trim() !== '').length;
                 console.log(`Questions with explanations: ${questionsWithExplanations}/${parsedData.questions.length}`);
+                
+                // Log all explanations and their types
+                parsedData.questions.forEach((q, i) => {
+                  console.log(`Question ${i + 1} explanation:`, 
+                    q.explanation, 
+                    `(type: ${typeof q.explanation}, length: ${q.explanation ? q.explanation.length : 0})`
+                  );
+                });
+                
+                // Log all keys in the first question object
+                console.log('First question keys:', Object.keys(parsedData.questions[0]));
               }
               
               setTestData(parsedData);
@@ -559,10 +570,22 @@ function TestResults() {
                           Explanation:
                         </Typography>
                         <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.9rem' }}>
-                          {question.explanation && question.explanation.trim() !== "" 
+                          {(question.explanation && question.explanation.trim() !== "") 
                             ? question.explanation 
                             : "No explanation available for this question."}
                         </Typography>
+                        
+                        {/* Debug info to see what data we have */}
+                        {process.env.NODE_ENV === 'development' && (
+                          <Box sx={{ mt: 2, p: 1, bgcolor: '#f5f5f5', borderRadius: 1, fontSize: '0.7rem' }}>
+                            <Typography variant="caption" sx={{ fontFamily: 'monospace', display: 'block' }}>
+                              explanation: {JSON.stringify(question.explanation)}
+                            </Typography>
+                            <Typography variant="caption" sx={{ fontFamily: 'monospace', display: 'block' }}>
+                              allocatedTime: {question.allocatedTime}
+                            </Typography>
+                          </Box>
+                        )}
                       </Box>
                     </Box>
                   </Paper>
