@@ -227,10 +227,19 @@ function TestPage() {
             
             // Ensure timeAllocation exists (default to 60 seconds if not provided)
             if (!processedQuestion.timeAllocation) {
-              processedQuestion.timeAllocation = processedQuestion.timeAllocation || 60;
-              console.log(`Setting default timeAllocation for question ${processedQuestion._id || processedQuestion.id}: ${processedQuestion.timeAllocation} seconds`);
+              // Check for field name inconsistency - API might send as "time_allocation" instead of "timeAllocation"
+              processedQuestion.timeAllocation = processedQuestion.time_allocation || 60;
+              console.log(`Setting timeAllocation for question ${processedQuestion._id || processedQuestion.id}: ${processedQuestion.timeAllocation} seconds`);
             } else {
               console.log(`Question ${processedQuestion._id || processedQuestion.id} has timeAllocation: ${processedQuestion.timeAllocation} seconds`);
+            }
+            
+            // Log explanation for debugging
+            if (processedQuestion.explanation) {
+              console.log(`Question ${processedQuestion._id || processedQuestion.id} has explanation of length: ${processedQuestion.explanation.length}`);
+            } else {
+              console.log(`Question ${processedQuestion._id || processedQuestion.id} has no explanation`);
+              processedQuestion.explanation = "No explanation available for this question.";
             }
             
             return processedQuestion;
@@ -340,7 +349,11 @@ function TestPage() {
           isCorrect: isCorrect,
           explanation: question.explanation || "",
           timeSpent: questionTimers[questionId] || 0,
-          allocatedTime: question.timeAllocation || 60 // Get allocated time from question data
+          allocatedTime: question.timeAllocation || 60, // Get allocated time from question data
+          optionA: question.optionA,
+          optionB: question.optionB,
+          optionC: question.optionC,
+          optionD: question.optionD
         });
       });
       

@@ -52,6 +52,17 @@ function TestResults() {
             // Verify this is the test we're looking for
             if (parsedData.testId === testId || parsedData._id === testId) {
               console.log('Retrieved test result from session storage:', parsedData);
+              
+              // Debug the questions data
+              if (parsedData.questions && parsedData.questions.length > 0) {
+                console.log(`First question sample - explanation: "${parsedData.questions[0].explanation}"`);
+                console.log(`First question sample - allocatedTime: ${parsedData.questions[0].allocatedTime}`);
+                
+                // Log how many questions have explanations
+                const questionsWithExplanations = parsedData.questions.filter(q => q.explanation && q.explanation.trim() !== '').length;
+                console.log(`Questions with explanations: ${questionsWithExplanations}/${parsedData.questions.length}`);
+              }
+              
               setTestData(parsedData);
               setLoading(false);
               return;
@@ -548,7 +559,9 @@ function TestResults() {
                           Explanation:
                         </Typography>
                         <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.9rem' }}>
-                          {question.explanation || "No explanation available for this question."}
+                          {question.explanation && question.explanation.trim() !== "" 
+                            ? question.explanation 
+                            : "No explanation available for this question."}
                         </Typography>
                       </Box>
                     </Box>
