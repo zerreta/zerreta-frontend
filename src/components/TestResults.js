@@ -330,7 +330,7 @@ function TestResults() {
             </Box>
             
             <Typography variant="body2" color="text.secondary" mb={2}>
-              This chart shows how much time you spent on each question compared to the allocated time (60 sec per question).
+              This chart shows how much time you spent on each question compared to the allocated time for each question.
             </Typography>
             
             <Box sx={{ height: 'auto', width: '100%', mb: 3 }}>
@@ -338,7 +338,7 @@ function TestResults() {
                 {testData.questions && testData.questions.map((question, index) => {
                   const questionId = question._id || question.id;
                   const timeSpent = question.timeSpent || 0;
-                  const allocatedTime = 60; // Default 60 seconds per question
+                  const allocatedTime = question.allocatedTime || 60; // Use question's allocatedTime if available
                   const isCorrect = question.isCorrect;
                   
                   // Calculate percentage of allocated time
@@ -542,17 +542,15 @@ function TestResults() {
                         </Box>
                       </Box>
                       
-                      {/* Explanation */}
-                      {question.explanation && (
-                        <Box sx={{ mt: 'auto', pt: 1 }}>
-                          <Typography variant="body2" fontWeight="bold" color="text.secondary">
-                            Explanation:
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.9rem' }}>
-                            {question.explanation}
-                          </Typography>
-                        </Box>
-                      )}
+                      {/* Explanation - Ensure it's always shown by removing conditional check */}
+                      <Box sx={{ mt: 'auto', pt: 1 }}>
+                        <Typography variant="body2" fontWeight="bold" color="text.secondary">
+                          Explanation:
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.9rem' }}>
+                          {question.explanation || "No explanation available for this question."}
+                        </Typography>
+                      </Box>
                     </Box>
                   </Paper>
                 </Grid>

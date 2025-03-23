@@ -225,6 +225,14 @@ function TestPage() {
               console.warn("Question without ID detected. Assigned temporary ID:", processedQuestion.id);
             }
             
+            // Ensure timeAllocation exists (default to 60 seconds if not provided)
+            if (!processedQuestion.timeAllocation) {
+              processedQuestion.timeAllocation = processedQuestion.timeAllocation || 60;
+              console.log(`Setting default timeAllocation for question ${processedQuestion._id || processedQuestion.id}: ${processedQuestion.timeAllocation} seconds`);
+            } else {
+              console.log(`Question ${processedQuestion._id || processedQuestion.id} has timeAllocation: ${processedQuestion.timeAllocation} seconds`);
+            }
+            
             return processedQuestion;
           });
           
@@ -322,6 +330,7 @@ function TestPage() {
         const isCorrect = selectedOption === question.correctOption;
         if (isCorrect) correctCount++;
         
+        // Include the allocatedTime from the question data
         processedQuestions.push({
           questionId: questionId,
           question: question.questionText || question.question,
@@ -329,7 +338,9 @@ function TestPage() {
           selectedOption: selectedOption || null,
           correctOption: question.correctOption,
           isCorrect: isCorrect,
-          explanation: question.explanation || ""
+          explanation: question.explanation || "",
+          timeSpent: questionTimers[questionId] || 0,
+          allocatedTime: question.timeAllocation || 60 // Get allocated time from question data
         });
       });
       
@@ -1078,7 +1089,7 @@ function TestPage() {
               </Box>
               
               <Typography variant="body2" color="text.secondary" mb={2}>
-                This chart shows how much time you spent on each question compared to the allocated time (60 sec per question).
+                This chart shows how much time you spent on each question compared to the allocated time for each question.
               </Typography>
               
               <Box sx={{ height: 'auto', width: '100%', mb: 3 }}>
@@ -1086,7 +1097,7 @@ function TestPage() {
                   {questions.map((question, index) => {
                     const questionId = question._id || question.id;
                     const timeSpent = questionTimers[questionId] || 0;
-                    const allocatedTime = 60; // Default 60 seconds per question
+                    const allocatedTime = question.timeAllocation || 60; // Use the question's allocated time
                     const isCorrect = (selectedAnswers[questionId] || confirmedAnswers[questionId]) === question.correctOption;
                     
                     // Calculate percentage of allocated time
@@ -1333,16 +1344,14 @@ function TestPage() {
                         </Box>
                         
                         {/* Explanation */}
-                        {resultDetails?.explanation && (
-                          <Box sx={{ mt: 'auto', pt: 1 }}>
-                            <Typography variant="body2" fontWeight="bold" color="text.secondary">
-                              Explanation:
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.9rem' }}>
-                              {resultDetails.explanation}
-                            </Typography>
-                          </Box>
-                        )}
+                        <Box sx={{ mt: 'auto', pt: 1 }}>
+                          <Typography variant="body2" fontWeight="bold" color="text.secondary">
+                            Explanation:
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.9rem' }}>
+                            {question.explanation || "No explanation available for this question."}
+                          </Typography>
+                        </Box>
                       </Box>
                     </Paper>
                   </Grid>
