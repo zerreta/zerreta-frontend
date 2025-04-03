@@ -36,10 +36,12 @@ import {
   CheckCircle,
   Schedule,
   CalendarMonth,
-  EmojiEvents as TrophyIcon
+  EmojiEvents as TrophyIcon,
+  Book as BookIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import axiosInstance from '../components/axios-config';
+import Syllabus from '../components/Syllabus';
 
 // Styled components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -108,26 +110,24 @@ const StudentDashboard = () => {
     const fetchStudentData = async () => {
       try {
         console.log('Fetching student profile data...');
-        const response = await axiosInstance.get('/student/profile');
+        const response = await axiosInstance.get('/api/students/profile');
         console.log('Student profile data received:', response.data);
         setStudentData(response.data);
         
         // Calculate N.POINTS based on levels cleared
         if (response.data.subjects) {
-          const { physics, chemistry, botany, zoology } = response.data.subjects;
+          const { physics, chemistry, biology } = response.data.subjects;
           
           // Convert level strings to numbers and subtract 1 (since level 1 means 0 levels cleared)
           const physicsLevel = parseInt(physics.level) - 1;
           const chemistryLevel = parseInt(chemistry.level) - 1;
-          const botanyLevel = parseInt(botany.level) - 1;
-          const zoologyLevel = parseInt(zoology.level) - 1;
+          const biologyLevel = parseInt(biology.level) - 1;
           
           // Sum up the levels cleared (ensure they're not negative)
           const totalLevelsCleared = 
             Math.max(0, physicsLevel) + 
             Math.max(0, chemistryLevel) + 
-            Math.max(0, botanyLevel) + 
-            Math.max(0, zoologyLevel);
+            Math.max(0, biologyLevel);
           
           // Calculate N.POINTS (25 points per level cleared)
           setNPoints(totalLevelsCleared * 25);
@@ -147,35 +147,17 @@ const StudentDashboard = () => {
     setTabValue(newValue);
   };
 
-  // Mock data for the dashboard
-  const courses = [
-    { id: 1, title: 'Physics NEET Preparation', progress: 65, instructor: 'Dr. Sharma', lastAccessed: '2 hours ago', icon: <Science sx={{ color: '#7445f8' }} /> },
-    { id: 2, title: 'Biology Mastery', progress: 82, instructor: 'Dr. Patel', lastAccessed: 'Yesterday', icon: <MenuBook sx={{ color: '#7445f8' }} /> },
-    { id: 3, title: 'Chemistry Crash Course', progress: 38, instructor: 'Prof. Rajan', lastAccessed: '3 days ago', icon: <Science sx={{ color: '#7445f8' }} /> },
-  ];
-
+  // Mock data for announcements
   const announcements = [
     { id: 1, title: 'Live Session: Physics Problem Solving', date: 'Tomorrow, 4:00 PM', description: 'Join our expert for an interactive problem-solving session.' },
     { id: 2, title: 'Mock Test Scheduled', date: 'Saturday, 10:00 AM', description: 'Prepare for the all-India mock test scheduled for this weekend.' },
     { id: 3, title: 'New Study Materials Uploaded', date: 'Just now', description: 'Check out the new biology notes and practice worksheets.' },
   ];
 
-  const upcomingEvents = [
-    { id: 1, title: 'Physics Live Class', date: 'Today, 6:00 PM', subject: 'Physics' },
-    { id: 2, title: 'Biology Quiz', date: 'Tomorrow, 11:00 AM', subject: 'Biology' },
-    { id: 3, title: 'Chemistry Doubt Clearing', date: 'Friday, 4:00 PM', subject: 'Chemistry' },
-  ];
-
-  const recentActivities = [
-    { id: 1, title: 'Completed Biology Module 4', time: '2 hours ago', icon: <CheckCircle sx={{ color: '#4caf50' }} /> },
-    { id: 2, title: 'Started Physics Mock Test', time: 'Yesterday', icon: <Assignment sx={{ color: '#2196f3' }} /> },
-    { id: 3, title: 'Attended Chemistry Live Class', time: '2 days ago', icon: <Schedule sx={{ color: '#ff9800' }} /> },
-  ];
-
   return (
-    <Box>
-      {/* Stats Row */}
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Grid container spacing={3}>
+        {/* Stats Row */}
         <Grid item xs={12} sm={6} md={4}>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -243,208 +225,8 @@ const StudentDashboard = () => {
             </StatCard>
           </motion.div>
         </Grid>
-      </Grid>
 
-      {/* Main Dashboard Sections */}
-      <Grid container spacing={3} sx={{ mt: 3 }}>
-        {/* Courses & Progress */}
-        <Grid item xs={12} lg={8}>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <StyledCard>
-              <CardHeader
-                title="Your Courses"
-                action={
-                  <Button 
-                    endIcon={<ArrowForward />}
-                    sx={{ color: '#7445f8', textTransform: 'none' }}
-                  >
-                    View All
-                  </Button>
-                }
-              />
-              <Divider />
-              <CardContent>
-                <Grid container spacing={2}>
-                  {courses.map(course => (
-                    <Grid item xs={12} key={course.id}>
-                      <Paper
-                        sx={{
-                          p: 2,
-                          borderRadius: 2,
-                          display: 'flex',
-                          flexDirection: { xs: 'column', sm: 'row' },
-                          alignItems: { sm: 'center' },
-                          mb: 1,
-                          '&:hover': {
-                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-                          }
-                        }}
-                      >
-                        <Avatar 
-                          variant="rounded"
-                          sx={{ 
-                            bgcolor: 'rgba(116, 69, 248, 0.1)',
-                            width: 50,
-                            height: 50,
-                            mr: { xs: 0, sm: 2 },
-                            mb: { xs: 1, sm: 0 }
-                          }}
-                        >
-                          {course.icon}
-                        </Avatar>
-                        <Box sx={{ flex: 1 }}>
-                          <Box 
-                            sx={{ 
-                              display: 'flex', 
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              flexWrap: 'wrap'
-                            }}
-                          >
-                            <Typography variant="subtitle1" fontWeight="600">
-                              {course.title}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {course.lastAccessed}
-                            </Typography>
-                          </Box>
-                          <Typography variant="body2" color="text.secondary" gutterBottom>
-                            Instructor: {course.instructor}
-                          </Typography>
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <Box sx={{ flex: 1, mr: 1 }}>
-                              <ProgressBar 
-                                variant="determinate" 
-                                value={course.progress} 
-                                sx={{ mb: 0.5 }}
-                              />
-                            </Box>
-                            <Typography variant="body2" fontWeight="600" color="primary">
-                              {course.progress}%
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </Paper>
-                    </Grid>
-                  ))}
-                </Grid>
-              </CardContent>
-            </StyledCard>
-          </motion.div>
-        </Grid>
-        
-        {/* Right Sidebar */}
-        <Grid item xs={12} lg={4}>
-          <Grid container spacing={3} direction="column">
-            {/* Upcoming Events */}
-            <Grid item>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-              >
-                <StyledCard>
-                  <CardHeader
-                    title="Upcoming Schedule"
-                    action={
-                      <IconButton>
-                        <CalendarMonth sx={{ color: '#7445f8' }} />
-                      </IconButton>
-                    }
-                  />
-                  <Divider />
-                  <CardContent>
-                    <List sx={{ p: 0 }}>
-                      {upcomingEvents.map(event => (
-                        <ListItem 
-                          key={event.id} 
-                          alignItems="flex-start"
-                          sx={{
-                            p: 1.5,
-                            borderRadius: 2,
-                            mb: 1,
-                            '&:hover': {
-                              bgcolor: 'rgba(0, 0, 0, 0.02)',
-                            }
-                          }}
-                        >
-                          <ListItemAvatar>
-                            <Avatar sx={{ bgcolor: 'rgba(116, 69, 248, 0.1)' }}>
-                              <Event sx={{ color: '#7445f8' }} />
-                            </Avatar>
-                          </ListItemAvatar>
-                          <ListItemText
-                            primary={event.title}
-                            secondary={
-                              <>
-                                <Typography variant="body2" color="text.secondary">
-                                  {event.date}
-                                </Typography>
-                                <Chip 
-                                  label={event.subject} 
-                                  size="small" 
-                                  sx={{ mt: 1, bgcolor: 'rgba(116, 69, 248, 0.1)', color: '#7445f8' }} 
-                                />
-                              </>
-                            }
-                          />
-                        </ListItem>
-                      ))}
-                    </List>
-                  </CardContent>
-                </StyledCard>
-              </motion.div>
-            </Grid>
-            
-            {/* Recent Activity */}
-            <Grid item>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-              >
-                <StyledCard>
-                  <CardHeader
-                    title="Recent Activity"
-                  />
-                  <Divider />
-                  <CardContent>
-                    <List sx={{ p: 0 }}>
-                      {recentActivities.map(activity => (
-                        <ListItem 
-                          key={activity.id}
-                          sx={{
-                            py: 1.5,
-                            borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
-                            '&:last-child': {
-                              borderBottom: 'none'
-                            }
-                          }}
-                        >
-                          <ListItemAvatar>
-                            <Avatar sx={{ bgcolor: 'rgba(0, 0, 0, 0.04)' }}>
-                              {activity.icon}
-                            </Avatar>
-                          </ListItemAvatar>
-                          <ListItemText
-                            primary={activity.title}
-                            secondary={activity.time}
-                          />
-                        </ListItem>
-                      ))}
-                    </List>
-                  </CardContent>
-                </StyledCard>
-              </motion.div>
-            </Grid>
-          </Grid>
-        </Grid>
-
-        {/* Announcements */}
+        {/* Main Content */}
         <Grid item xs={12}>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -454,27 +236,24 @@ const StudentDashboard = () => {
             <StyledCard>
               <CardHeader
                 title="Announcements & News"
-                action={
-                  <Tabs
-                    value={tabValue}
-                    onChange={handleTabChange}
-                    sx={{
-                      '& .MuiTabs-indicator': {
-                        backgroundColor: '#7445f8',
-                      },
-                      '& .MuiTab-root.Mui-selected': {
-                        color: '#7445f8',
-                      },
-                    }}
-                  >
-                    <Tab label="All" />
-                    <Tab label="Important" />
-                    <Tab label="Recent" />
-                  </Tabs>
-                }
               />
               <Divider />
               <CardContent>
+                <Tabs
+                  value={tabValue}
+                  onChange={handleTabChange}
+                  indicatorColor="primary"
+                  textColor="primary"
+                  variant="scrollable"
+                  scrollButtons="auto"
+                >
+                  <Tab icon={<MenuBook />} label="Study Materials" />
+                  <Tab icon={<Assignment />} label="Assignments" />
+                  <Tab icon={<Event />} label="Schedule" />
+                  <Tab icon={<BookIcon />} label="Syllabus" />
+                  <Tab icon={<Star />} label="Progress" />
+                </Tabs>
+
                 <TabPanel value={tabValue} index={0}>
                   <Grid container spacing={2}>
                     {announcements.map(announcement => (
@@ -507,18 +286,28 @@ const StudentDashboard = () => {
                     ))}
                   </Grid>
                 </TabPanel>
+
                 <TabPanel value={tabValue} index={1}>
-                  <Typography variant="body1">Important announcements will appear here.</Typography>
+                  {/* Existing Assignments content */}
                 </TabPanel>
+
                 <TabPanel value={tabValue} index={2}>
-                  <Typography variant="body1">Recent announcements will appear here.</Typography>
+                  {/* Existing Schedule content */}
+                </TabPanel>
+
+                <TabPanel value={tabValue} index={3}>
+                  <Syllabus />
+                </TabPanel>
+
+                <TabPanel value={tabValue} index={4}>
+                  {/* Existing Progress content */}
                 </TabPanel>
               </CardContent>
             </StyledCard>
           </motion.div>
         </Grid>
       </Grid>
-    </Box>
+    </Container>
   );
 };
 

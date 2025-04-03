@@ -50,229 +50,698 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import axiosInstance from './axios-config';
 import { motion } from 'framer-motion';
+import { physicsTopics, chemistryTopics, biologyTopics } from './SyllabusData';
+import { saveTestResult } from '../services/firebase';
+
+const axiosInstance = axios.create({
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000',
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+// Add request interceptor to add token
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor to handle errors
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error('Axios error:', error.response || error);
+    return Promise.reject(error);
+  }
+);
 
 function TestPage() {
-  const navigate = useNavigate();
   const location = useLocation();
-  const { subject, stage, level } = location.state || {};
-  
-  // Define global styles properly
-  const globalStyles = {
-    margin: 0,
-    padding: 0,
-    width: '100vw',
-    height: '100vh'
-  };
-  
-  // Define the image URL formatting function at component level
-  const getFullImageUrl = (url) => {
-    if (!url) return null;
-    
-    console.log('Processing image URL:', url);
-    
-    // If URL already has http or https, it's already a full URL
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      console.log('URL is already absolute, returning as is:', url);
-      return url;
-    }
-    
-    // Get the base URL from axios instance
-    const baseURL = axiosInstance.defaults.baseURL || '';
-    
-    // If it's a relative URL, prepend the backend server URL
-    const formattedUrl = `${baseURL}${url.startsWith('/') ? url : `/${url}`}`;
-    console.log('Formatted URL:', formattedUrl);
-    return formattedUrl;
-  };
-  
+  const navigate = useNavigate();
+  const state = location.state;
+  const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedAnswers, setSelectedAnswers] = useState({});
-  const [confirmedAnswers, setConfirmedAnswers] = useState({});
-  const [timeLeft, setTimeLeft] = useState(2700); // 45 minutes in seconds
+  const [answers, setAnswers] = useState([]);
+  const [timers, setTimers] = useState([]);
+  const [questionStartTime, setQuestionStartTime] = useState(new Date());
+  const [questionTimer, setQuestionTimer] = useState(null);
+  const [testTimer, setTestTimer] = useState(null);
+  const [testTimeLeft, setTestTimeLeft] = useState(60 * 60); // Default 60 minutes
+  const [isSubmitting, setSubmitting] = useState(false);
+  const [correctOptions, setCorrectOptions] = useState([]);
+  
+  // Add missing state variables for test completion
+  const [timeSpent, setTimeSpent] = useState(0);
+  const [pausedTime, setPausedTime] = useState(0);
+  const [questionTimers, setQuestionTimers] = useState([]);
+  const [selectedAnswers, setSelectedAnswers] = useState([]);
+  const [reviewedQuestions, setReviewedQuestions] = useState([]);
+  const [subject, setSubject] = useState(state?.subject || '');
+  const [topicNumber, setTopicNumber] = useState(state?.topicNumber || '');
+  
+  // Added state variables for enhanced metrics
+  const [testStartTime, setTestStartTime] = useState(new Date());
+  const [pauseDuration, setPauseDuration] = useState(0);
+  const [pauseStartTime, setPauseStartTime] = useState(null);
+  const [questionTransitionTimes, setQuestionTransitionTimes] = useState([]);
+  const [optionChanges, setOptionChanges] = useState(0);
+  const [reviewMarkedQuestions, setReviewMarkedQuestions] = useState([]);
+  const [screenSize, setScreenSize] = useState(`${window.innerWidth}x${window.innerHeight}`);
+  const [previousAttempts, setPreviousAttempts] = useState([]);
+  
+  // Add missing state variables
+  const [showRules, setShowRules] = useState(true);
+  const [confirmStartDialogOpen, setConfirmStartDialogOpen] = useState(false);
   const [testStarted, setTestStarted] = useState(false);
   const [testCompleted, setTestCompleted] = useState(false);
   const [results, setResults] = useState(null);
-  const [previousAttempts, setPreviousAttempts] = useState([]);
-  const [showRules, setShowRules] = useState(true);
-  const [activeTab, setActiveTab] = useState(0);
-  const [confirmStartDialogOpen, setConfirmStartDialogOpen] = useState(false);
+
+  // Add calculateScore function
+  const calculateScore = useCallback(() => {
+    if (!questions || !selectedAnswers) return 0;
+    const correctAnswers = questions.filter((question, index) => 
+      selectedAnswers[index] === question.correctOption
+    ).length;
+    return (correctAnswers / questions.length) * 100;
+  }, [questions, selectedAnswers]);
+
+  // Update useEffect to set subject and topicNumber when state changes
+  useEffect(() => {
+    if (state) {
+      setSubject(state?.subject || '');
+      setTopicNumber(state?.topicNumber || '');
+    }
+  }, [state]);
+
+  // Update useEffect to track time spent
+  useEffect(() => {
+    let interval;
+    if (testStarted && !testCompleted) {
+      interval = setInterval(() => {
+        setTimeSpent(prev => prev + 1);
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [testStarted, testCompleted]);
+
+  // Update useEffect to track question timers
+  useEffect(() => {
+    if (testStarted && !testCompleted && currentQuestionIndex < questions.length) {
+      const startTime = Date.now();
+      const interval = setInterval(() => {
+        const currentTime = Date.now();
+        const timeSpent = Math.floor((currentTime - startTime) / 1000);
+        setQuestionTimers(prev => {
+          const newTimers = [...prev];
+          newTimers[currentQuestionIndex] = timeSpent;
+          return newTimers;
+        });
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [testStarted, testCompleted, currentQuestionIndex, questions.length]);
+
+  // Update useEffect to track selected answers
+  useEffect(() => {
+    if (answers.length > 0) {
+      setSelectedAnswers(answers);
+    }
+  }, [answers]);
+
+  // Update useEffect to track reviewed questions
+  useEffect(() => {
+    if (reviewMarkedQuestions.length > 0) {
+      setReviewedQuestions(reviewMarkedQuestions);
+    }
+  }, [reviewMarkedQuestions]);
+
+  // Function to get full image URL
+  const getFullImageUrl = (imageUrl) => {
+    if (!imageUrl) return null;
+    if (imageUrl.startsWith('http')) return imageUrl;
+    return `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/uploads/${imageUrl}`;
+  };
   
-  // Initialize a ref for last question time
-  const lastQuestionTime = useRef(null);
-  
-  // Add new state for per-question timers
-  const [questionTimers, setQuestionTimers] = useState({});
-  const [timer, setTimer] = useState(0);
+  // Function to handle when time is up
+  const handleTimeUp = () => {
+    console.log('Time is up! Submitting test automatically...');
+    handleTestComplete();
+  };
 
-  // The answeredAt state is used to track when questions are first answered
-  // This helps with analytics and timing calculations
-  const [answeredAt, setAnsweredAt] = useState({});
-
-  // Add the leaderboard display to the test results page
-
-  // First define a sample leaderboard state (this would be populated by an API call in a real application)
-  const [leaderboard, setLeaderboard] = useState([]);
-
-  // Create a function to fetch the leaderboard data
-  const fetchLeaderboard = useCallback(async () => {
+  // Define fetchPreviousAttempts before it's used in useEffect
+  const fetchPreviousAttempts = async () => {
     try {
-      const token = localStorage.getItem('token');
-      
-      if (!token) {
-        console.error('Authentication token missing');
+      if (!state) {
+        console.error('Cannot fetch previous attempts: state is null');
         return;
       }
       
-      // In a real application, fetch from server
-      try {
-        const response = await axiosInstance.get('/student/leaderboard');
-        setLeaderboard(response.data);
-      } catch (err) {
-        console.error("Error fetching leaderboard data:", err);
-        // Fallback to mock data
-        setLeaderboard([
-          { studentId: 'STU001', name: 'John Doe', totalPoints: 175, levelsCleared: 7 },
-          { studentId: 'STU002', name: 'Jane Smith', totalPoints: 225, levelsCleared: 9 },
-          { studentId: 'STU003', name: 'Alex Johnson', totalPoints: 150, levelsCleared: 6 },
-          { studentId: 'STU004', name: 'Sam Williams', totalPoints: 200, levelsCleared: 8 },
-          { studentId: 'STU005', name: 'Taylor Brown', totalPoints: 125, levelsCleared: 5 },
-        ]);
+      let query = `?subject=${state?.subject || ''}`;
+      
+      if (state?.mode === 'practice' && state?.topicNumber) {
+        query += `&topicNumber=${state.topicNumber}`;
+      } else if (state?.stage && state?.level) {
+        query += `&stage=${state.stage}&level=${state.level}`;
       }
-    } catch (err) {
-      console.error("Error fetching leaderboard:", err);
+      
+      const response = await axiosInstance.get(`/student/test-history${query}`);
+      
+      if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+        setPreviousAttempts(response.data);
+        console.log(`Found ${response.data.length} previous attempts for this test`);
+      }
+    } catch (error) {
+      console.error('Error fetching previous attempts:', error);
+      // Non-critical error, don't set error state
     }
+  };
+
+  // Add support for multi-subject tests in the fetchQuestions function
+  const fetchQuestions = async () => {
+    setLoading(true);
+    console.log("Starting to fetch questions with state:", state);
+    
+    try {
+      // Check if state exists
+      if (!state) {
+        setError('Test configuration not found. Please return to the dashboard and try again.');
+        setLoading(false);
+        return;
+      }
+
+      // Get auth token from local storage
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Authentication token not found. Please log in again.');
+        setLoading(false);
+        return;
+      }
+
+      // Handle multi-subject tests
+      if (state.multiSubject) {
+        console.log("Fetching multi-subject test with config:", JSON.stringify(state, null, 2));
+        
+        try {
+          // Make sure timeLimit is set - convert from minutes to seconds if needed
+          let timeLimit = state.timeLimit;
+          if (!timeLimit) {
+            timeLimit = (state.questionCount || 45) * 60; // Default to 1 minute per question
+            console.log(`No timeLimit provided, defaulting to ${timeLimit} seconds (${timeLimit/60} minutes)`);
+          }
+          
+          // Log the params being sent to the API
+          const params = {
+            topicsBySubject: JSON.stringify(state.topicsBySubject),
+            selectedSubjects: state.selectedSubjects.join(','),
+            questionCount: state.questionCount || 45,
+            timeLimit: timeLimit,
+            mode: 'assessment'
+          };
+          console.log("Sending params to /student/combined-test:", params);
+          
+          // Fetch questions from the server for a combined test
+          const response = await axiosInstance.get(`/student/combined-test`, { params });
+          
+          console.log('Combined test response:', response.data);
+          
+          // Process the questions
+          if (response.data && response.data.questions && response.data.questions.length > 0) {
+            const fetchedQuestions = processResponseQuestions(response.data.questions);
+            console.log('Processed combined questions:', fetchedQuestions);
+            
+            // Update state with fetched questions
+            setQuestions(fetchedQuestions);
+            
+            // Set time limit based on total question time allocations or provided timeLimit
+            setTestTimeLeft(timeLimit);
+            console.log(`Set test time limit to ${timeLimit} seconds (${timeLimit/60} minutes)`);
+            
+            setLoading(false);
+            return;
+          } else {
+            console.error('No questions returned from API:', response.data);
+            throw new Error('No questions returned from API');
+          }
+        } catch (combinedError) {
+          console.error('Error fetching combined test questions:', combinedError);
+          
+          // Try using manual test generation as a fallback
+          try {
+            console.log("Trying fallback method for combined test...");
+            let allQuestions = [];
+            
+            // Log topics by subject for debugging
+            console.log("Topics by subject:", state.topicsBySubject);
+            console.log("Selected subjects:", state.selectedSubjects);
+            
+            // For each subject, fetch questions for each topic
+            for (const subjectId of state.selectedSubjects) {
+              const topicNumbers = state.topicsBySubject[subjectId] || [];
+              
+              if (topicNumbers.length > 0) {
+                // Determine how many questions to fetch from this subject
+                const topicCount = topicNumbers.length;
+                const totalTopicsCount = Object.values(state.topicsBySubject)
+                  .reduce((sum, topics) => sum + topics.length, 0);
+                
+                // Allocate questions proportionally by subject
+                const subjectQuestionCount = Math.ceil(
+                  ((state.questionCount || 45) * topicCount) / totalTopicsCount
+                );
+                
+                console.log(`Fetching ${subjectQuestionCount} questions for ${subjectId} with topics: ${topicNumbers.join(',')}`);
+                
+                // Create parameters for this subject's request
+                const subjectParams = {
+                  subject: subjectId,
+                  topics: topicNumbers.join(','),
+                  count: subjectQuestionCount,
+                  mode: 'assessment'
+                };
+                console.log("Subject request params:", subjectParams);
+                
+                // Make the request
+                const subjectResponse = await axiosInstance.get(`/student/test`, { params: subjectParams });
+                
+                if (subjectResponse.data && subjectResponse.data.questions && subjectResponse.data.questions.length > 0) {
+                  console.log(`Received ${subjectResponse.data.questions.length} questions for ${subjectId}`);
+                  
+                  // Add subject info to each question
+                  const subjectQuestions = subjectResponse.data.questions.map(q => ({
+                    ...q,
+                    subject: subjectId
+                  }));
+                  
+                  allQuestions = [...allQuestions, ...subjectQuestions];
+                } else {
+                  console.warn(`No questions returned for subject ${subjectId}`, subjectResponse.data);
+                }
+              } else {
+                console.warn(`No topics selected for subject ${subjectId}`);
+              }
+            }
+            
+            console.log(`Total questions collected from all subjects: ${allQuestions.length}`);
+            
+            // Ensure we don't exceed the requested question count
+            if (allQuestions.length > (state.questionCount || 45)) {
+              console.log(`Limiting to ${state.questionCount || 45} questions as requested`);
+              allQuestions = allQuestions.slice(0, state.questionCount || 45);
+            }
+            
+            if (allQuestions.length === 0) {
+              throw new Error('No questions could be retrieved for any of the selected topics');
+            }
+            
+            // Process all questions
+            const fetchedQuestions = processResponseQuestions(allQuestions);
+            console.log('Processed combined questions (fallback method):', fetchedQuestions);
+            
+            // Update state with fetched questions
+            setQuestions(fetchedQuestions);
+            
+            // Set time limit based on provided timeLimit or default to question count * 60 seconds
+            const timeLimit = state.timeLimit || ((state.questionCount || 45) * 60);
+            console.log(`Using time limit: ${timeLimit} seconds (${timeLimit/60} minutes)`);
+            
+            setTestTimeLeft(timeLimit);
+            
+            setLoading(false);
+            return;
+          } catch (fallbackError) {
+            console.error('Error in fallback method for combined test:', fallbackError);
+            setError('Failed to load combined test questions. Please try again later. Error: ' + fallbackError.message);
+            setLoading(false);
+            return;
+          }
+        }
+      }
+      
+      // Normal single-subject test logic (unchanged)
+      // Fetch questions from the server
+      const response = await axiosInstance.get(`/student/test`, {
+        params: {
+          subject: state?.subject || '',
+          ...(state?.mode === 'practice' && state?.topicNumber ? { topicNumber: state.topicNumber } : {}),
+          ...(state?.mode === 'assessment' && state?.topics ? { 
+            topics: state.topics.join(','),
+            count: state?.questionCount || 40
+          } : {}),
+          mode: state?.mode || 'practice'
+        }
+      });
+
+      console.log('Raw questions from server:', response.data);
+      
+      // Process the questions
+      const fetchedQuestions = processResponseQuestions(response.data.questions);
+
+      console.log('Processed questions:', fetchedQuestions);
+      
+      // Update state with fetched questions
+      setQuestions(fetchedQuestions);
+      
+      // Set time limit based on total question time allocations
+      const totalTimeAllocation = fetchedQuestions.reduce((total, q) => total + (q.timeAllocation || 60), 0);
+      setTestTimeLeft(Math.max(totalTimeAllocation, 1800)); // Min 30 minutes
+
+      // Initialize state for previous attempts if available
+      if (response.data.previousAttempts) {
+        setPreviousAttempts(response.data.previousAttempts);
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+      setError('Failed to load test questions. Please try again later.');
+      setLoading(false);
+    }
+  };
+
+  // Helper function to process questions from API response
+  const processResponseQuestions = (questionsArray) => {
+    if (!questionsArray || !Array.isArray(questionsArray)) {
+      console.error('Invalid questions array:', questionsArray);
+      return [];
+    }
+    
+    return questionsArray.map(q => {
+      // Convert letter option to index
+      let correctOptionIndex = null;
+      let correctOptionLetter = null;
+      
+      // First, try to extract the correct option in a consistent way
+      if (q.correctOption !== undefined && q.correctOption !== null) {
+        if (typeof q.correctOption === 'string') {
+          if (q.correctOption.match(/^[A-D]$/)) {
+            // If it's a letter (A, B, C, D), convert to index (0, 1, 2, 3)
+            correctOptionIndex = q.correctOption.charCodeAt(0) - 65; // 'A' -> 0, 'B' -> 1, etc.
+            correctOptionLetter = q.correctOption;
+          } else if (q.correctOption.match(/^[0-3]$/)) {
+            // If it's a string with a number 0-3, convert to index
+            correctOptionIndex = parseInt(q.correctOption);
+            correctOptionLetter = String.fromCharCode(65 + correctOptionIndex);
+          }
+        } else if (typeof q.correctOption === 'number' && q.correctOption >= 0 && q.correctOption <= 3) {
+          // If it's already a number between 0-3, use as is
+          correctOptionIndex = q.correctOption;
+          correctOptionLetter = String.fromCharCode(65 + correctOptionIndex);
+        }
+      }
+      
+      // If we still don't have a correct option, check if there's any other field that might have it
+      if (correctOptionIndex === null) {
+        // Look for alternative fields like answer, answerIndex, etc.
+        if (q.answer && typeof q.answer === 'string' && q.answer.match(/^[A-D]$/)) {
+          correctOptionIndex = q.answer.charCodeAt(0) - 65;
+          correctOptionLetter = q.answer;
+        } else if (q.answerIndex !== undefined && typeof q.answerIndex === 'number') {
+          correctOptionIndex = q.answerIndex;
+          correctOptionLetter = String.fromCharCode(65 + correctOptionIndex);
+        }
+      }
+      
+      // Ensure we have a consistent structure
+      return {
+        ...q,
+        id: q._id || q.id, // Ensure id is consistently available
+        questionText: q.questionText || q.text || "No question text available", // Ensure questionText is always set
+        options: Array.isArray(q.options) ? q.options : [], // Ensure options is an array
+        timeAllocation: q.timeAllocation || 60, // Default time allocation
+        correctOptionIndex: correctOptionIndex, // Store the index (0-3)
+        correctOption: correctOptionLetter, // Store the letter (A-D)
+        // Include subject info if available
+        subject: q.subject || state?.subject || 'general',
+        // Debug fields
+        _debug_correctOption: {
+          original: q.correctOption,
+          type: typeof q.correctOption,
+          index: correctOptionIndex,
+          letter: correctOptionLetter
+        }
+      };
+    });
+  };
+
+  useEffect(() => {
+    if (!state) {
+      setError('Test configuration not found. Please return to the dashboard and try again.');
+      setLoading(false);
+      return;
+    }
+
+    // Set test start time when component mounts
+    setTestStartTime(new Date());
+    
+    // Capture screen size on mount
+    setScreenSize(`${window.innerWidth}x${window.innerHeight}`);
+    
+    // Try to fetch previous attempts for this topic/subject
+    if (state.subject) {
+      fetchPreviousAttempts();
+    }
+
+    // Fetch test questions from API
+    fetchQuestions();
+
+    // Set up test timer
+    const timer = setInterval(() => {
+      setTestTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          handleTimeUp();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    setTestTimer(timer);
+
+    return () => {
+      if (timer) clearInterval(timer);
+      if (questionTimer) clearInterval(questionTimer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Call fetchLeaderboard when test is completed
-  useEffect(() => {
-    if (testCompleted) {
-      fetchLeaderboard();
+  // Update handleOptionChange to track changes
+  const handleOptionChange = (index, optionIndex) => {
+    // If the answer is being changed (not just initial selection), count it
+    if (answers[index] !== null && answers[index] !== undefined) {
+      setOptionChanges(prev => prev + 1);
     }
-  }, [testCompleted, fetchLeaderboard]);
+    
+    setAnswers(prev => {
+      const newAnswers = [...prev];
+      newAnswers[index] = optionIndex;
+      return newAnswers;
+    });
+  };
 
-  // Fetch the test questions when component mounts
-  useEffect(() => {
-    const fetchQuestions = async () => {
-      setLoading(true);
-      try {
-        // Get auth token from local storage
-        const token = localStorage.getItem('token');
-        if (!token) {
-          setError('Authentication token not found. Please log in again.');
-          setLoading(false);
-          return;
-        }
+  // Update handleNextQuestion to track transition times
+  const handleNextQuestion = () => {
+    // Record time spent on current question before moving to next
+    const timeSpent = (new Date() - questionStartTime) / 1000; // in seconds
+    setQuestionTransitionTimes(prev => [...prev, timeSpent]);
+    
+    // Reset question timer for next question
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+      setQuestionStartTime(new Date());
+    }
+  };
 
-        // Fetch questions from the server
-        const response = await axiosInstance.get(`/student/test?subject=${subject}&stage=${stage}&level=${level}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        console.log("Fetched questions:", response.data);
-        
-        // Add more detailed logging to see the full response
-        console.log("Full API response:", JSON.stringify(response.data, null, 2));
-        
-        // Check if response.data is either an array or has a questions property
-        const questionsArray = Array.isArray(response.data) ? response.data : 
-                              (response.data && Array.isArray(response.data.questions)) ? response.data.questions : [];
-        
-        if (questionsArray.length > 0) {
-          // Log the first question to debug option format
-          console.log("Sample question data:", questionsArray[0]);
-          console.log("First question options:", {
-            optionA: questionsArray[0].optionA,
-            optionB: questionsArray[0].optionB,
-            optionC: questionsArray[0].optionC,
-            optionD: questionsArray[0].optionD,
-          });
-          
-          // Ensure all questions have option properties
-          let processedQuestions = questionsArray.map(q => {
-            // Validate question format
-            const processedQuestion = { ...q };
-            
-            // Log options for debugging
-            console.log(`Question ${q.id || q._id} options:`, {
-              optionA: q.optionA,
-              optionB: q.optionB,
-              optionC: q.optionC,
-              optionD: q.optionD,
-            });
-            
-            // Ensure each option exists
-            ['A', 'B', 'C', 'D'].forEach(option => {
-              const optionKey = `option${option}`;
-              if (!processedQuestion[optionKey] && processedQuestion[optionKey] !== 0) {
-                console.warn(`Missing ${optionKey} for question ${q._id || q.id}. Setting default value.`);
-                processedQuestion[optionKey] = `Option ${option}`;
-              } else {
-                console.log(`Option ${option} for question ${q._id || q.id}: ${processedQuestion[optionKey]}`);
-              }
-            });
-            
-            // Ensure question has a valid ID
-            if (!processedQuestion._id && !processedQuestion.id) {
-              processedQuestion.id = Math.random().toString(36).substring(2, 9);
-              console.warn("Question without ID detected. Assigned temporary ID:", processedQuestion.id);
-            }
-            
-            // Ensure timeAllocation exists (default to 60 seconds if not provided)
-            if (!processedQuestion.timeAllocation) {
-              // Check for field name inconsistency - API might send as "time_allocation" instead of "timeAllocation"
-              processedQuestion.timeAllocation = processedQuestion.time_allocation || 60;
-              console.log(`Setting timeAllocation for question ${processedQuestion._id || processedQuestion.id}: ${processedQuestion.timeAllocation} seconds`);
-            } else {
-              console.log(`Question ${processedQuestion._id || processedQuestion.id} has timeAllocation: ${processedQuestion.timeAllocation} seconds`);
-            }
-            
-            // Log explanation for debugging
-            if (processedQuestion.explanation) {
-              console.log(`Question ${processedQuestion._id || processedQuestion.id} has explanation of length: ${processedQuestion.explanation.length}`);
-            } else {
-              console.log(`Question ${processedQuestion._id || processedQuestion.id} has no explanation`);
-              processedQuestion.explanation = "No explanation available for this question.";
-            }
-            
-            return processedQuestion;
-          });
-          
-          // Shuffle the questions
-          processedQuestions = shuffleArray(processedQuestions);
-          
-          // Limit to exactly 45 questions
-          if (processedQuestions.length > 45) {
-            processedQuestions = processedQuestions.slice(0, 45);
-          } else if (processedQuestions.length < 45) {
-            console.warn(`Only ${processedQuestions.length} questions available, less than the required 45`);
-          }
-          
-          setQuestions(processedQuestions);
-          setCurrentQuestionIndex(0);
-          lastQuestionTime.current = Date.now();
-          setTestStarted(true);
+  // Add function to mark questions for review
+  const handleMarkForReview = () => {
+    const currentIndex = currentQuestionIndex;
+    setReviewMarkedQuestions(prev => {
+      if (prev.includes(currentIndex)) {
+        return prev.filter(idx => idx !== currentIndex);
         } else {
-          setError('No questions available for this test.');
-        }
-      } catch (err) {
-        console.error("Error fetching questions:", err);
-        setError(`Failed to load questions: ${err.response?.data?.message || err.message}`);
+        return [...prev, currentIndex];
       }
-      setLoading(false);
-    };
+    });
+  };
 
-    if (subject && stage && level) {
-      fetchQuestions();
+  // Add pause handling functions
+  const handlePause = () => {
+    // Record when the pause started
+    setPauseStartTime(new Date());
+    
+    // Pause timers if needed
+    if (testTimer) clearInterval(testTimer);
+    if (questionTimer) clearInterval(questionTimer);
+  };
+  
+  const handleResume = () => {
+    // Calculate pause duration and add to total
+    if (pauseStartTime) {
+      const pauseEnd = new Date();
+      const pauseTimeInSeconds = (pauseEnd - pauseStartTime) / 1000;
+      setPauseDuration(prev => prev + pauseTimeInSeconds);
+      setPauseStartTime(null);
     }
-  }, [subject, stage, level]);
+    
+    // Resume timers
+    // Restart test timer
+    const timer = setInterval(() => {
+      setTestTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          handleTimeUp();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    
+    setTestTimer(timer);
+    setQuestionStartTime(new Date());
+  };
+
+  // Update the handleTestComplete function
+  const handleTestComplete = async () => {
+    try {
+      setSubmitting(true);
+      console.log('Starting test completion process...');
+
+      // Calculate total time spent
+      const totalTimeSpent = timeSpent + (pausedTime || 0);
+      console.log('Total time spent:', totalTimeSpent);
+      
+      // Process each question to gather metrics - enhanced to include more data
+      const processedQuestions = questions.map((question, index) => {
+        const timeSpentOnQuestion = questionTimers[index] || 0;
+        const selectedOption = selectedAnswers[index];
+        // Get the letter (A, B, C, D) representation for selected option
+        const selectedOptionLetter = selectedOption !== null && selectedOption !== undefined 
+          ? String.fromCharCode(65 + selectedOption) 
+          : '';
+        // Determine if the answer was correct
+        const isCorrect = selectedOption === question.correctOptionIndex;
+        const isReviewed = reviewedQuestions.includes(index);
+
+        // Construct full question data
+        return {
+          questionId: question._id || question.id,
+          timeSpent: timeSpentOnQuestion,
+          selectedOption: selectedOptionLetter,
+          correctOption: question.correctOption || 'A',
+          isCorrect: isCorrect,
+          isReviewed: isReviewed,
+          // Include full question text and options
+          questionText: question.questionText || question.text || `Question ${index + 1}`,
+          options: question.options || ['Option A', 'Option B', 'Option C', 'Option D'],
+          explanation: question.explanation || 'No explanation available for this question.',
+          allocatedTime: question.timeAllocation || 60
+        };
+      });
+
+      // Create test history data
+      const testHistoryData = {
+        subject: subject || 'general',
+        mode: state?.mode || 'practice',
+        topicNumber: topicNumber || '',
+        score: calculateScore(),
+        totalTime: totalTimeSpent,
+        questions: processedQuestions,
+        deviceInfo: {
+          userAgent: navigator.userAgent,
+          platform: navigator.platform,
+          language: navigator.language
+        },
+        completedAt: new Date().toISOString()
+      };
+
+      console.log('Sending test data to backend:', testHistoryData);
+      const response = await axiosInstance.post('/student/complete-test', testHistoryData);
+      console.log('Backend response:', response.data);
+
+      // Save to Firebase
+      try {
+        await saveTestResult(response.data._id, testHistoryData);
+        console.log('Test result saved to Firebase');
+      } catch (firebaseError) {
+        console.error('Error saving to Firebase:', firebaseError);
+        // Continue with navigation even if Firebase save fails
+      }
+
+      // Clear test history cache
+      if (window.TEST_HISTORY_CACHE) {
+        window.TEST_HISTORY_CACHE.invalidate();
+      }
+
+      // Store test data in session storage with enhanced question data
+      try {
+        const testDataToStore = {
+          ...response.data,
+          testId: response.data._id, // Ensure we have the testId
+          // Make sure we store the full question data
+          questions: processedQuestions,
+          // Ensure basic data is present
+          score: response.data.score || calculateScore(),
+          totalQuestions: questions.length,
+          correctAnswers: processedQuestions.filter(q => q.isCorrect).length,
+          timeTaken: totalTimeSpent,
+          subject: subject || 'General',
+          level: topicNumber || '1'
+        };
+        
+        // Log the data we're storing for debugging
+        console.log('Storing test data in session storage:', testDataToStore);
+        console.log('Question sample:', testDataToStore.questions[0]);
+        
+        sessionStorage.setItem('lastTestResult', JSON.stringify(testDataToStore));
+        console.log('Test data saved to session storage.');
+      } catch (storageError) {
+        console.error('Error saving to sessionStorage:', storageError);
+      }
+
+      // Add a longer delay before navigation to ensure state updates and storage is complete
+      setTimeout(() => {
+        console.log('Navigating to test results page with testId:', response.data._id);
+        if (response.data && response.data._id) {
+          navigate(`/test-results/${response.data._id}`);
+        } else {
+          navigate('/test-results');
+        }
+      }, 1000);
+
+    } catch (error) {
+      console.error('Error completing test:', error);
+      setError('Failed to submit test. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+  
+  // Helper function to get previous best score
+  const getPreviousBestScore = () => {
+    if (!previousAttempts || previousAttempts.length === 0) return 0;
+    
+    // Filter out attempts with invalid scores first
+    const validScores = previousAttempts
+      .map(a => a?.score || 0)
+      .filter(score => typeof score === 'number' && !isNaN(score));
+    
+    if (validScores.length === 0) return 0;
+    return Math.max(...validScores);
+  };
 
   // Function to shuffle array (Fisher-Yates algorithm)
   const shuffleArray = (array) => {
@@ -284,189 +753,72 @@ function TestPage() {
     return shuffled;
   };
 
-  // Define the memoized fetchPreviousAttempts function before it's used in useEffect
-  const fetchPreviousAttempts = useCallback(async () => {
-    try {
-      const token = localStorage.getItem('token');
-      
-      if (!token) {
-        console.error('Authentication token missing');
-        return;
-      }
-      
-      // Try to fetch test history from server
-      try {
-        const response = await axiosInstance.get(
-          `/student/test-history?subject=${subject}&stage=${stage}&level=${level}`
-        );
-        
-        console.log('Fetched test history:', response.data);
-        setPreviousAttempts(response.data);
-      } catch (err) {
-        console.error("Error fetching test history:", err);
-        // Use mock data as fallback
-        setPreviousAttempts([
-          { date: '2023-07-15', score: 80, total: 100, timeTaken: 2400, passedLevel: true },
-          { date: '2023-07-10', score: 65, total: 100, timeTaken: 1800, passedLevel: false }
-        ]);
-      }
-    } catch (err) {
-      console.error("Error fetching previous attempts:", err);
-    }
-  }, [subject, stage, level]);
-
-  // First, define the handleSubmitTest function to properly include leaderboard points (25 points per level cleared)
-  // Memoize the handleSubmitTest function 
-  const handleSubmitTest = async () => {
-    try {
-      // Don't allow submitting if the test is still loading or already completed
-      if (loading || testCompleted) {
-        return;
-      }
-      
-      // Set loading state
-      setLoading(true);
-      
-      // Calculate score
-      let correctCount = 0;
-      const processedQuestions = [];
-      
-      // Convert confirmed answers to the format expected by the backend
-      questions.forEach(question => {
-        const questionId = question._id || question.id;
-        const selectedOption = confirmedAnswers[questionId];
-        
-        const isCorrect = selectedOption === question.correctOption;
-        if (isCorrect) correctCount++;
-        
-        // Log the explanation for debugging
-        console.log(`Question ${questionId} explanation:`, question.explanation);
-        
-        // Include the allocatedTime from the question data
-        processedQuestions.push({
-          questionId: questionId,
-          question: question.questionText || question.question,
-          options: question.options,
-          selectedOption: selectedOption || null,
-          correctOption: question.correctOption,
-          isCorrect: isCorrect,
-          explanation: question.explanation || "",
-          timeSpent: questionTimers[questionId] || 0,
-          allocatedTime: question.timeAllocation || 60, // Get allocated time from question data
-          optionA: question.optionA,
-          optionB: question.optionB,
-          optionC: question.optionC,
-          optionD: question.optionD,
-          // Ensure questionText is included
-          questionText: question.questionText || question.question
-        });
-      });
-      
-      // Calculate score as percentage
-      const score = Math.round((correctCount / questions.length) * 100);
-      
-      // Determine if the student passed the level (70% or above)
-      const passedLevel = score >= 70;
-      
-      // Calculate leaderboard points (25 points for passing the level)
-      const leaderboardPoints = passedLevel ? 25 : 0;
-      
-      let testId = new Date().getTime().toString();
-      
-      // Skip backend submission since it's consistently failing with 500 error
-      console.log("Skipping backend submission due to server errors. Using local results only.");
-      
-      // Create results object with all the necessary data
-      const results = {
-        _id: testId,
-        subject: subject,
-        stage: stage,
-        level: level,
-        score: score,
-        correctAnswers: correctCount,
-        totalQuestions: questions.length,
-        timeTaken: timer,
-        passedLevel: passedLevel,
-        leaderboardPoints: leaderboardPoints,
-        questions: processedQuestions, // Rename to match what TestResults expects
-        testId: testId,
-        date: new Date().toISOString()
-      };
-      
-      // Store locally in sessionStorage for TestResults component
-      sessionStorage.setItem('lastTestResult', JSON.stringify(results));
-      
-      // Set results and mark test as completed
-      setResults(results);
-      setTestCompleted(true);
-      
-      // Navigate directly to test results page
-      navigate(`/student-dashboard/test-results/${testId}`);
-      
-    } catch (err) {
-      console.error("Error processing test results:", err);
-      setError(`Error Loading Test: ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Now, let's place the useEffect after all the function declarations so that they're initialized properly
-  useEffect(() => {
-    if (!subject || !stage || !level) {
-      navigate('/student-dashboard');
-      return;
-    }
-    
-    // Only fetch previous attempts here
-    fetchPreviousAttempts();
-  }, [subject, stage, level, navigate, fetchPreviousAttempts]);
-
   // Timer effect with the memoized handleSubmitTest
   useEffect(() => {
     let timer;
-    if (testStarted && !testCompleted && timeLeft > 0) {
+    if (testTimer && testTimeLeft > 0) {
       timer = setTimeout(() => {
-        setTimeLeft(prevTime => prevTime - 1);
+        setTestTimeLeft(prevTime => prevTime - 1);
       }, 1000);
-    } else if (timeLeft === 0 && !testCompleted) {
-      handleSubmitTest();
+    } else if (testTimeLeft === 0) {
+      handleTestComplete();
     }
     
     return () => {
       if (timer) clearTimeout(timer);
     };
-  }, [timeLeft, testStarted, testCompleted, handleSubmitTest]);
+  }, [testTimer, testTimeLeft, handleTestComplete]);
 
   // Set up question timer
   useEffect(() => {
     let interval;
     
-    if (testStarted && !testCompleted) {
-      lastQuestionTime.current = lastQuestionTime.current || Date.now();
+    if (questionTimer && currentQuestionIndex < questions.length) {
+      // Set the initial time immediately when test starts
+      questionStartTime.current = Date.now();
+      
+      // Start from 0 instead of waiting for the first interval
+      setQuestionTimer(0);
       
       interval = setInterval(() => {
-        setTimer(prev => prev + 1);
+        setQuestionTimer(prev => prev + 1);
       }, 1000);
     }
     
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [testStarted, testCompleted]);
+  }, [questionTimer, currentQuestionIndex, questions.length]);
 
   // Clean up timer when component unmounts
   useEffect(() => {
     return () => {
-      if (timer) {
-        clearInterval(timer);
+      if (testTimer) {
+        clearInterval(testTimer);
+      }
+      if (questionTimer) {
+        clearInterval(questionTimer);
       }
     };
   }, []);
 
   const handleStartTest = () => {
+    // Initialize test when user starts it
     setShowRules(false);
     setTestStarted(true);
+    setTestCompleted(false);
+    setTestStartTime(new Date());
+    
+    // Initialize question timer
+    setQuestionStartTime(new Date());
+    
+    // Reset answers
+    setAnswers([]);
+    
+    // Reset timers
+    setTimers([]);
+    
+    console.log('Test started with', questions.length, 'questions');
   };
   
   const handleOpenConfirmStartDialog = () => {
@@ -477,123 +829,73 @@ function TestPage() {
     setConfirmStartDialogOpen(false);
   };
 
-  // Memoize the handleAnswerSelect function
-  const handleAnswerSelect = (option) => {
-    console.log("Selected option:", option);
-    if (!questions[currentQuestionIndex]) {
-      console.error("Current question is not defined");
-      return;
-    }
-
-    const questionId = questions[currentQuestionIndex]._id || questions[currentQuestionIndex].id;
+  // Implement the handleAnswerSelect function
+  const handleAnswerSelect = (questionIndex, optionIndex) => {
+    console.log('Selected option', optionIndex, 'for question', questionIndex);
     
-    // Don't allow changing a confirmed answer
-    if (confirmedAnswers[questionId]) {
-      console.log("This answer is already confirmed");
-      return;
-    }
+    // Get the current question
+    const currentQuestion = questions[questionIndex];
+    if (!currentQuestion) return;
     
-    // Update the selected answer for this question
-    setSelectedAnswers(prev => ({
-      ...prev,
-      [questionId]: option
-    }));
-    
-    // Update the question timer
-    const currentTime = Date.now();
-    if (lastQuestionTime.current) {
-      const timeSpent = Math.floor((currentTime - lastQuestionTime.current) / 1000);
-      
-      setQuestionTimers(prev => ({
-        ...prev,
-        [questionId]: (prev[questionId] || 0) + timeSpent
-      }));
-    }
-    
-    lastQuestionTime.current = currentTime;
-    console.log("Selected answers updated:", { ...selectedAnswers, [questionId]: option });
+    // Store the answer in the answers state
+    setAnswers(prev => {
+      const newAnswers = [...prev];
+      newAnswers[questionIndex] = optionIndex;
+      return newAnswers;
+    });
   };
 
+  // Implement the handleConfirmAnswer function
   const handleConfirmAnswer = () => {
-    if (!questions[currentQuestionIndex]) {
-      console.error("Current question is not defined");
-      return;
-    }
-
-    const questionId = questions[currentQuestionIndex]._id || questions[currentQuestionIndex].id;
-    const selected = selectedAnswers[questionId];
+    // Get the current question
+    const currentQuestion = questions[currentQuestionIndex];
+    if (!currentQuestion) return;
     
-    console.log("Confirming answer:", { questionId, selected });
+    const questionId = currentQuestion._id || currentQuestion.id;
+    const selectedOption = answers[currentQuestionIndex];
     
-    // Don't allow confirming if no answer is selected
-    if (!selected) {
-      console.warn("No answer selected to confirm");
+    if (selectedOption === null || selectedOption === undefined) {
+      // No option selected
+      console.log('No option selected');
       return;
     }
     
-    // Don't allow changing a confirmed answer
-    if (confirmedAnswers[questionId]) {
-      console.log("This answer is already confirmed");
-      return;
-    }
+    console.log('Confirming answer', selectedOption, 'for question', questionId);
     
-    // Confirm the answer
-    setConfirmedAnswers(prev => ({
-      ...prev,
-      [questionId]: selected
-    }));
+    // Record current question's correct option for later scoring
+    const newCorrectOptions = [...correctOptions];
+    const correctOptionIndex = currentQuestion.correctOptionIndex;
+    newCorrectOptions[currentQuestionIndex] = correctOptionIndex;
+    setCorrectOptions(newCorrectOptions);
     
-    console.log("Confirmed answers updated:", { ...confirmedAnswers, [questionId]: selected });
+    // Log for debugging
+    console.log(`Question ${currentQuestionIndex}: 
+      Selected: ${selectedOption} (${String.fromCharCode(65 + selectedOption)}), 
+      Correct: ${correctOptionIndex} (${String.fromCharCode(65 + correctOptionIndex)}),
+      isCorrect: ${selectedOption === correctOptionIndex}`
+    );
     
-    // Auto move to next question if not the last one
+    // Update timer for this question
+    setTimers(prev => {
+      const newTimers = [...prev];
+      const timeSpent = (new Date() - questionStartTime) / 1000; // in seconds
+      newTimers[currentQuestionIndex] = timeSpent;
+      return newTimers;
+    });
+    
+    // Move to next question if available
     if (currentQuestionIndex < questions.length - 1) {
-      // Use a short delay for better UX
-      setTimeout(() => {
         handleNextQuestion();
-      }, 500);
+    } else {
+      // Show confirmation dialog to submit the test
+      if (window.confirm('You\'ve reached the last question. Would you like to submit the test?')) {
+        handleTestComplete();
+      }
     }
   };
 
   const handlePrevQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      // Update timer for current question
-      const questionId = questions[currentQuestionIndex]._id || questions[currentQuestionIndex].id;
-      const currentTime = Date.now();
-      
-      if (lastQuestionTime.current) {
-        const timeSpent = Math.floor((currentTime - lastQuestionTime.current) / 1000);
-        
-      setQuestionTimers(prev => ({
-        ...prev,
-        [questionId]: (prev[questionId] || 0) + timeSpent
-      }));
-      }
-      
-      // Move to previous question
-      setCurrentQuestionIndex(currentQuestionIndex - 1);
-      lastQuestionTime.current = Date.now();
-    }
-  };
-
-  const handleNextQuestion = () => {
-    if (currentQuestionIndex < questions.length - 1) {
-      // Update timer for current question
-      const questionId = questions[currentQuestionIndex]._id || questions[currentQuestionIndex].id;
-      const currentTime = Date.now();
-      
-      if (lastQuestionTime.current) {
-        const timeSpent = Math.floor((currentTime - lastQuestionTime.current) / 1000);
-        
-        setQuestionTimers(prev => ({
-          ...prev,
-          [questionId]: (prev[questionId] || 0) + timeSpent
-        }));
-      }
-      
-      // Move to next question
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-      lastQuestionTime.current = Date.now();
-    }
+    // Implementation of handlePrevQuestion function
   };
 
   const handleGoBack = () => {
@@ -607,7 +909,7 @@ function TestPage() {
   };
 
   const getCompletionPercentage = () => {
-    const answeredCount = Object.keys(selectedAnswers).length;
+    const answeredCount = Object.keys(answers).length;
     return (answeredCount / questions.length) * 100;
   };
 
@@ -679,6 +981,81 @@ function TestPage() {
       medium: '0.7rem',
       large: '1rem'
     }
+  };
+
+  // Add the renderTestInfo function to display test information
+  const renderTestInfo = () => {
+    const testMode = state?.mode || 'practice';
+    const testTypeLabel = testMode === 'practice' ? 'Practice Test' : 'Assessment Test';
+    
+    let topicInfo;
+    if (testMode === 'practice') {
+      // For practice mode, show the specific topic
+      const topicNumber = state?.topicNumber;
+      // Get the topic data from SyllabusData.js
+      const subjectTopics = {
+        'physics': physicsTopics,
+        'chemistry': chemistryTopics,
+        'biology': biologyTopics
+      }[state?.subject] || [];
+      
+      const topicData = subjectTopics.find(t => t.number === topicNumber);
+      topicInfo = topicData ? `Topic ${topicNumber}: ${topicData.title}` : `Topic ${topicNumber}`;
+    } else if (testMode === 'assessment' && state?.multiSubject) {
+      // For multi-subject assessment mode
+      const subjectCount = state?.selectedSubjects?.length || 0;
+      const topicsCount = Object.values(state?.topicsBySubject || {}).reduce((sum, topics) => sum + topics.length, 0);
+      topicInfo = `${topicsCount} topics across ${subjectCount} subjects`;
+    } else {
+      // For single-subject assessment mode
+      const selectedTopics = state?.topics || [];
+      topicInfo = `${selectedTopics.length} selected topics`;
+    }
+
+    // Get subject info based on type of test
+    let subjectInfo;
+    if (state?.multiSubject) {
+      // For multi-subject tests, show a list of subjects
+      const subjects = state?.selectedSubjects || [];
+      if (subjects.length > 0) {
+        // Make sure each subject is a valid string before using charAt
+        subjectInfo = subjects
+          .filter(s => typeof s === 'string' && s.length > 0)
+          .map(s => s.charAt(0).toUpperCase() + s.slice(1))
+          .join(', ');
+        
+        // If we ended up with an empty string, use a fallback
+        if (!subjectInfo) {
+          subjectInfo = 'Multiple Subjects';
+        }
+      } else {
+        subjectInfo = 'Multiple Subjects';
+      }
+    } else {
+      // For single-subject tests, show the subject name
+      if (state?.subject && typeof state.subject === 'string' && state.subject.length > 0) {
+        subjectInfo = state.subject.charAt(0).toUpperCase() + state.subject.slice(1);
+      } else {
+        subjectInfo = 'Unknown Subject';
+      }
+    }
+
+    return (
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          {testTypeLabel}
+        </Typography>
+        <Typography variant="body1">
+          Subject: {subjectInfo}
+        </Typography>
+        <Typography variant="body1">
+          {topicInfo}
+        </Typography>
+        <Typography variant="body1">
+          Questions: {questions.length}
+        </Typography>
+      </Box>
+    );
   };
 
   if (loading) {
@@ -769,18 +1146,15 @@ function TestPage() {
           overflow: 'auto'
         }}
       >
-        <Box sx={{ p: 4, maxWidth: 1200, mx: 'auto', my: 3 }}>
-          <Typography variant="h4" gutterBottom sx={{ 
-            textAlign: 'center', 
-            fontWeight: 'bold',
-            background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
-            backgroundClip: 'text',
-            textFillColor: 'transparent',
-            mb: 3,
-            fontSize: '2rem'
-          }}>
-            {subject.charAt(0).toUpperCase() + subject.slice(1)} - Stage {stage}, Level {level}
+        <Box sx={{ p: 4, maxWidth: 800, mx: 'auto' }}>
+          <Paper sx={{ p: 4, borderRadius: 2, boxShadow: 3 }}>
+            <Typography variant="h4" gutterBottom fontWeight="bold" align="center">
+              Test Instructions
           </Typography>
+            
+            {renderTestInfo()}
+            
+            <Divider sx={{ my: 3 }} />
           
           <Paper elevation={3} sx={{ p: 3, mb: 4, borderRadius: 2, border: '1px solid #e0e0e0' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -957,7 +1331,7 @@ function TestPage() {
               Start Test
             </Button>
           </Box>
-        </Box>
+          </Paper>
         
         {/* Confirmation Dialog */}
         <Dialog
@@ -993,417 +1367,8 @@ function TestPage() {
             </Button>
           </DialogActions>
         </Dialog>
+        </Box>
       </motion.div>
-    );
-  }
-
-  if (testCompleted && results) {
-    return (
-      <Box sx={{ 
-        height: '100vh', 
-        width: '100vw',
-        bgcolor: '#ffffff',
-        margin: 0,
-        padding: 0,
-        overflow: 'auto',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        transform: 'none'
-      }}>
-        {/* Results Header */}
-        <Container maxWidth={false} sx={{ width: '100%', px: 2, py: 2 }}>
-          <Paper 
-            elevation={2}
-            sx={{
-              p: 4,
-              borderRadius: 2,
-              mb: 4,
-              background: results.score >= 70 ? 
-                'linear-gradient(to right, #4caf50, #81c784)' : 
-                'linear-gradient(to right, #ff9800, #ffb74d)',
-              color: 'white'
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              {results.score >= 70 ? (
-                <CheckCircleIcon sx={{ fontSize: 40, mr: 2 }} />
-              ) : (
-                <InfoIcon sx={{ fontSize: 40, mr: 2 }} />
-              )}
-              <Typography variant="h4" fontWeight="bold">
-                {results.score >= 70 ? 'Test Passed!' : 'Test Completed'}
-              </Typography>
-            </Box>
-            
-            <Typography variant="h6" sx={{ opacity: 0.9, mb: 3 }}>
-              {results.score >= 70 
-                ? 'Congratulations! You have successfully passed this level.' 
-                : 'You did not reach the passing score. Review your answers and try again.'}
-            </Typography>
-            
-            <Grid container spacing={4}>
-              <Grid item xs={12} md={4}>
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography variant="overline" sx={{ opacity: 0.8, letterSpacing: 1 }}>
-                    SCORE
-                  </Typography>
-                  <Typography variant="h2" fontWeight="bold" sx={{ my: 1 }}>
-                    {results.score}%
-                  </Typography>
-                  <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                    {results.correctAnswers} of {results.totalQuestions} questions answered correctly
-                  </Typography>
-                </Box>
-              </Grid>
-              
-              <Grid item xs={12} md={4}>
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography variant="overline" sx={{ opacity: 0.8, letterSpacing: 1 }}>
-                    RESULT
-                  </Typography>
-                  <Typography variant="h2" fontWeight="bold" sx={{ my: 1 }}>
-                    {results.passedLevel ? 'PASS' : 'FAIL'}
-                  </Typography>
-                  <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                    {results.passedLevel 
-                      ? `You earned ${results.leaderboardPoints} points` 
-                      : 'You need 70% to pass this level'}
-                  </Typography>
-                </Box>
-              </Grid>
-              
-              <Grid item xs={12} md={4}>
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography variant="overline" sx={{ opacity: 0.8, letterSpacing: 1 }}>
-                    TIME
-                  </Typography>
-                  <Typography variant="h2" fontWeight="bold" sx={{ my: 1 }}>
-                    {Math.floor(results.timeTaken / 60)}:{(results.timeTaken % 60).toString().padStart(2, '0')}
-                  </Typography>
-                  <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                    Avg. {Math.round(results.timeTaken / results.totalQuestions)} seconds per question
-                  </Typography>
-                </Box>
-              </Grid>
-            </Grid>
-          </Paper>
-
-          {/* Detailed Results */}
-          <Box sx={{ mb: 4 }}>
-            <Typography variant="h5" fontWeight="bold" gutterBottom>
-              Question Review
-            </Typography>
-            
-            {/* Time Analysis Graph */}
-            <Paper elevation={1} sx={{ p: 3, borderRadius: 2, mb: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <TimerIcon sx={{ color: 'primary.main', mr: 1 }} />
-                <Typography variant="h6" fontWeight="bold">
-                  Time Analysis
-                </Typography>
-              </Box>
-              
-              <Typography variant="body2" color="text.secondary" mb={2}>
-                This chart shows how much time you spent on each question compared to the allocated time for each question.
-              </Typography>
-              
-              <Box sx={{ height: 'auto', width: '100%', mb: 3 }}>
-                <Grid container spacing={1}>
-                  {questions.map((question, index) => {
-                    const questionId = question._id || question.id;
-                    const timeSpent = questionTimers[questionId] || 0;
-                    const allocatedTime = question.timeAllocation || 60; // Use the question's allocated time
-                    const isCorrect = (selectedAnswers[questionId] || confirmedAnswers[questionId]) === question.correctOption;
-                    
-                    // Calculate percentage of allocated time
-                    const percentage = Math.min(100, (timeSpent / allocatedTime) * 100);
-                    
-                    // Determine color based on correctness and time
-                    let color = '#f44336'; // Red for incorrect
-                    if (isCorrect) {
-                      color = timeSpent > allocatedTime ? '#ff9800' : '#4caf50'; // Orange for overtime, green for on time
-                    }
-                    
-                    return (
-                      <Grid item xs={12} key={questionId} sx={{ mb: 1 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <Typography variant="body2" fontWeight="medium" sx={{ mr: 1, minWidth: 50 }}>
-                              Q{index + 1}:
-                            </Typography>
-                            <Chip 
-                              size="small" 
-                              label={isCorrect ? "Correct" : "Incorrect"}
-                              color={isCorrect ? "success" : "error"}
-                              sx={{ mr: 1 }}
-                            />
-                          </Box>
-                          <Typography variant="body2">
-                            {timeSpent} sec / {allocatedTime} sec
-                            {timeSpent > allocatedTime && (
-                              <span style={{ color: '#ff9800', fontWeight: 'bold', marginLeft: '4px' }}>
-                                (Overtime)
-                              </span>
-                            )}
-                          </Typography>
-                        </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                          <Box sx={{ flexGrow: 1, bgcolor: '#f0f0f0', height: 12, borderRadius: 6, overflow: 'hidden' }}>
-                            <Box
-                              sx={{ 
-                                width: `${percentage}%`,
-                                bgcolor: color,
-                                height: '100%',
-                                transition: 'width 0.5s ease-in-out'
-                              }}
-                            />
-                          </Box>
-                        </Box>
-                      </Grid>
-                    );
-                  })}
-                </Grid>
-              </Box>
-              
-              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3, flexWrap: 'wrap' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Box sx={{ width: 16, height: 16, bgcolor: '#4caf50', borderRadius: '50%', mr: 1 }} />
-                  <Typography variant="body2">Correct & On Time</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Box sx={{ width: 16, height: 16, bgcolor: '#ff9800', borderRadius: '50%', mr: 1 }} />
-                  <Typography variant="body2">Correct but Overtime</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Box sx={{ width: 16, height: 16, bgcolor: '#f44336', borderRadius: '50%', mr: 1 }} />
-                  <Typography variant="body2">Incorrect</Typography>
-                </Box>
-              </Box>
-            </Paper>
-            
-            <Typography variant="h5" sx={{ mb: 4, textAlign: 'center' }}>
-              Review Your Answers
-            </Typography>
-            
-            {/* Wrap questions in a Grid container */}
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-              {questions.map((question, index) => {
-                const questionId = question._id || question.id;
-                const selectedOption = selectedAnswers[questionId] || confirmedAnswers[questionId] || '';
-                const isCorrect = selectedOption === question.correctOption;
-                const resultDetails = results.results?.find(r => r.questionId === questionId);
-                
-                // Get formatted image URL
-                const fullImageUrl = question.imageUrl ? getFullImageUrl(question.imageUrl) : null;
-                
-                // Display two questions side by side based on index
-                return (
-                  <Grid item xs={12} md={6} key={questionId}>
-                    <Paper 
-                      elevation={1} 
-                      sx={{ 
-                        mb: 3,
-                        borderRadius: 2,
-                        overflow: 'hidden',
-                        height: '100%',
-                        display: 'flex',
-                        flexDirection: 'column'
-                      }}
-                    >
-                      {/* Question Header */}
-                      <Box sx={{ 
-                        px: 2, 
-                        py: 1.5, 
-                        bgcolor: isCorrect ? 'success.light' : 'error.light',
-                        borderBottom: '1px solid',
-                        borderColor: isCorrect ? 'success.main' : 'error.main',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                      }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          {isCorrect ? (
-                            <CheckCircleIcon sx={{ color: 'success.dark', mr: 1, fontSize: '1.2rem' }} />
-                          ) : (
-                            <CancelIcon sx={{ color: 'error.dark', mr: 1, fontSize: '1.2rem' }} />
-                          )}
-                          <Typography variant="body1" fontWeight="bold" color={isCorrect ? 'success.dark' : 'error.dark'}>
-                            Question {index + 1} - {isCorrect ? 'Correct' : 'Incorrect'}
-                          </Typography>
-                        </Box>
-                        
-                        <Chip 
-                          icon={<TimerIcon fontSize="small" />}
-                          label={`${questionTimers[questionId] || 0} seconds`}
-                          size="small"
-                          color={isCorrect ? "success" : "error"}
-                          variant="outlined"
-                        />
-                      </Box>
-                      
-                      {/* Question Content */}
-                      <Box sx={{ p: 2, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                        {/* Subject & Question Text */}
-                        <Box sx={{ mb: 2 }}>
-                          <Typography variant="caption" color="text.secondary" gutterBottom>
-                            {subject.toUpperCase()} • LEVEL {level}
-                          </Typography>
-                          <Typography variant="h5" sx={{ fontWeight: 'medium', mb: 3, fontSize: '0.95rem' }}>
-                            {question.questionText || "Loading question..."}
-                          </Typography>
-                        </Box>
-                        
-                        {/* Image display area */}
-                        {question.imageUrl && (
-                          <Box sx={{ 
-                            mb: 2, 
-                            display: 'flex',
-                            justifyContent: 'center',
-                            p: 2,
-                            bgcolor: 'white',
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            borderRadius: 2,
-                            overflow: 'hidden'
-                          }}>
-                            <img 
-                              src={fullImageUrl}
-                              alt="Question"
-                              style={{
-                                maxWidth: '100%',
-                                maxHeight: 250,
-                                objectFit: 'contain'
-                              }}
-                            />
-                          </Box>
-                        )}
-                        
-                        {/* Answer Options */}
-                        <Box sx={{ mb: 3 }}>
-                          <Typography variant="body2" fontWeight="bold" sx={{ mb: 1 }}>
-                            Answer Options:
-                          </Typography>
-                          
-                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                            {['A', 'B', 'C', 'D'].map((option) => {
-                              const isUserSelected = selectedOption === option;
-                              const isCorrectOption = question.correctOption === option;
-                              
-                              const optionText = question[`option${option}`] || 
-                                (question.options && question.options.length > 0 && question.options[option.charCodeAt(0) - 'A'.charCodeAt(0)]) ||
-                                `Option ${option}`;
-                              
-                              // Define disabled variable
-                              const disabled = true; // In review mode, options should be disabled
-                              
-                              return (
-                                <Paper
-                                  key={option}
-                                  elevation={0}
-                                  onClick={() => !disabled && handleAnswerSelect(option)}
-                                  sx={{
-                                    p: 1.5,
-                                    border: '1.5px solid',
-                                    borderColor: isCorrectOption ? 'success.main' : 
-                                                isUserSelected ? 'primary.main' : 
-                                                 '#e0e0e0',
-                                    borderRadius: 1.5,
-                                    transition: 'all 0.2s ease',
-                                    bgcolor: isCorrectOption ? 'rgba(76, 175, 80, 0.1)' : 
-                                             isUserSelected ? 'rgba(33, 150, 243, 0.1)' : 
-                                               'white',
-                                    cursor: disabled ? 'default' : 'pointer',
-                                    '&:hover': {
-                                      bgcolor: disabled ? (isCorrectOption ? 'rgba(76, 175, 80, 0.1)' : isUserSelected ? 'rgba(33, 150, 243, 0.1)' : 'white') : 
-                                        '#f5f5f5',
-                                      borderColor: disabled ? (isCorrectOption ? 'success.main' : isUserSelected ? 'primary.main' : '#e0e0e0') :
-                                                            '#bdbdbd'
-                                    },
-                                    display: 'flex',
-                                    alignItems: 'center'
-                                  }}
-                                >
-                                  <Box sx={{
-                                    width: 30,
-                                    height: 36,
-                                    borderRadius: '50%',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    bgcolor: isCorrectOption ? 'success.main' :
-                                             isUserSelected ? 'primary.main' : 
-                                             '#f5f5f5',
-                                    color: (isCorrectOption || isUserSelected) ? 'white' : 'text.primary',
-                                    fontWeight: 'medium',
-                                    mr: 1.5,
-                                    fontSize: '0.9rem'
-                                  }}>
-                                    {option}
-                                  </Box>
-                                  <Typography 
-                                    variant="body1" 
-                                    sx={{ 
-                                      fontWeight: (isCorrectOption || isUserSelected) ? 'medium' : 'regular',
-                                      wordBreak: 'break-word',
-                                      flex: 1,
-                                      fontSize: '0.9rem',
-                                      lineHeight: 1.5
-                                    }}
-                                  >
-                                    {optionText}
-                                  </Typography>
-                                </Paper>
-                              );
-                            })}
-                          </Box>
-                        </Box>
-                        
-                        {/* Explanation */}
-                        <Box sx={{ mt: 'auto', pt: 1 }}>
-                          <Typography variant="body2" fontWeight="bold" color="text.secondary">
-                            Explanation:
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.9rem' }}>
-                            {question.explanation || "No explanation available for this question."}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Paper>
-                  </Grid>
-                );
-              })}
-            </Grid>
-          </Box>
-          
-          {/* Actions */}
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between',
-            mt: 6,
-            pb: 8  // Add more padding at the bottom to ensure content doesn't get cut off
-          }}>
-            <Button 
-              variant="outlined"
-              color="primary"
-              size="large"
-              onClick={handleGoBack}
-              startIcon={<ArrowBackIcon />}
-            >
-              Back to Dashboard
-            </Button>
-            
-            <Button
-              variant="contained"
-              onClick={() => navigate('/student-dashboard')}
-            >
-              Continue to Dashboard
-            </Button>
-          </Box>
-        </Container>
-      </Box>
     );
   }
 
@@ -1441,7 +1406,9 @@ function TestPage() {
           }}
         >
           <Typography variant="h6" fontWeight="medium" sx={{ fontSize: '0.95rem' }}>
-            {subject.charAt(0).toUpperCase() + subject.slice(1)} - Stage {stage}, Level {level}
+            {state?.subject && typeof state.subject === 'string' 
+              ? `${state.subject.charAt(0).toUpperCase() + state.subject.slice(1)}${state?.stage ? ` - Stage ${state.stage}, Level ${state.level}` : ''}`
+              : 'Test'}
           </Typography>
           
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
@@ -1453,18 +1420,18 @@ function TestPage() {
               px: 2,
               borderRadius: 20,
               border: '1px solid',
-              borderColor: timer < 300 ? "error.main" : timer < 600 ? "warning.main" : "primary.main"
+              borderColor: testTimer < 300 ? "error.main" : testTimer < 600 ? "warning.main" : "primary.main"
             }}>
               <TimerIcon sx={{ 
-                color: timer < 300 ? "error.main" : timer < 600 ? "warning.main" : "primary.main", 
+                color: testTimer < 300 ? "error.main" : testTimer < 600 ? "warning.main" : "primary.main", 
                 mr: 1,
                 fontSize: '1rem'
               }} />
               <Typography variant="body1" fontWeight="bold" sx={{ 
-                color: timer < 300 ? "error.main" : timer < 600 ? "warning.main" : "primary.main",
+                color: testTimer < 300 ? "error.main" : testTimer < 600 ? "warning.main" : "primary.main",
                 fontSize: '0.9rem'
               }}>
-                {formatTime(timer)}
+                {formatTime(testTimer)}
               </Typography>
             </Box>
             
@@ -1479,7 +1446,7 @@ function TestPage() {
               borderColor: 'success.main'
             }}>
               <Typography variant="body1" fontWeight="medium" color="success.dark" sx={{ fontSize: '0.9rem' }}>
-                {Object.keys(confirmedAnswers).length}/{questions.length}
+                {Object.keys(answers).length}/{questions.length}
               </Typography>
             </Box>
           </Box>
@@ -1512,19 +1479,19 @@ function TestPage() {
             <Box sx={{ mb: 3 }}>
               <LinearProgress 
                 variant="determinate" 
-                value={(Object.keys(confirmedAnswers).length / questions.length) * 100} 
+                value={(Object.keys(answers).length / questions.length) * 100} 
                 sx={{ height: 6, borderRadius: 3, mb: 1.5 }}
               />
               <Typography variant="body2" sx={{ textAlign: 'center', color: 'text.secondary', fontSize: '0.8rem' }}>
-                {Object.keys(confirmedAnswers).length} of {questions.length} questions answered
+                {Object.keys(answers).length} of {questions.length} questions answered
               </Typography>
             </Box>
             
             <Grid container spacing={1} sx={{ mb: 3 }}>
               {questions.map((question, index) => {
                 const questionId = question._id || question.id;
-                const isAnswered = !!confirmedAnswers[questionId];
-                const selectedOption = confirmedAnswers[questionId] || '';
+                const isAnswered = !!answers[questionId];
+                const selectedOption = answers[questionId] || '';
                 
                 return (
                   <Grid item xs={3} key={questionId}>
@@ -1708,7 +1675,9 @@ function TestPage() {
                     fontSize: '0.7rem',
                     letterSpacing: '0.5px'
                   }}>
-                    {subject.toUpperCase()} • STAGE {stage} • LEVEL {level}
+                    {state?.subject && typeof state.subject === 'string' 
+                      ? `${state.subject.toUpperCase()}${state?.stage ? ` • STAGE ${state.stage} • LEVEL ${state.level}` : ''}`
+                      : 'TEST'}
                   </Typography>
                   <Typography variant="h5" sx={{ fontWeight: 'medium', fontSize: '1.1rem', lineHeight: 1.4 }}>
                     {questions[currentQuestionIndex]?.questionText || "Loading question..."}
@@ -1747,57 +1716,50 @@ function TestPage() {
                 
                 {questions[currentQuestionIndex] ? (
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mb: 3 }}>
-                    {['A', 'B', 'C', 'D'].map((option) => {
+                    {['A', 'B', 'C', 'D'].map((option, optionIndex) => {
                       const currentQuestion = questions[currentQuestionIndex];
                       const questionId = currentQuestion?._id || currentQuestion?.id;
-                      const isConfirmed = confirmedAnswers[questionId] === option;
-                      const isUserSelected = selectedAnswers[questionId] === option;
+                      const isSelected = answers[currentQuestionIndex] === optionIndex;
+                      const isConfirmed = false; // We'll just use selected state for simplicity
                       
                       // Get option text from the question
                       let optionText = '';
                       
                       // First try direct property access (optionA, optionB, etc.)
-                      optionText = currentQuestion[`option${option}`] || '';
+                      optionText = currentQuestion[`option${String.fromCharCode(65 + optionIndex)}`] || '';
                       
-                      // If that fails, try the options array
+                      // If that fails, try the options array with proper error handling
                       if (!optionText && optionText !== 0) {
                         if (currentQuestion.options && Array.isArray(currentQuestion.options) && currentQuestion.options.length > 0) {
-                          const optionIndex = option.charCodeAt(0) - 'A'.charCodeAt(0);
-                          if (optionIndex >= 0 && optionIndex < currentQuestion.options.length) {
-                            optionText = currentQuestion.options[optionIndex];
+                          if (optionIndex < currentQuestion.options.length) {
+                            optionText = currentQuestion.options[optionIndex] || `Option ${String.fromCharCode(65 + optionIndex)}`;
+                          } else {
+                            optionText = `Option ${String.fromCharCode(65 + optionIndex)}`;
                           }
                         }
                       }
                       
                       // If still no option text, show placeholder
                       if (!optionText && optionText !== 0) {
-                        optionText = `Option ${option}`;
+                        optionText = `Option ${String.fromCharCode(65 + optionIndex)}`;
                       }
-                      
-                      const disabled = !!confirmedAnswers[questionId];
                       
                       return (
                         <Paper
                           key={option}
                           elevation={0}
-                          onClick={() => !disabled && handleAnswerSelect(option)}
+                          onClick={() => handleAnswerSelect(currentQuestionIndex, optionIndex)}
                           sx={{
                             p: 1.5,
                             border: '1.5px solid',
-                            borderColor: isConfirmed ? 'success.main' : 
-                                                isUserSelected ? 'primary.main' : 
-                                                'divider',
+                            borderColor: isSelected ? 'primary.main' : 'divider',
                             borderRadius: 2,
                             transition: 'all 0.2s ease',
-                            bgcolor: isConfirmed ? 'rgba(76, 175, 80, 0.08)' : 
-                                             isUserSelected ? 'rgba(33, 150, 243, 0.08)' : 
-                                             'white',
-                            cursor: disabled ? 'default' : 'pointer',
+                            bgcolor: isSelected ? 'rgba(33, 150, 243, 0.08)' : 'white',
+                            cursor: 'pointer',
                             '&:hover': {
-                              bgcolor: disabled ? (isConfirmed ? 'rgba(76, 175, 80, 0.08)' : isUserSelected ? 'rgba(33, 150, 243, 0.08)' : 'white') : 
-                                        '#f8f9fa',
-                              borderColor: disabled ? (isConfirmed ? 'success.main' : isUserSelected ? 'primary.main' : 'divider') :
-                                                            '#bdbdbd'
+                              bgcolor: '#f8f9fa',
+                              borderColor: '#bdbdbd'
                             },
                             display: 'flex',
                             alignItems: 'center'
@@ -1810,15 +1772,13 @@ function TestPage() {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            bgcolor: isConfirmed ? 'success.main' :
-                                     isUserSelected ? 'primary.main' : 
-                                     '#f5f5f5',
-                            color: (isConfirmed || isUserSelected) ? 'white' : 'text.primary',
-                            fontWeight: 'medium',
-                            mr: 2,
+                            bgcolor: isSelected ? 'primary.main' : '#f5f5f5',
+                            color: isSelected ? 'white' : 'text.primary',
+                                    fontWeight: 'medium',
+                                    mr: 2,
                             fontSize: '0.9rem'
                           }}>
-                            {option}
+                            {String.fromCharCode(65 + optionIndex)}
                           </Box>
                           <Typography variant="body1" sx={{ 
                             fontWeight: 'normal',
@@ -1845,10 +1805,7 @@ function TestPage() {
                     variant="contained"
                     color="success"
                     onClick={handleConfirmAnswer}
-                    disabled={
-                      !selectedAnswers[questions[currentQuestionIndex]?._id || questions[currentQuestionIndex]?.id] || 
-                      !!confirmedAnswers[questions[currentQuestionIndex]?._id || questions[currentQuestionIndex]?.id]
-                    }
+                    disabled={answers[currentQuestionIndex] === undefined || answers[currentQuestionIndex] === null}
                     sx={{ 
                       px: 4, 
                       py: 1,
@@ -1885,7 +1842,7 @@ function TestPage() {
             <Button
               variant="contained"
               color="primary"
-              onClick={handleSubmitTest}
+              onClick={handleTestComplete}
               startIcon={<SendIcon />}
               sx={{ 
                 px: 3, 
@@ -1896,13 +1853,143 @@ function TestPage() {
                 fontSize: '0.9rem'
               }}
             >
-              Submit Test ({Object.keys(confirmedAnswers).length}/{questions.length})
+              Submit Test ({Object.keys(answers).length}/{questions.length})
             </Button>
           </Paper>
         </Box>
       </Box>
     );
   }
+
+  if (testCompleted && results) {
+    return (
+      <Box sx={{ 
+        height: '100vh', 
+        width: '100vw',
+        bgcolor: '#ffffff',
+        margin: 0,
+        padding: 0,
+        overflow: 'auto',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        transform: 'none'
+      }}>
+        {/* Results Header */}
+        <Container maxWidth={false} sx={{ width: '100%', px: 2, py: 2 }}>
+          <Paper 
+            elevation={2}
+            sx={{
+              p: 4,
+              borderRadius: 2,
+              mb: 4,
+              background: results.score >= 70 ? 
+                'linear-gradient(to right, #4caf50, #81c784)' : 
+                'linear-gradient(to right, #ff9800, #ffb74d)',
+              color: 'white'
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              {results.score >= 70 ? (
+                <CheckCircleIcon sx={{ fontSize: 40, mr: 2 }} />
+              ) : (
+                <InfoIcon sx={{ fontSize: 40, mr: 2 }} />
+              )}
+              <Typography variant="h4" fontWeight="bold">
+                {results.score >= 70 ? 'Test Passed!' : 'Test Completed'}
+              </Typography>
+            </Box>
+            
+            <Typography variant="h6" sx={{ opacity: 0.9, mb: 3 }}>
+              {results.score >= 70 
+                ? 'Congratulations! You have successfully passed this level.' 
+                : 'You did not reach the passing score. Review your answers and try again.'}
+            </Typography>
+            
+            <Grid container spacing={4}>
+              <Grid item xs={12} md={4}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="overline" sx={{ opacity: 0.8, letterSpacing: 1 }}>
+                    SCORE
+                  </Typography>
+                  <Typography variant="h2" fontWeight="bold" sx={{ my: 1 }}>
+                    {results.score}%
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                    {results.correctAnswers} of {results.totalQuestions} questions answered correctly
+                  </Typography>
+                </Box>
+              </Grid>
+              
+              <Grid item xs={12} md={4}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="overline" sx={{ opacity: 0.8, letterSpacing: 1 }}>
+                    RESULT
+                  </Typography>
+                  <Typography variant="h2" fontWeight="bold" sx={{ my: 1 }}>
+                    {results.passedLevel ? 'PASS' : 'FAIL'}
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                    {results.passedLevel 
+                      ? `You earned ${results.leaderboardPoints} points` 
+                      : 'You need 70% to pass this level'}
+                  </Typography>
+                </Box>
+              </Grid>
+              
+              <Grid item xs={12} md={4}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="overline" sx={{ opacity: 0.8, letterSpacing: 1 }}>
+                    TIME
+                  </Typography>
+                  <Typography variant="h2" fontWeight="bold" sx={{ my: 1 }}>
+                    {Math.floor(results.timeTaken / 60)}:{(results.timeTaken % 60).toString().padStart(2, '0')}
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                    Avg. {Math.round(results.timeTaken / results.totalQuestions)} seconds per question
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+          </Paper>
+
+          {/* Actions */}
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between',
+            mt: 6,
+            pb: 8  // Add more padding at the bottom to ensure content doesn't get cut off
+          }}>
+            <Button 
+              variant="outlined"
+              color="primary"
+              size="large"
+              onClick={handleGoBack}
+              startIcon={<ArrowBackIcon />}
+            >
+              Back to Dashboard
+            </Button>
+            
+            <Button
+              variant="contained"
+              onClick={() => navigate('/student-dashboard')}
+            >
+              Continue to Dashboard
+            </Button>
+          </Box>
+        </Container>
+      </Box>
+    );
+  }
+
+  // Return loading state as fallback
+  return (
+    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <CircularProgress />
+    </Box>
+  );
 }
 
 export default TestPage; 

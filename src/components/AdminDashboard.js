@@ -51,13 +51,13 @@ function AdminDashboard() {
     studentId: '',
     name: '',
     username: '',
+    email: '',
     password: '',
     institution: 'Default Institution',
     subjects: {
       physics: { level: '', stage: '' },
       chemistry: { level: '', stage: '' },
-      botany: { level: '', stage: '' },
-      zoology: { level: '', stage: '' }
+      biology: { level: '', stage: '' },
     },
     column1: '',
     column2: '',
@@ -123,13 +123,13 @@ function AdminDashboard() {
         studentId: student.studentId || '',
         name: student.name || '',
         username: student.username || '',
+        email: student.email || '',
         password: student.password || '',
         institution: student.institution || 'Default Institution',
         subjects: student.subjects || {
           physics: { level: '1', stage: '1' },
           chemistry: { level: '1', stage: '1' },
-          botany: { level: '1', stage: '1' },
-          zoology: { level: '1', stage: '1' }
+          biology: { level: '1', stage: '1' },
         },
         column1: student.column1 || '',
         column2: student.column2 || '',
@@ -143,13 +143,13 @@ function AdminDashboard() {
         studentId: '',
         name: '',
         username: '',
+        email: '',
         password: '',
         institution: 'Default Institution',
         subjects: {
           physics: { level: '1', stage: '1' },
           chemistry: { level: '1', stage: '1' },
-          botany: { level: '1', stage: '1' },
-          zoology: { level: '1', stage: '1' }
+          biology: { level: '1', stage: '1' },
         },
         column1: '',
         column2: '',
@@ -168,13 +168,13 @@ function AdminDashboard() {
       studentId: '',
       name: '',
       username: '',
+      email: '',
       password: '',
       institution: 'Default Institution',
       subjects: {
         physics: { level: '', stage: '' },
         chemistry: { level: '', stage: '' },
-        botany: { level: '', stage: '' },
-        zoology: { level: '', stage: '' }
+        biology: { level: '', stage: '' },
       },
       column1: '',
       column2: '',
@@ -225,13 +225,9 @@ function AdminDashboard() {
             level: formData.subjects.chemistry.level || "1",
             stage: formData.subjects.chemistry.stage || "1"
           },
-          botany: {
-            level: formData.subjects.botany.level || "1",
-            stage: formData.subjects.botany.stage || "1"
-          },
-          zoology: {
-            level: formData.subjects.zoology.level || "1",
-            stage: formData.subjects.zoology.stage || "1"
+          biology: {
+            level: formData.subjects.biology.level || "1",
+            stage: formData.subjects.biology.stage || "1"
           }
         }
       };
@@ -312,7 +308,7 @@ function AdminDashboard() {
     }));
   };
 
-  const subjects = ['physics', 'chemistry', 'botany', 'zoology'];
+  const subjects = ['physics', 'chemistry', 'biology'];
   const levels = ['1', '2', '3', '4'];
   const stages = Array.from({ length: 12 }, (_, i) => (i + 1).toString());
 
@@ -435,8 +431,7 @@ function AdminDashboard() {
                 <TableCell>Password</TableCell>
                 <TableCell>Physics</TableCell>
                 <TableCell>Chemistry</TableCell>
-                <TableCell>Botany</TableCell>
-                <TableCell>Zoology</TableCell>
+                <TableCell>Biology</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -464,10 +459,7 @@ function AdminDashboard() {
                     {student.subjects?.chemistry ? `L${student.subjects.chemistry.level}-S${student.subjects.chemistry.stage}` : 'Not Set'}
                   </TableCell>
                   <TableCell>
-                    {student.subjects?.botany ? `L${student.subjects.botany.level}-S${student.subjects.botany.stage}` : 'Not Set'}
-                  </TableCell>
-                  <TableCell>
-                    {student.subjects?.zoology ? `L${student.subjects.zoology.level}-S${student.subjects.zoology.stage}` : 'Not Set'}
+                    {student.subjects?.biology ? `L${student.subjects.biology.level}-S${student.subjects.biology.stage}` : 'Not Set'}
                   </TableCell>
                   <TableCell>
                     <IconButton color="primary" onClick={() => handleOpenDialog(student)}>
@@ -519,6 +511,16 @@ function AdminDashboard() {
                   fullWidth
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  margin="dense"
+                  label="Email"
+                  fullWidth
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
                 />
               </Grid>

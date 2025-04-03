@@ -50,8 +50,7 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 const subjects = [
   { id: 'physics', name: 'Physics', color: '#FF6384' },
   { id: 'chemistry', name: 'Chemistry', color: '#36A2EB' },
-  { id: 'botany', name: 'Botany', color: '#4BC0C0' },
-  { id: 'zoology', name: 'Zoology', color: '#FFCE56' }
+  { id: 'biology', name: 'Biology', color: '#4BC0C0' }
 ];
 
 // Total levels per subject (12 stages × 4 levels)
@@ -83,14 +82,12 @@ const subjectTopicsData = {
     { topic: 'Analytical Chemistry', score: 68 },
     { topic: 'Biochemistry', score: 77 }
   ],
-  botany: [
+  biology: [
     { topic: 'Plant Morphology', score: 88 },
     { topic: 'Plant Physiology', score: 80 },
     { topic: 'Plant Taxonomy', score: 65 },
     { topic: 'Plant Ecology', score: 73 },
-    { topic: 'Plant Reproduction', score: 82 }
-  ],
-  zoology: [
+    { topic: 'Plant Reproduction', score: 82 },
     { topic: 'Animal Physiology', score: 70 },
     { topic: 'Animal Taxonomy', score: 63 },
     { topic: 'Cell Biology', score: 85 },
@@ -153,8 +150,7 @@ function Analytics() {
       const mockSubjects = {
         physics: { level: '2', stage: '3' },
         chemistry: { level: '2', stage: '2' },
-        botany: { level: '1', stage: '4' },
-        zoology: { level: '1', stage: '3' }
+        biology: { level: '3', stage: '2' }
       };
       
       setStudentData({
@@ -218,6 +214,13 @@ function Analytics() {
   // Calculate average score for a subject
   const getAverageScoreForSubject = (subjectId) => {
     const topics = subjectTopicsData[subjectId];
+    
+    // Return 0 if the subject doesn't exist in our data
+    if (!topics || !Array.isArray(topics) || topics.length === 0) {
+      console.warn(`No topic data found for subject: ${subjectId}`);
+      return 0;
+    }
+    
     const sum = topics.reduce((total, topic) => total + topic.score, 0);
     return Math.round(sum / topics.length);
   };

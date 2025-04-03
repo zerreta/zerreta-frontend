@@ -81,6 +81,7 @@ function StudentData() {
 
   const fetchStudents = async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem('token');
       const response = await axios.get('http://localhost:5000/admin/students', {
         headers: { Authorization: `Bearer ${token}` }
@@ -229,6 +230,54 @@ function StudentData() {
   const levels = ['1', '2', '3', '4'];
   const stages = Array.from({ length: 12 }, (_, i) => (i + 1).toString());
 
+  // Add function to manually increment a student's level for a subject
+  const incrementStudentLevel = async (student, subject) => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Get current level and stage
+      let currentLevel = parseInt(student.subjects[subject]?.level) || 1;
+      let currentStage = parseInt(student.subjects[subject]?.stage) || 1;
+      
+      // Increment level
+      currentLevel += 1;
+      
+      // If level exceeds 4, move to next stage
+      if (currentLevel > 4) {
+        currentLevel = 1;
+        currentStage += 1;
+      }
+      
+      // Update the student data
+      const updatedStudent = {
+        ...student,
+        subjects: {
+          ...student.subjects,
+          [subject]: {
+            level: currentLevel.toString(),
+            stage: currentStage.toString()
+          }
+        }
+      };
+      
+      // Save to database
+      await axios.put(
+        `http://localhost:5000/admin/students/${student._id}`,
+        updatedStudent,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      // Refresh the student list
+      fetchStudents();
+      
+      // Show success message
+      alert(`Successfully updated ${subject} to Level ${currentLevel}, Stage ${currentStage} for ${student.name}`);
+    } catch (err) {
+      console.error('Failed to update student level:', err);
+      setError('Failed to update student level');
+    }
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -236,6 +285,14 @@ function StudentData() {
           Student Data Management
         </Typography>
         <Box>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={fetchStudents}
+            sx={{ mr: 2 }}
+          >
+            Refresh Data
+          </Button>
           <Button
             variant="contained"
             startIcon={<AddIcon />}
@@ -262,12 +319,12 @@ function StudentData() {
       )}
 
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
           <CircularProgress />
         </Box>
       ) : (
-        <TableContainer component={Paper}>
-          <Table>
+        <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 200px)', overflow: 'auto' }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow>
                 <TableCell>Student ID</TableCell>
@@ -334,7 +391,21 @@ function StudentData() {
                   <TableCell>{student.performance}</TableCell>
                   {subjects.map(subject => (
                     <React.Fragment key={subject}>
-                      <TableCell>{student.subjects?.[subject]?.level || '-'}</TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          {student.subjects?.[subject]?.level || '-'}
+                          <Tooltip title={`Increment ${subject} level`}>
+                            <IconButton 
+                              size="small" 
+                              color="primary" 
+                              onClick={() => incrementStudentLevel(student, subject)}
+                              sx={{ ml: 1 }}
+                            >
+                              <AddIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </TableCell>
                       <TableCell>{student.subjects?.[subject]?.stage || '-'}</TableCell>
                     </React.Fragment>
                   ))}

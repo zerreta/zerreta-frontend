@@ -27,6 +27,12 @@ if (!window.location.hostname.includes('localhost') && !window.location.hostname
   }
 }
 
+// Additional check to ensure baseURL is not empty or undefined
+if (!baseURL) {
+  baseURL = 'http://localhost:5000'; // Default fallback
+  console.warn('No API URL detected, falling back to localhost:5000');
+}
+
 console.log('Final API URL:', baseURL);
 
 const axiosInstance = axios.create({
@@ -35,20 +41,27 @@ const axiosInstance = axios.create({
     'Content-Type': 'application/json',
   },
   // Increase timeout for potentially slow render.com free tier
-  timeout: 60000,
+  timeout: 30000, // 30 seconds timeout
 });
 
 // Add a request interceptor to include auth token in every request
 axiosInstance.interceptors.request.use(
   (config) => {
     console.log('Making request to:', config.baseURL + config.url);
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    } catch (error) {
+      console.error('Error in request interceptor:', error);
+      return config;
     }
-    return config;
   },
   (error) => {
+    console.error('Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
@@ -57,19 +70,47 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => {
     // Any status code within the range of 2xx
+    const method = response.config.method.toUpperCase();
+    const url = response.config.url;
+    
+    console.log(`${method} ${url} - Status: ${response.status}`);
+    
+    // Return the response to continue the chain
     return response;
   },
   (error) => {
     // Log errors for debugging
     console.error('API Error:', error.message);
+    
     if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error(`Error ${error.response.status} for ${error.config?.method?.toUpperCase()} ${error.config?.url}`);
       console.error('Response data:', error.response.data);
-      console.error('Response status:', error.response.status);
     } else if (error.request) {
-      console.error('No response received:', error.request);
+      // The request was made but no response was received
+      console.error('No response received:', error.config?.url);
+      // Provide more user-friendly error message for network issues
+      error.message = 'Network error. Please check your connection.';
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      console.error('Request setup error:', error.message);
     }
+    
+    // Pass the error down the chain
     return Promise.reject(error);
   }
 );
+
+// Add helper methods for common operations
+axiosInstance.testConnection = async () => {
+  try {
+    const response = await axiosInstance.get('/health');
+    return response.data && response.data.status === 'ok';
+  } catch (error) {
+    console.error('API connection test failed:', error);
+    return false;
+  }
+};
 
 export default axiosInstance; 

@@ -44,6 +44,7 @@ import {
   DeleteForever as DeleteForeverIcon
 } from '@mui/icons-material';
 import axiosInstance from './axios-config';
+import { physicsTopics, chemistryTopics, biologyTopics } from './SyllabusData';
 
 function QuestionManager() {
   const [questions, setQuestions] = useState([]);
@@ -60,32 +61,41 @@ function QuestionManager() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [filters, setFilters] = useState({
     subject: '',
-    stage: '',
-    level: ''
+    topicNumber: ''
   });
+
+  // Get the topic arrays based on selected subject
+  const getTopicsForSubject = (subject) => {
+    switch(subject) {
+      case 'physics':
+        return physicsTopics;
+      case 'chemistry':
+        return chemistryTopics;
+      case 'biology': 
+        return biologyTopics;
+      default:
+        return [];
+    }
+  };
 
   // Form state for adding/editing questions
   const [formData, setFormData] = useState({
     subject: 'physics',
-    stage: '1',
-    level: '1',
-    topic: '',
+    topicNumber: '1',
     questionText: '',
     options: ['', '', '', ''],
     correctOption: 0,
     explanation: '',
     difficulty: 'medium',
-    timeAllocation: '60', // Default time in seconds
-    imageUrl: '' // New field for image URL
+    timeAllocation: '60',
+    imageUrl: ''
   });
 
-  // Add the missing resetFormData function
+  // Reset form data function
   const resetFormData = () => {
     setFormData({
       subject: 'physics',
-      stage: '1',
-      level: '1',
-      topic: '',
+      topicNumber: '1',
       questionText: '',
       options: ['', '', '', ''],
       correctOption: 0,
@@ -113,8 +123,7 @@ function QuestionManager() {
       const queryParams = new URLSearchParams();
       
       if (filters.subject) queryParams.append('subject', filters.subject);
-      if (filters.stage) queryParams.append('stage', filters.stage);
-      if (filters.level) queryParams.append('level', filters.level);
+      if (filters.topicNumber) queryParams.append('topicNumber', filters.topicNumber);
       
       console.log('Fetching questions with params:', queryParams.toString());
       const response = await axiosInstance.get(`/admin/questions?${queryParams.toString()}`);
@@ -146,15 +155,13 @@ function QuestionManager() {
       // Edit mode
       setFormData({
         subject: question.subject,
-        stage: question.stage,
-        level: question.level,
-        topic: question.topic || '',
+        topicNumber: question.topicNumber || '1',
         questionText: question.questionText,
         options: [...question.options],
         correctOption: question.correctOption,
         explanation: question.explanation || '',
         difficulty: question.difficulty || 'medium',
-        timeAllocation: question.timeAllocation || '60', // Default 60 seconds if not set
+        timeAllocation: question.timeAllocation || '60',
         imageUrl: question.imageUrl || ''
       });
       setCurrentQuestion(question);
@@ -162,15 +169,13 @@ function QuestionManager() {
       // Add mode
       setFormData({
         subject: 'physics',
-        stage: '1',
-        level: '1',
-        topic: '',
+        topicNumber: '1',
         questionText: '',
         options: ['', '', '', ''],
         correctOption: 0,
         explanation: '',
         difficulty: 'medium',
-        timeAllocation: '60', // Default 60 seconds
+        timeAllocation: '60',
         imageUrl: ''
       });
       setCurrentQuestion(null);
@@ -212,8 +217,8 @@ function QuestionManager() {
       }
       
       // Validate form data
-      if (!formData.subject || !formData.stage || !formData.level || !formData.questionText) {
-        setError('Please fill all required fields: Subject, Stage, Level, and Question Text');
+      if (!formData.subject || !formData.topicNumber || !formData.questionText) {
+        setError('Please fill all required fields: Subject, Topic, and Question Text');
         setLoading(false);
         return;
       }
@@ -354,8 +359,8 @@ function QuestionManager() {
       }
 
       // Validate questions (now in 0-3 format)
-      const requiredFields = ['subject', 'stage', 'level', 'questionText', 'options', 'correctOption'];
-      const validSubjects = ['physics', 'chemistry', 'botany', 'zoology'];
+      const requiredFields = ['subject', 'topicNumber', 'questionText', 'options', 'correctOption'];
+      const validSubjects = ['physics', 'chemistry', 'biology'];
       
       for (let i = 0; i < parsedQuestions.length; i++) {
         const question = parsedQuestions[i];
@@ -373,7 +378,7 @@ function QuestionManager() {
         
         // Validate subject
         if (!validSubjects.includes(question.subject.toLowerCase())) {
-          setError(`Question ${i + 1}: Invalid subject. Must be one of: physics, chemistry, botany, zoology`);
+          setError(`Question ${i + 1}: Invalid subject. Must be one of: physics, chemistry, biology`);
           setLoading(false);
           return;
         }
@@ -403,9 +408,6 @@ function QuestionManager() {
         }
       }
 
-      // Debug: Log the questions being sent
-      console.log('Sending questions to server:', JSON.stringify(parsedQuestions, null, 2));
-      
       // Upload questions
       try {
         const response = await axiosInstance.post(
@@ -476,7 +478,7 @@ function QuestionManager() {
         const headers = lines[0].split(',').map(header => header.trim());
         
         // Validate headers
-        const requiredHeaders = ['subject', 'stage', 'level', 'questionText', 'options', 'correctOption'];
+        const requiredHeaders = ['subject', 'topicNumber', 'questionText', 'options', 'correctOption'];
         const missingHeaders = requiredHeaders.filter(header => !headers.includes(header));
         
         if (missingHeaders.length > 0) {
@@ -524,8 +526,8 @@ function QuestionManager() {
           });
           
           // Validate subject field
-          if (question.subject && !['physics', 'chemistry', 'botany', 'zoology'].includes(question.subject.toLowerCase())) {
-            setError(`Line ${i + 1}: Invalid subject. Must be one of: physics, chemistry, botany, zoology`);
+          if (question.subject && !['physics', 'chemistry', 'biology'].includes(question.subject.toLowerCase())) {
+            setError(`Line ${i + 1}: Invalid subject. Must be one of: physics, chemistry, biology`);
             setLoading(false);
             return;
           }
@@ -708,7 +710,7 @@ function QuestionManager() {
       {tabValue === 0 && (
         <>
           <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid item xs={12} sm={3}>
+            <Grid item xs={12} sm={4}>
               <FormControl fullWidth>
                 <InputLabel>Filter by Subject</InputLabel>
                 <Select
@@ -720,48 +722,30 @@ function QuestionManager() {
                   <MenuItem value="">All Subjects</MenuItem>
                   <MenuItem value="physics">Physics</MenuItem>
                   <MenuItem value="chemistry">Chemistry</MenuItem>
-                  <MenuItem value="botany">Botany</MenuItem>
-                  <MenuItem value="zoology">Zoology</MenuItem>
+                  <MenuItem value="biology">Biology</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={3}>
+            <Grid item xs={12} sm={4}>
               <FormControl fullWidth>
-                <InputLabel>Filter by Stage</InputLabel>
+                <InputLabel>Filter by Topic</InputLabel>
                 <Select
-                  name="stage"
-                  value={filters.stage}
+                  name="topicNumber"
+                  value={filters.topicNumber}
                   onChange={handleFilterChange}
-                  label="Filter by Stage"
+                  label="Filter by Topic"
+                  disabled={!filters.subject}
                 >
-                  <MenuItem value="">All Stages</MenuItem>
-                  {Array.from({ length: 12 }, (_, i) => (
-                    <MenuItem key={i + 1} value={(i + 1).toString()}>
-                      Stage {i + 1}
+                  <MenuItem value="">All Topics</MenuItem>
+                  {filters.subject && getTopicsForSubject(filters.subject).map((topic) => (
+                    <MenuItem key={topic.number} value={topic.number}>
+                      {topic.number}: {topic.title}
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={3}>
-              <FormControl fullWidth>
-                <InputLabel>Filter by Level</InputLabel>
-                <Select
-                  name="level"
-                  value={filters.level}
-                  onChange={handleFilterChange}
-                  label="Filter by Level"
-                >
-                  <MenuItem value="">All Levels</MenuItem>
-                  {Array.from({ length: 4 }, (_, i) => (
-                    <MenuItem key={i + 1} value={(i + 1).toString()}>
-                      Level {i + 1}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={3} sx={{ display: 'flex', alignItems: 'center' }}>
+            <Grid item xs={12} sm={4} sx={{ display: 'flex', alignItems: 'center' }}>
               <Button 
                 variant="contained" 
                 color="primary" 
@@ -784,7 +768,7 @@ function QuestionManager() {
                 <TableHead>
                   <TableRow>
                     <TableCell>Subject</TableCell>
-                    <TableCell>Stage-Level</TableCell>
+                    <TableCell>Topic</TableCell>
                     <TableCell>Question</TableCell>
                     <TableCell>Image</TableCell>
                     <TableCell>Time (sec)</TableCell>
@@ -793,73 +777,84 @@ function QuestionManager() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {questions.map((question) => (
-                    <TableRow key={question._id}>
-                      <TableCell>
-                        <Chip 
-                          label={question.subject.charAt(0).toUpperCase() + question.subject.slice(1)} 
-                          color={
-                            question.subject === 'physics' ? 'primary' :
-                            question.subject === 'chemistry' ? 'secondary' :
-                            question.subject === 'botany' ? 'success' :
-                            'warning'
-                          }
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>{`${question.stage}-${question.level}`}</TableCell>
-                      <TableCell>
-                        <Tooltip title={question.questionText}>
-                          <Typography variant="body2" sx={{ maxWidth: 250, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {question.questionText}
-                          </Typography>
-                        </Tooltip>
-                      </TableCell>
-                      <TableCell>
-                        {question.imageUrl ? (
-                          <Tooltip title="View Image">
-                            <IconButton 
-                              size="small" 
-                              color="primary"
-                              onClick={() => window.open(question.imageUrl, '_blank')}
-                            >
-                              <ImageIcon />
-                            </IconButton>
+                  {questions.map((question) => {
+                    // Find topic title from topic number
+                    const topics = getTopicsForSubject(question.subject);
+                    const topic = topics.find(t => t.number === question.topicNumber) || {};
+                    
+                    return (
+                      <TableRow key={question._id}>
+                        <TableCell>
+                          <Chip 
+                            label={question.subject.charAt(0).toUpperCase() + question.subject.slice(1)} 
+                            color={
+                              question.subject === 'physics' ? 'primary' :
+                              question.subject === 'chemistry' ? 'secondary' :
+                              'info'
+                            }
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Tooltip title={topic.title || ''}>
+                            <Typography variant="body2">
+                              {question.topicNumber || '—'}: {(topic.title || '').substring(0, 20)}{topic.title && topic.title.length > 20 ? '...' : ''}
+                            </Typography>
                           </Tooltip>
-                        ) : (
-                          <Typography variant="body2" color="text.secondary">None</Typography>
-                        )}
-                      </TableCell>
-                      <TableCell>{question.timeAllocation || '60'}</TableCell>
-                      <TableCell>
-                        <Chip 
-                          label={question.difficulty || 'medium'} 
-                          size="small"
-                          color={
-                            question.difficulty === 'easy' ? 'success' :
-                            question.difficulty === 'hard' ? 'error' :
-                            'info'
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <IconButton 
-                          color="primary" 
-                          size="small"
-                          onClick={() => handleOpenDialog(question)}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton 
-                          color="error" 
-                          size="small"
-                          onClick={() => handleDelete(question._id)}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell>
+                          <Tooltip title={question.questionText}>
+                            <Typography variant="body2" sx={{ maxWidth: 250, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {question.questionText}
+                            </Typography>
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell>
+                          {question.imageUrl ? (
+                            <Tooltip title="View Image">
+                              <IconButton 
+                                size="small" 
+                                color="primary"
+                                onClick={() => window.open(question.imageUrl, '_blank')}
+                              >
+                                <ImageIcon />
+                              </IconButton>
+                            </Tooltip>
+                          ) : (
+                            <Typography variant="body2" color="text.secondary">None</Typography>
+                          )}
+                        </TableCell>
+                        <TableCell>{question.timeAllocation || '60'}</TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={question.difficulty || 'medium'} 
+                            size="small"
+                            color={
+                              question.difficulty === 'easy' ? 'success' :
+                              question.difficulty === 'hard' ? 'error' :
+                              'info'
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <IconButton 
+                            color="primary" 
+                            size="small"
+                            onClick={() => handleOpenDialog(question)}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton 
+                            color="error" 
+                            size="small"
+                            onClick={() => handleDelete(question._id)}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -890,7 +885,10 @@ function QuestionManager() {
                 JSON Format
               </Typography>
               <Typography variant="body2" color="textSecondary" paragraph>
-                Paste JSON array of questions below. Each question must include: subject (physics, chemistry, botany, zoology), stage, level, questionText, options (array of 4 option strings), correctOption (1-4 index of correct answer). Optional fields: topic, explanation, difficulty (easy, medium, hard), imageUrl, timeAllocation (seconds).
+                Paste JSON array of questions below. Each question must include: subject (physics, chemistry, biology), 
+                topicNumber (based on the topic number in syllabus), questionText, options (array of 4 option strings), 
+                correctOption (1-4 index of correct answer). Optional fields: explanation, difficulty (easy, medium, hard), 
+                imageUrl, timeAllocation (seconds).
                 <br />
                 <strong>Note:</strong> Options are numbered 1-4 in the UI for clarity, but are stored as 0-3 in the database.
               </Typography>
@@ -902,9 +900,7 @@ function QuestionManager() {
                 placeholder={`[
   {
     "subject": "physics",
-    "stage": "1",
-    "level": "1",
-    "topic": "Mechanics",
+    "topicNumber": "1",
     "questionText": "What is the SI unit of force?",
     "options": ["Newton", "Joule", "Watt", "Pascal"],
     "correctOption": 1,
@@ -914,9 +910,7 @@ function QuestionManager() {
   },
   {
     "subject": "chemistry",
-    "stage": "1",
-    "level": "1",
-    "topic": "Periodic Table",
+    "topicNumber": "3",
     "questionText": "Which element has the symbol 'Na'?",
     "options": ["Nitrogen", "Sodium", "Nickel", "Neon"],
     "correctOption": 2,
@@ -943,8 +937,8 @@ function QuestionManager() {
                 CSV Format
               </Typography>
               <Typography variant="body2" color="textSecondary" paragraph>
-                Upload a CSV file with the following headers: subject, stage, level, topic, questionText, options, correctOption, explanation, difficulty, timeAllocation.
-                Required fields: subject (physics, chemistry, botany, zoology), stage, level, questionText, options, correctOption (1-4).
+                Upload a CSV file with the following headers: subject, topicNumber, questionText, options, correctOption, explanation, difficulty, timeAllocation.
+                Required fields: subject (physics, chemistry, biology), topicNumber, questionText, options, correctOption (1-4).
                 <br />
                 <strong>Note:</strong> Options are numbered 1-4 in the UI for clarity, but are stored as 0-3 in the database.
                 <br />
@@ -984,10 +978,10 @@ function QuestionManager() {
                 CSV Template Format:
               </Typography>
               <Typography variant="body2" color="textSecondary" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}>
-                subject,stage,level,topic,questionText,options,correctOption,explanation,difficulty,timeAllocation
-                physics,1,1,Mechanics,What is the SI unit of force?,Newton|Joule|Watt|Pascal,1,Newton is the SI unit of force.,easy,60
-                chemistry,1,1,Periodic Table,Which element has the symbol 'Na'?,Nitrogen|Sodium|Nickel|Neon,2,Sodium has the symbol 'Na' in the periodic table.,medium,60
-                botany,1,1,Cell Biology,Which organelle is known as the powerhouse of the cell?,Nucleus|Ribosome|Mitochondria|Golgi apparatus,3,Mitochondria are responsible for cellular respiration and energy production.,medium,45
+                subject,topicNumber,questionText,options,correctOption,explanation,difficulty,timeAllocation
+                physics,1,What is the SI unit of force?,Newton|Joule|Watt|Pascal,1,Newton is the SI unit of force.,easy,60
+                chemistry,3,Which element has the symbol 'Na'?,Nitrogen|Sodium|Nickel|Neon,2,Sodium has the symbol 'Na' in the periodic table.,medium,60
+                biology,8,Which organelle is known as the powerhouse of the cell?,Nucleus|Ribosome|Mitochondria|Golgi apparatus,3,Mitochondria are responsible for cellular respiration and energy production.,medium,45
               </Typography>
             </Box>
           </CardContent>
@@ -1001,7 +995,7 @@ function QuestionManager() {
         </DialogTitle>
         <DialogContent dividers>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={3}>
+            <Grid item xs={12} sm={6}>
               <FormControl fullWidth sx={{ mb: 2 }}>
                 <InputLabel>Subject</InputLabel>
                 <Select
@@ -1012,54 +1006,26 @@ function QuestionManager() {
                 >
                   <MenuItem value="physics">Physics</MenuItem>
                   <MenuItem value="chemistry">Chemistry</MenuItem>
-                  <MenuItem value="botany">Botany</MenuItem>
-                  <MenuItem value="zoology">Zoology</MenuItem>
+                  <MenuItem value="biology">Biology</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={3}>
+            <Grid item xs={12} sm={6}>
               <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Stage</InputLabel>
+                <InputLabel>Topic</InputLabel>
                 <Select
-                  name="stage"
-                  value={formData.stage}
+                  name="topicNumber"
+                  value={formData.topicNumber}
                   onChange={handleFormChange}
-                  label="Stage"
+                  label="Topic"
                 >
-                  {Array.from({ length: 12 }, (_, i) => (
-                    <MenuItem key={i + 1} value={(i + 1).toString()}>
-                      Stage {i + 1}
+                  {getTopicsForSubject(formData.subject).map((topic) => (
+                    <MenuItem key={topic.number} value={topic.number}>
+                      {topic.number}: {topic.title}
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={3}>
-              <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Level</InputLabel>
-                <Select
-                  name="level"
-                  value={formData.level}
-                  onChange={handleFormChange}
-                  label="Level"
-                >
-                  {Array.from({ length: 4 }, (_, i) => (
-                    <MenuItem key={i + 1} value={(i + 1).toString()}>
-                      Level {i + 1}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={3}>
-              <TextField
-                fullWidth
-                label="Topic (Optional)"
-                name="topic"
-                value={formData.topic}
-                onChange={handleFormChange}
-                sx={{ mb: 2 }}
-              />
             </Grid>
             
             {/* Image Upload Section */}

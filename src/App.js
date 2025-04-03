@@ -27,6 +27,11 @@ import StudentProfile from './pages/StudentProfile';
 import StudentData from './components/StudentData';
 import InstitutionsList from './components/InstitutionsList';
 import InstitutionStudents from './components/InstitutionStudents';
+import Syllabus from './components/Syllabus';
+import Resources from './components/Resources';
+
+// Import the new AdvancedAssessment component
+import AdvancedAssessment from './components/AdvancedAssessment';
 
 // Create a simple TestSelection component
 const TestSelection = () => {
@@ -78,13 +83,63 @@ function App() {
   
   const isAuthenticated = () => {
     const token = localStorage.getItem('token');
-    // Additional validation could be added here to check token validity
-    return !!token;
+    // Check if token exists
+    if (!token) return false;
+    
+    // Additional check - token should be a JWT (basic format validation)
+    // A JWT consists of three parts separated by dots
+    const tokenParts = token.split('.');
+    if (tokenParts.length !== 3) {
+      console.warn('Invalid token format detected');
+      return false;
+    }
+    
+    // We could add token expiration check here in the future
+    
+    return true;
   };
 
   const isAdmin = () => {
+    if (!isAuthenticated()) return false;
+    
     const role = localStorage.getItem('role');
     return role === 'admin';
+  };
+
+  const isStudent = () => {
+    if (!isAuthenticated()) return false;
+    
+    const role = localStorage.getItem('role');
+    return role === 'student';
+  };
+
+  // Create reusable protected route components for cleaner routing
+  const AdminRoute = ({ children }) => {
+    if (!isAuthenticated()) {
+      console.warn('Unauthenticated access attempt to admin route');
+      return <Navigate to="/login" replace />;
+    }
+    
+    if (!isAdmin()) {
+      console.warn('Unauthorized access attempt to admin route');
+      return <Navigate to="/login" replace />;
+    }
+    
+    return children;
+  };
+
+  const StudentRoute = ({ children }) => {
+    if (!isAuthenticated()) {
+      console.warn('Unauthenticated access attempt to student route');
+      return <Navigate to="/login" replace />;
+    }
+    
+    if (!isStudent()) {
+      console.warn('Unauthorized access attempt to student route');
+      return <Navigate to="/login" replace />;
+    }
+    
+    return children;
   };
 
   return (
@@ -117,11 +172,9 @@ function App() {
           <Route 
             path="/admin"
             element={
-              isAuthenticated() && isAdmin() ? (
+              <AdminRoute>
                 <AdminLayout />
-              ) : (
-                <Navigate to="/login" replace />
-              )
+              </AdminRoute>
             }
           >
             <Route index element={<AdminDashboard />} />
@@ -137,11 +190,9 @@ function App() {
           <Route 
             path="/student-dashboard" 
             element={
-              isAuthenticated() && !isAdmin() ? (
+              <StudentRoute>
                 <DashboardLayout />
-              ) : (
-                <Navigate to="/login" replace />
-              )
+              </StudentRoute>
             }
           >
             <Route index element={<StudentDashboard />} />
@@ -149,35 +200,61 @@ function App() {
             <Route path="progress" element={<Progress />} />
             <Route path="analytics" element={<Analytics />} />
             <Route path="analytics-summary" element={<AnalyticsSummary />} />
+            <Route path="resources" element={<Resources />} />
             <Route path="ai-help" element={<AIHelp />} />
             <Route path="leaderboard" element={<LeaderboardPage />} />
-            {/* <Route path="test-history" element={<TestHistory />} /> */}
+            <Route path="test-history" element={<TestHistory />} />
           </Route>
           
+          {/* TestResults routes */}
+          <Route
+            path="/test-results"
+            element={
+              <StudentRoute>
+                <TestResults />
+              </StudentRoute>
+            }
+          />
           
+          <Route
+            path="/test-results/:testId"
+            element={
+              <StudentRoute>
+                <TestResults />
+              </StudentRoute>
+            }
+          />
           
-          {/* TestResults route moved outside DashboardLayout */}
           <Route
             path="/student-dashboard/test-results/:testId"
             element={
-              isAuthenticated() && !isAdmin() ? (
+              <StudentRoute>
                 <TestResults />
-              ) : (
-                <Navigate to="/login" replace />
-              )
+              </StudentRoute>
             }
           />
           
           <Route
-            path="/test"
+            path="/results/:testId"
             element={
-              isAuthenticated() && !isAdmin() ? (
-                <TestPage />
-              ) : (
-                <Navigate to="/login" replace />
-              )
+              <StudentRoute>
+                <TestResults />
+              </StudentRoute>
             }
           />
+          
+          {/* Add the new route */}
+          <Route path="/advanced-assessment" element={
+            <StudentRoute>
+              <AdvancedAssessment />
+            </StudentRoute>
+          } />
+          
+          <Route path="/test" element={
+            <StudentRoute>
+              <TestPage />
+            </StudentRoute>
+          } />
         </Routes>
       </Router>
     </ThemeProvider>

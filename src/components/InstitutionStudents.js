@@ -53,13 +53,13 @@ function InstitutionStudents() {
     studentId: '',
     name: '',
     username: '',
+    email: '',
     password: '',
     institution: decodedInstitution,
     subjects: {
       physics: { level: '', stage: '' },
       chemistry: { level: '', stage: '' },
-      botany: { level: '', stage: '' },
-      zoology: { level: '', stage: '' }
+      biology: { level: '', stage: '' },
     },
     column1: '',
     column2: '',
@@ -68,7 +68,7 @@ function InstitutionStudents() {
     column5: ''
   });
 
-  const subjects = ['physics', 'chemistry', 'botany', 'zoology'];
+  const subjects = ['physics', 'chemistry', 'biology'];
   const levels = ['1', '2', '3', '4', '5'];
   const stages = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
 
@@ -106,13 +106,13 @@ function InstitutionStudents() {
         studentId: student.studentId || '',
         name: student.name || '',
         username: student.username || '',
+        email: student.email || '',
         password: student.password || '',
         institution: student.institution || decodedInstitution,
         subjects: student.subjects || {
           physics: { level: '1', stage: '1' },
           chemistry: { level: '1', stage: '1' },
-          botany: { level: '1', stage: '1' },
-          zoology: { level: '1', stage: '1' }
+          biology: { level: '1', stage: '1' },
         },
         column1: student.column1 || '',
         column2: student.column2 || '',
@@ -126,13 +126,13 @@ function InstitutionStudents() {
         studentId: '',
         name: '',
         username: '',
+        email: '',
         password: '',
         institution: decodedInstitution,
         subjects: {
           physics: { level: '1', stage: '1' },
           chemistry: { level: '1', stage: '1' },
-          botany: { level: '1', stage: '1' },
-          zoology: { level: '1', stage: '1' }
+          biology: { level: '1', stage: '1' },
         },
         column1: '',
         column2: '',
@@ -299,8 +299,7 @@ function InstitutionStudents() {
                     <TableCell>Password</TableCell>
                     <TableCell>Physics</TableCell>
                     <TableCell>Chemistry</TableCell>
-                    <TableCell>Botany</TableCell>
-                    <TableCell>Zoology</TableCell>
+                    <TableCell>Biology</TableCell>
                     <TableCell>Actions</TableCell>
                   </TableRow>
                 </TableHead>
@@ -328,10 +327,7 @@ function InstitutionStudents() {
                         Stage: {student.subjects?.chemistry?.stage || 1}, Level: {student.subjects?.chemistry?.level || 1}
                       </TableCell>
                       <TableCell>
-                        Stage: {student.subjects?.botany?.stage || 1}, Level: {student.subjects?.botany?.level || 1}
-                      </TableCell>
-                      <TableCell>
-                        Stage: {student.subjects?.zoology?.stage || 1}, Level: {student.subjects?.zoology?.level || 1}
+                        Stage: {student.subjects?.biology?.stage || 1}, Level: {student.subjects?.biology?.level || 1}
                       </TableCell>
                       <TableCell>
                         <IconButton color="primary" onClick={() => handleOpenDialog(student)}>
@@ -383,6 +379,15 @@ function InstitutionStudents() {
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                   required
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  margin="dense"
+                  label="Email"
+                  fullWidth
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>

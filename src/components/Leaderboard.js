@@ -56,29 +56,18 @@ function Leaderboard() {
     setTimeFrame(newTimeFrame);
   };
 
-  // Calculate score based on levels (25 points per level)
-  const calculateLevelScore = (subjectLevels) => {
-    if (!subjectLevels) return 0;
-    
+  // Calculate student score based on levels completed
+  const calculateStudentScore = (subjectLevels) => {
     let totalScore = 0;
-    
-    // Calculate score for each subject
     if (subjectLevels.physics) {
       totalScore += (parseInt(subjectLevels.physics.level) * 25);
     }
-    
     if (subjectLevels.chemistry) {
       totalScore += (parseInt(subjectLevels.chemistry.level) * 25);
     }
-    
-    if (subjectLevels.botany) {
-      totalScore += (parseInt(subjectLevels.botany.level) * 25);
+    if (subjectLevels.biology) {
+      totalScore += (parseInt(subjectLevels.biology.level) * 25);
     }
-    
-    if (subjectLevels.zoology) {
-      totalScore += (parseInt(subjectLevels.zoology.level) * 25);
-    }
-    
     return totalScore;
   };
 
@@ -119,24 +108,21 @@ function Leaderboard() {
         studentId: student.studentId,
         avatar: student.name.split(' ').map(n => n[0]).join(''),
         subjects: student.subjects,
-        overallScore: calculateLevelScore(student.subjects),
+        overallScore: calculateStudentScore(student.subjects),
         physicsScore: calculateSubjectScore(student.subjects, 'physics'),
         chemistryScore: calculateSubjectScore(student.subjects, 'chemistry'),
-        botanyScore: calculateSubjectScore(student.subjects, 'botany'),
-        zoologyScore: calculateSubjectScore(student.subjects, 'zoology'),
+        biologyScore: calculateSubjectScore(student.subjects, 'biology'),
         // Get highest level across all subjects
         highestLevel: Math.max(
           parseInt(student.subjects?.physics?.level || 0),
           parseInt(student.subjects?.chemistry?.level || 0),
-          parseInt(student.subjects?.botany?.level || 0),
-          parseInt(student.subjects?.zoology?.level || 0)
+          parseInt(student.subjects?.biology?.level || 0)
         ),
         // Track the sum of all levels
         totalLevels: (
           parseInt(student.subjects?.physics?.level || 0) +
           parseInt(student.subjects?.chemistry?.level || 0) +
-          parseInt(student.subjects?.botany?.level || 0) +
-          parseInt(student.subjects?.zoology?.level || 0)
+          parseInt(student.subjects?.biology?.level || 0)
         )
       }));
       
@@ -172,10 +158,8 @@ function Leaderboard() {
         return sortedStudents.sort((a, b) => b.physicsScore - a.physicsScore);
       case 'chemistry':
         return sortedStudents.sort((a, b) => b.chemistryScore - a.chemistryScore);
-      case 'botany':
-        return sortedStudents.sort((a, b) => b.botanyScore - a.botanyScore);
-      case 'zoology':
-        return sortedStudents.sort((a, b) => b.zoologyScore - a.zoologyScore);
+      case 'biology':
+        return sortedStudents.sort((a, b) => b.biologyScore - a.biologyScore);
       case 'levels':
         return sortedStudents.sort((a, b) => b.totalLevels - a.totalLevels);
       default:
@@ -211,8 +195,7 @@ function Leaderboard() {
   const getSubjectLevelInfo = (student) => {
     const physicsLevel = parseInt(student.subjects?.physics?.level || 0);
     const chemistryLevel = parseInt(student.subjects?.chemistry?.level || 0);
-    const botanyLevel = parseInt(student.subjects?.botany?.level || 0);
-    const zoologyLevel = parseInt(student.subjects?.zoology?.level || 0);
+    const biologyLevel = parseInt(student.subjects?.biology?.level || 0);
     
     return (
       <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
@@ -230,14 +213,8 @@ function Leaderboard() {
         />
         <Chip
           size="small"
-          label={`Botany: L${botanyLevel}`}
+          label={`Biology: L${biologyLevel}`}
           color="success"
-          variant="outlined"
-        />
-        <Chip
-          size="small"
-          label={`Zoology: L${zoologyLevel}`}
-          color="warning"
           variant="outlined"
         />
       </Box>
@@ -387,13 +364,8 @@ function Leaderboard() {
               sx={{ textTransform: 'none', py: 2 }}
             />
             <Tab 
-              value="botany" 
-              label={getTabLabel("Botany", <WhatshotIcon sx={{ color: theme.palette.success.main }} />)} 
-              sx={{ textTransform: 'none', py: 2 }}
-            />
-            <Tab 
-              value="zoology" 
-              label={getTabLabel("Zoology", <WhatshotIcon sx={{ color: theme.palette.warning.main }} />)} 
+              value="biology" 
+              label={getTabLabel("Biology", <WhatshotIcon sx={{ color: theme.palette.success.main }} />)} 
               sx={{ textTransform: 'none', py: 2 }}
             />
           </Tabs>
@@ -491,8 +463,7 @@ function Leaderboard() {
                           label={`${currentTab === 'levels' ? student.totalLevels + ' Levels' : 
                                   currentTab === 'physics' ? student.physicsScore + ' pts' :
                                   currentTab === 'chemistry' ? student.chemistryScore + ' pts' :
-                                  currentTab === 'botany' ? student.botanyScore + ' pts' :
-                                  currentTab === 'zoology' ? student.zoologyScore + ' pts' :
+                                  currentTab === 'biology' ? student.biologyScore + ' pts' :
                                   student.overallScore + ' pts'}`}
                           sx={{
                             bgcolor: index === 0 ? 'rgba(255, 215, 0, 0.2)' : 
@@ -608,8 +579,7 @@ function Leaderboard() {
                                 {currentTab === 'levels' ? student.totalLevels + ' Levels' : 
                                  currentTab === 'physics' ? student.physicsScore + ' pts' :
                                  currentTab === 'chemistry' ? student.chemistryScore + ' pts' :
-                                 currentTab === 'botany' ? student.botanyScore + ' pts' :
-                                 currentTab === 'zoology' ? student.zoologyScore + ' pts' :
+                                 currentTab === 'biology' ? student.biologyScore + ' pts' :
                                  student.overallScore + ' pts'}
                               </Typography>
                             </TableCell>

@@ -35,7 +35,8 @@ import {
   MenuBook as MenuBookIcon,
   Lightbulb as LightbulbIcon,
   EmojiEvents as TrophyIcon,
-  Psychology as PsychologyIcon
+  Psychology as PsychologyIcon,
+  BookmarkBorder as BookmarkIcon
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import axiosInstance from './axios-config';
@@ -115,6 +116,8 @@ const menuItems = [
   { text: 'My Progress', icon: <SchoolIcon />, path: '/student-dashboard/progress' },
   { text: 'Analytics', icon: <AnalyticsIcon />, path: '/student-dashboard/analytics' },
   { text: 'Analytics Summary', icon: <AnalyticsIcon />, path: '/student-dashboard/analytics-summary' },
+  { text: 'Resources', icon: <BookmarkIcon />, path: '/student-dashboard/resources' },
+  { text: 'Test History', icon: <AssignmentIcon />, path: '/student-dashboard/test-history' },
   { text: 'AI Help', icon: <LightbulbIcon />, path: '/student-dashboard/ai-help' },
   { text: 'Leaderboard', icon: <TrophyIcon />, path: '/student-dashboard/leaderboard' }
 ];

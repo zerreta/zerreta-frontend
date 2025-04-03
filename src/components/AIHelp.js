@@ -3,118 +3,284 @@ import {
   Box,
   Typography,
   TextField,
-  Button,
+  IconButton,
+  CircularProgress,
   Paper,
   Avatar,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
-  CircularProgress,
-  IconButton,
-  Tooltip,
-  Divider,
-  Chip,
-  Menu,
-  MenuItem,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Alert,
-  Snackbar
+  Button,
+  useMediaQuery,
+  useTheme,
+  Tooltip
 } from '@mui/material';
-import { motion } from 'framer-motion';
+import { styled } from '@mui/material/styles';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import SendIcon from '@mui/icons-material/Send';
-import HistoryIcon from '@mui/icons-material/History';
-import DeleteIcon from '@mui/icons-material/Delete';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import PersonIcon from '@mui/icons-material/Person';
+import AddIcon from '@mui/icons-material/Add';
 import axios from 'axios';
+import ReactMarkdown from 'react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 
-// Gemini API key
-const GEMINI_API_KEY = "AIzaSyB2vBt8DezWCC7FdryTDDQEHRV4wGqu6Qs";
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+// API Key
+const ZERRETA_API_KEY = "AIzaSyB2vBt8DezWCC7FdryTDDQEHRV4wGqu6Qs";
+const ZERRETA_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+
+// Styled components
+const PageContainer = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  height: '100%',
+  minHeight: 'calc(100vh - 64px)', // Ensure minimum height
+  width: '100%',
+  overflow: 'hidden',
+  backgroundColor: '#efefef',
+  position: 'relative',
+  zIndex: 1 // Ensure proper stacking context
+}));
+
+const Header = styled(Box)(({ theme }) => ({
+  borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
+  padding: theme.spacing(2),
+  backgroundColor: '#7445f8',
+  color: 'white',
+  display: 'flex',
+  alignItems: 'center',
+  position: 'sticky',
+  top: 0,
+  zIndex: 5
+}));
+
+const ChatArea = styled(Box)(({ theme }) => ({
+  flex: 1,
+  overflowY: 'auto',
+  padding: theme.spacing(2),
+  paddingBottom: theme.spacing(10),
+  display: 'flex',
+  flexDirection: 'column',
+  minHeight: 0, // This is important for flex child to scroll
+  marginBottom: 60 // Add space for the input container
+}));
+
+const InputContainer = styled(Box)(({ theme }) => ({
+  position: 'sticky',
+  bottom: 0,
+  left: 0,
+  right: 0,
+  padding: theme.spacing(1.5),
+  paddingLeft: theme.spacing(2),
+  paddingRight: theme.spacing(2),
+  backgroundColor: '#fff',
+  borderTop: '1px solid rgba(0, 0, 0, 0.1)',
+  display: 'flex',
+  alignItems: 'center',
+  zIndex: 10,
+  height: 60,
+  [theme.breakpoints.down('sm')]: {
+    height: 56
+  }
+}));
+
+const MessageBubble = styled(Paper)(({ theme, isai }) => ({
+  padding: theme.spacing(2),
+  borderRadius: 16,
+  backgroundColor: isai === 'true' ? '#ffffff' : '#EFE7FF',
+  border: isai === 'true' ? '1px solid rgba(0, 0, 0, 0.08)' : 'none',
+  maxWidth: '85%',
+  alignSelf: isai === 'true' ? 'flex-start' : 'flex-end',
+  marginBottom: theme.spacing(2),
+  wordBreak: 'break-word'
+}));
+
+const CircleAvatar = styled(Avatar)(({ theme }) => ({
+  width: 40,
+  height: 40,
+  borderRadius: '50%'
+}));
+
+// Add an error boundary class at the top of the file
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("AI Help Error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <Box sx={{ p: 3, textAlign: 'center' }}>
+          <Typography variant="h6" color="error" gutterBottom>
+            Something went wrong with the AI assistant
+          </Typography>
+          <Typography variant="body2" color="text.secondary" paragraph>
+            Error: {this.state.error?.message || 'Unknown error'}
+          </Typography>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={() => {
+              sessionStorage.removeItem('aiChatQuestion');
+              this.setState({ hasError: false, error: null });
+              window.location.reload();
+            }}
+          >
+            Reload AI Assistant
+          </Button>
+        </Box>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function AIHelp() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [message, setMessage] = useState('');
   const [chatHistory, setChatHistory] = useState([
     {
       id: 1,
-      text: 'Hello! I\'m your AI study assistant. How can I help you today?',
+      text: 'Hello! I\'m your Zerreta study assistant. How can I help you today?',
       isAI: true,
-    },
+      timestamp: new Date().toISOString()
+    }
   ]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [conversations, setConversations] = useState([]);
-  const [currentConversationId, setCurrentConversationId] = useState('default');
-  const [historyMenuAnchor, setHistoryMenuAnchor] = useState(null);
-  const [contextMenuAnchor, setContextMenuAnchor] = useState(null);
-  const [selectedMessageId, setSelectedMessageId] = useState(null);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
   
   const messagesEndRef = useRef(null);
-  const listRef = useRef(null);
-
-  // Load chat history from localStorage on component mount
-  useEffect(() => {
-    const savedConversations = localStorage.getItem('aiChatConversations');
-    if (savedConversations) {
-      setConversations(JSON.parse(savedConversations));
-    } else {
-      // Initialize with a default conversation
-      const defaultConversation = {
-        id: 'default',
-        name: 'New Conversation',
-        messages: [{
-          id: 1,
-          text: 'Hello! I\'m your AI study assistant. How can I help you today?',
-          isAI: true,
-        }],
-        createdAt: new Date().toISOString()
-      };
-      setConversations([defaultConversation]);
-      localStorage.setItem('aiChatConversations', JSON.stringify([defaultConversation]));
-    }
-  }, []);
-
-  // Load current conversation
-  useEffect(() => {
-    if (conversations.length > 0) {
-      const currentConversation = conversations.find(conv => conv.id === currentConversationId) || conversations[0];
-      setChatHistory(currentConversation.messages);
-      setCurrentConversationId(currentConversation.id);
-    }
-  }, [conversations, currentConversationId]);
+  const inputRef = useRef(null);
 
   // Scroll to bottom when chat history changes
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatHistory]);
 
-  // Function to format the response text properly
-  const formatResponseText = (text) => {
-    // Replace markdown bold syntax with HTML
-    let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    
-    // Replace markdown italic syntax with HTML
-    formattedText = formattedText.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    
-    // Replace markdown code blocks with HTML
-    formattedText = formattedText.replace(/```(.*?)```/gs, '<pre><code>$1</code></pre>');
-    
-    // Replace markdown inline code with HTML
-    formattedText = formattedText.replace(/`(.*?)`/g, '<code>$1</code>');
-    
-    // Replace newlines with HTML line breaks
-    formattedText = formattedText.replace(/\n/g, '<br>');
-    
-    return formattedText;
-  };
+  // Check for question from TestResults component on mount
+  useEffect(() => {
+    const checkForQuestionFromResults = () => {
+      try {
+        const storedQuestion = sessionStorage.getItem('aiChatQuestion');
+        if (storedQuestion) {
+          // Parse the stored question
+          const questionData = JSON.parse(storedQuestion);
+          
+          // Format a comprehensive question for the AI
+          let formattedQuestion = `I don't understand this question and need help:\n\n`;
+          formattedQuestion += `Question: ${questionData.questionText}\n\n`;
+          formattedQuestion += `Options:\n`;
+          if (questionData.options && Array.isArray(questionData.options)) {
+            questionData.options.forEach((option, index) => {
+              const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
+              formattedQuestion += `${optionLetter}. ${option}\n`;
+            });
+          }
+          
+          formattedQuestion += `\nCorrect Answer: ${questionData.correctOption}\n`;
+          formattedQuestion += `My Answer: ${questionData.selectedOption || 'Not answered'}\n\n`;
+          formattedQuestion += `Explanation provided: ${questionData.explanation}\n\n`;
+          formattedQuestion += `Can you explain this in a simpler way and help me understand the concept better?`;
+          
+          // Add the user message to chat history immediately
+          const userMessage = {
+            id: Date.now(),
+            text: formattedQuestion,
+            isAI: false,
+            timestamp: new Date().toISOString()
+          };
+
+          // Update chat history with user message
+          const updatedHistory = [...chatHistory, userMessage];
+          setChatHistory(updatedHistory);
+          
+          // Clear the stored question to prevent it from being used again on refresh
+          sessionStorage.removeItem('aiChatQuestion');
+          
+          // Set loading state
+          setLoading(true);
+
+          // Call Zerreta API with error handling
+          axios.post(
+            `${ZERRETA_API_URL}?key=${ZERRETA_API_KEY}`,
+            {
+              contents: updatedHistory.map(msg => ({
+                role: msg.isAI ? "model" : "user",
+                parts: [{ text: msg.text }]
+              }))
+            }
+          )
+          .then(response => {
+            if (response.data && 
+                response.data.candidates && 
+                response.data.candidates[0] && 
+                response.data.candidates[0].content && 
+                response.data.candidates[0].content.parts && 
+                response.data.candidates[0].content.parts[0]) {
+              
+              // Extract the response text
+              const responseText = response.data.candidates[0].content.parts[0].text;
+              
+              // Create AI response message
+              const aiResponse = {
+                id: Date.now(),
+                text: responseText,
+                isAI: true,
+                timestamp: new Date().toISOString()
+              };
+
+              // Update chat history with AI response
+              setChatHistory([...updatedHistory, aiResponse]);
+            } else {
+              throw new Error("Invalid API response format");
+            }
+          })
+          .catch(err => {
+            console.error("Error calling Zerreta API:", err);
+            
+            // Add detailed error message to chat
+            const errorResponse = {
+              id: Date.now(),
+              text: `Sorry, I encountered an error while processing your request: ${err.message || 'Unknown error'}. Please try again or refresh the page.`,
+              isAI: true,
+              error: true,
+              timestamp: new Date().toISOString()
+            };
+            
+            setChatHistory([...updatedHistory, errorResponse]);
+          })
+          .finally(() => {
+            setLoading(false);
+          });
+        }
+      } catch (error) {
+        console.error("Error processing stored question:", error);
+        // Add a UI error message
+        setChatHistory(prev => [
+          ...prev, 
+          {
+            id: Date.now(),
+            text: `Sorry, there was an error processing your question: ${error.message}. Please try asking again.`,
+            isAI: true,
+            error: true,
+            timestamp: new Date().toISOString()
+          }
+        ]);
+        setLoading(false);
+      }
+    };
+
+    checkForQuestionFromResults();
+  }, [chatHistory]); // Add chatHistory as dependency
 
   const handleSendMessage = async () => {
     if (!message.trim()) return;
@@ -130,30 +296,24 @@ function AIHelp() {
     const updatedHistory = [...chatHistory, userMessage];
     setChatHistory(updatedHistory);
     
-    // Save to current conversation
-    updateConversation(updatedHistory);
-    
     setMessage('');
     setLoading(true);
 
     try {
-      // Prepare conversation context
-      const previousMessages = updatedHistory
-        .filter(msg => msg.id !== 1) // Skip the initial greeting
-        .map(msg => msg.text);
-      
-      // Format the request according to Gemini API requirements
+      // Prepare conversation history for context
+      const conversationMessages = updatedHistory.map(msg => ({
+        role: msg.isAI ? "model" : "user",
+        parts: [{ text: msg.text }]
+      }));
+
+      // Format the request with conversation history for context
       const requestData = {
-        contents: [{
-          parts: [{ text: previousMessages.length > 1 ? 
-            `Previous conversation: ${previousMessages.slice(0, -1).join('\n\n')}\n\nCurrent question: ${message}` : 
-            message }]
-        }]
+        contents: conversationMessages
       };
 
-      // Make API request to Gemini
+      // Make API request to Zerreta
       const response = await axios.post(
-        `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
+        `${ZERRETA_API_URL}?key=${ZERRETA_API_KEY}`,
         requestData
       );
 
@@ -169,14 +329,10 @@ function AIHelp() {
       };
 
       // Update chat history with AI response
-      const finalHistory = [...updatedHistory, aiResponse];
-      setChatHistory(finalHistory);
-      
-      // Save to current conversation
-      updateConversation(finalHistory);
+      setChatHistory([...updatedHistory, aiResponse]);
       
     } catch (err) {
-      console.error("Error calling Gemini API:", err);
+      console.error("Error calling Zerreta API:", err);
       
       // Add error message to chat
       const errorResponse = {
@@ -187,603 +343,153 @@ function AIHelp() {
         timestamp: new Date().toISOString()
       };
       
-      const finalHistory = [...updatedHistory, errorResponse];
-      setChatHistory(finalHistory);
-      
-      // Save to current conversation
-      updateConversation(finalHistory);
-      
-      setError(err.message);
+      setChatHistory([...updatedHistory, errorResponse]);
     } finally {
       setLoading(false);
+      // Focus the input field after sending a message
+      inputRef.current?.focus();
     }
   };
 
-  const updateConversation = (messages) => {
-    const updatedConversations = conversations.map(conv => {
-      if (conv.id === currentConversationId) {
-        // Update conversation name based on first user message if it's still the default name
-        let name = conv.name;
-        if (name === 'New Conversation' && messages.find(m => !m.isAI)) {
-          const firstUserMessage = messages.find(m => !m.isAI);
-          name = firstUserMessage.text.substring(0, 30) + (firstUserMessage.text.length > 30 ? '...' : '');
-        }
-        
-        return {
-          ...conv,
-          messages: messages,
-          name: name,
-          updatedAt: new Date().toISOString()
-        };
-      }
-      return conv;
-    });
-    
-    setConversations(updatedConversations);
-    localStorage.setItem('aiChatConversations', JSON.stringify(updatedConversations));
-  };
-
-  const handleNewConversation = () => {
-    const newConversation = {
-      id: `conv-${Date.now()}`,
-      name: 'New Conversation',
-      messages: [{
-        id: 1,
-        text: 'Hello! I\'m your AI study assistant. How can I help you today?',
+  // Function to start a new chat
+  const handleNewChat = () => {
+    setChatHistory([
+      {
+        id: Date.now(),
+        text: 'Hello! I\'m your Zerreta study assistant. How can I help you today?',
         isAI: true,
         timestamp: new Date().toISOString()
-      }],
-      createdAt: new Date().toISOString()
-    };
-    
-    const updatedConversations = [newConversation, ...conversations];
-    setConversations(updatedConversations);
-    setCurrentConversationId(newConversation.id);
-    localStorage.setItem('aiChatConversations', JSON.stringify(updatedConversations));
-    
-    // Close history menu if open
-    setHistoryMenuAnchor(null);
-  };
-
-  const handleSelectConversation = (conversationId) => {
-    setCurrentConversationId(conversationId);
-    setHistoryMenuAnchor(null);
-  };
-
-  const handleDeleteConversation = (conversationId) => {
-    const updatedConversations = conversations.filter(conv => conv.id !== conversationId);
-    
-    // If we're deleting the current conversation, switch to another one
-    if (conversationId === currentConversationId && updatedConversations.length > 0) {
-      setCurrentConversationId(updatedConversations[0].id);
+      }
+    ]);
+    setMessage('');
+    if (inputRef.current) {
+      inputRef.current.focus();
     }
-    
-    // If we deleted the last conversation, create a new one
-    if (updatedConversations.length === 0) {
-      const newConversation = {
-        id: `conv-${Date.now()}`,
-        name: 'New Conversation',
-        messages: [{
-          id: 1,
-          text: 'Hello! I\'m your AI study assistant. How can I help you today?',
-          isAI: true,
-          timestamp: new Date().toISOString()
-        }],
-        createdAt: new Date().toISOString()
-      };
-      setConversations([newConversation]);
-      setCurrentConversationId(newConversation.id);
-      localStorage.setItem('aiChatConversations', JSON.stringify([newConversation]));
-    } else {
-      setConversations(updatedConversations);
-      localStorage.setItem('aiChatConversations', JSON.stringify(updatedConversations));
-    }
-    
-    setHistoryMenuAnchor(null);
-  };
-
-  const handleOpenContextMenu = (event, messageId) => {
-    setContextMenuAnchor(event.currentTarget);
-    setSelectedMessageId(messageId);
-  };
-
-  const handleCloseContextMenu = () => {
-    setContextMenuAnchor(null);
-    setSelectedMessageId(null);
-  };
-
-  const handleCopyMessage = () => {
-    const message = chatHistory.find(msg => msg.id === selectedMessageId);
-    if (message) {
-      navigator.clipboard.writeText(message.text);
-      setSnackbarMessage('Message copied to clipboard');
-      setSnackbarOpen(true);
-    }
-    handleCloseContextMenu();
-  };
-
-  const handleDeleteMessage = () => {
-    setShowDeleteDialog(true);
-    handleCloseContextMenu();
-  };
-
-  const confirmDeleteMessage = () => {
-    const updatedHistory = chatHistory.filter(msg => msg.id !== selectedMessageId);
-    setChatHistory(updatedHistory);
-    updateConversation(updatedHistory);
-    setShowDeleteDialog(false);
-  };
-
-  const getCurrentConversationName = () => {
-    const currentConversation = conversations.find(conv => conv.id === currentConversationId);
-    return currentConversation ? currentConversation.name : 'Conversation';
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      style={{ 
-        height: '100vh', 
-        width: '100%', 
-        display: 'flex', 
-        flexDirection: 'column',
-        padding: '20px',
-        boxSizing: 'border-box',
-        backgroundColor: '#f5f5f5',
-        overflow: 'hidden'
-      }}
-    >
-      <Box sx={{ 
-        mb: 4, 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        width: '100%'
-      }}>
-        <Box>
-          <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ 
-            background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
-            backgroundClip: 'text',
-            textFillColor: 'transparent',
-            display: 'inline-block'
-          }}>
-            AI Study Assistant
+    <ErrorBoundary>
+      <PageContainer>
+        <Header>
+          <Typography variant="h6" fontWeight="bold">
+            Zerreta AI
           </Typography>
-          <Typography variant="body1" color="textSecondary">
-            Get instant help with your NEET preparation
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button 
-            variant="outlined" 
-            startIcon={<SmartToyIcon />}
-            onClick={handleNewConversation}
-            sx={{
-              borderRadius: 2,
-              borderWidth: '2px',
-              '&:hover': {
-                borderWidth: '2px'
-              }
-            }}
-          >
-            New Chat
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<HistoryIcon />}
-            onClick={(e) => setHistoryMenuAnchor(e.currentTarget)}
-            sx={{
-              borderRadius: 2,
-              borderWidth: '2px',
-              '&:hover': {
-                borderWidth: '2px'
-              }
-            }}
-          >
-            History
-          </Button>
-        </Box>
-      </Box>
-
-      <Paper 
-        elevation={3} 
-        sx={{ 
-          flex: 1,
-          display: 'flex', 
-          flexDirection: 'column',
-          borderRadius: 4,
-          overflow: 'hidden',
-          height: 'calc(100vh - 120px)',
-          maxHeight: 'calc(100vh - 120px)',
-          width: '100%',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-          border: '1px solid rgba(0,0,0,0.05)'
-        }}
-      >
-        <Box sx={{ 
-          p: 2, 
-          borderBottom: 1, 
-          borderColor: 'divider', 
-          bgcolor: 'primary.main', 
-          color: 'white',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          background: 'linear-gradient(90deg, #1976d2, #2196F3)'
-        }}>
-          <Typography variant="h6" sx={{ 
-            display: 'flex', 
-            alignItems: 'center',
-            gap: 1,
-            fontWeight: 500
-          }}>
-            <SmartToyIcon fontSize="small" />
-            {getCurrentConversationName()}
-          </Typography>
-          <Chip 
-            icon={<SmartToyIcon sx={{ color: 'white !important' }} />} 
-            label="Gemini AI" 
-            sx={{ 
-              bgcolor: 'rgba(255,255,255,0.2)', 
-              color: 'white',
-              backdropFilter: 'blur(10px)',
-              '& .MuiChip-icon': {
-                color: 'white'
-              }
-            }} 
-          />
-        </Box>
-        
-        <List sx={{ 
-          flex: 1, 
-          overflow: 'auto', 
-          p: 2,
-          height: 'calc(100% - 130px)',
-          maxHeight: 'calc(100% - 130px)',
-          '&::-webkit-scrollbar': {
-            width: '8px',
-          },
-          '&::-webkit-scrollbar-track': {
-            background: 'rgba(0,0,0,0.05)',
-            borderRadius: '10px',
-          },
-          '&::-webkit-scrollbar-thumb': {
-            background: 'rgba(0,0,0,0.1)',
-            borderRadius: '10px',
-            '&:hover': {
-              background: 'rgba(0,0,0,0.2)',
-            },
-          },
-        }} ref={listRef}>
-          {chatHistory.map((msg) => (
-            <ListItem 
-              key={msg.id} 
-              sx={{ 
-                flexDirection: msg.isAI ? 'row' : 'row-reverse',
-                alignItems: 'flex-start',
-                mb: 2,
-                position: 'relative'
-              }}
-              onContextMenu={(e) => {
-                e.preventDefault();
-                handleOpenContextMenu(e, msg.id);
+          <Tooltip title="New Chat">
+            <IconButton
+              onClick={handleNewChat}
+              size="small"
+              sx={{
+                ml: 'auto',
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                },
+                width: 28,
+                height: 28
               }}
             >
-              <ListItemAvatar>
-                <Avatar 
-                  sx={{ 
-                    bgcolor: msg.isAI 
-                      ? (msg.error ? 'error.main' : 'primary.main') 
-                      : 'secondary.main',
-                    boxShadow: 1
-                  }}
-                >
-                  {msg.isAI ? <SmartToyIcon /> : 'U'}
-                </Avatar>
-              </ListItemAvatar>
-              <Box 
-                sx={{ 
-                  position: 'relative',
-                  maxWidth: { xs: '85%', sm: '75%', md: '65%' },
-                  '&:hover .message-actions': {
-                    opacity: 1
-                  }
-                }}
-              >
-                <Paper
-                  elevation={1}
-                  sx={{
-                    p: 2,
-                    borderRadius: msg.isAI ? '16px 16px 16px 4px' : '16px 16px 4px 16px',
-                    bgcolor: msg.isAI 
-                      ? (msg.error ? 'error.light' : 'grey.100') 
-                      : 'primary.light',
-                    color: msg.isAI ? 'text.primary' : 'white',
-                    maxWidth: '100%',
-                    wordBreak: 'break-word',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      boxShadow: '0 3px 8px rgba(0,0,0,0.1)',
-                    },
-                    '& code': {
-                      backgroundColor: msg.isAI ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.2)',
-                      padding: '2px 4px',
-                      borderRadius: '4px',
-                      fontFamily: 'monospace'
-                    },
-                    '& pre': {
-                      backgroundColor: msg.isAI ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.2)',
-                      padding: '8px',
-                      borderRadius: '4px',
-                      overflow: 'auto',
-                      maxWidth: '100%'
-                    }
-                  }}
-                >
-                  {msg.isAI ? (
-                    <Typography 
-                      variant="body1" 
-                      component="div"
-                      dangerouslySetInnerHTML={{ 
-                        __html: formatResponseText(msg.text) 
-                      }}
-                    />
-                  ) : (
-                    <Typography variant="body1">
-                      {msg.text}
-                    </Typography>
-                  )}
-                </Paper>
-                <Box 
-                  className="message-actions"
-                  sx={{ 
-                    position: 'absolute', 
-                    top: 5, 
-                    right: msg.isAI ? -40 : 'auto',
-                    left: msg.isAI ? 'auto' : -40,
-                    opacity: 0,
-                    transition: 'opacity 0.2s',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 0.5
-                  }}
-                >
-                  <IconButton 
-                    size="small" 
-                    sx={{ bgcolor: 'background.paper', boxShadow: 1 }}
-                    onClick={(e) => handleOpenContextMenu(e, msg.id)}
-                  >
-                    <MoreVertIcon fontSize="small" />
-                  </IconButton>
-                </Box>
-                {msg.timestamp && (
-                  <Typography 
-                    variant="caption" 
-                    sx={{ 
-                      display: 'block', 
-                      mt: 0.5, 
-                      color: 'text.secondary',
-                      textAlign: msg.isAI ? 'left' : 'right'
+              <AddIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Header>
+        
+        <ChatArea>
+          {chatHistory.map((msg) => (
+            <Box
+              key={msg.id}
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: msg.isAI ? 'flex-start' : 'flex-end',
+                mb: 3
+              }}
+            >
+              <MessageBubble isai={msg.isAI ? 'true' : 'false'}>
+                <Box sx={{ '& p': { m: 0 }, '& pre': { my: 1, maxWidth: '100%', overflow: 'auto' } }}>
+                  <ReactMarkdown
+                    remarkPlugins={[remarkMath]}
+                    rehypePlugins={[rehypeKatex]}
+                    components={{
+                      code({node, inline, className, children, ...props}) {
+                        const match = /language-(\w+)/.exec(className || '');
+                        return !inline && match ? (
+                          <SyntaxHighlighter
+                            style={atomDark}
+                            language={match[1]}
+                            PreTag="div"
+                            {...props}
+                          >
+                            {String(children).replace(/\n$/, '')}
+                          </SyntaxHighlighter>
+                        ) : (
+                          <code className={className} {...props}>
+                            {children}
+                          </code>
+                        );
+                      }
                     }}
                   >
-                    {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </Typography>
-                )}
-              </Box>
-            </ListItem>
-          ))}
-          {loading && (
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'center', 
-              alignItems: 'center',
-              my: 2,
-              flexDirection: 'column',
-              gap: 1
-            }}>
-              <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-                <CircularProgress 
-                  size={40} 
-                  thickness={4} 
-                  sx={{ 
-                    color: 'primary.main',
-                    '& .MuiCircularProgress-circle': {
-                      strokeLinecap: 'round',
-                    }
-                  }} 
-                />
-                <Box
-                  sx={{
-                    top: 0,
-                    left: 0,
-                    bottom: 0,
-                    right: 0,
-                    position: 'absolute',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <SmartToyIcon sx={{ fontSize: 20, color: 'primary.main' }} />
+                    {msg.text}
+                  </ReactMarkdown>
                 </Box>
-              </Box>
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, fontStyle: 'italic' }}>
+              </MessageBubble>
+            </Box>
+          ))}
+          
+          {loading && (
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <CircularProgress size={20} sx={{ mr: 2, color: '#7445f8' }} />
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                 Thinking...
               </Typography>
             </Box>
           )}
-          <div ref={messagesEndRef} />
-        </List>
+          
+          <div ref={messagesEndRef} style={{ height: 20 }} />
+        </ChatArea>
         
-        <Box sx={{ 
-          p: 2, 
-          borderTop: 1, 
-          borderColor: 'divider', 
-          bgcolor: 'background.paper',
-          width: '100%',
-          position: 'sticky',
-          bottom: 0,
-          zIndex: 10
-        }}>
-          <Box sx={{ 
-            display: 'flex', 
-            gap: 1,
-            width: '100%',
-            alignItems: 'flex-end'
-          }}>
-            <TextField
-              fullWidth
-              variant="outlined"
-              placeholder="Ask your question..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
-              multiline
-              maxRows={4}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 3,
-                  backgroundColor: 'rgba(255,255,255,0.8)',
-                  transition: 'all 0.3s ease',
-                  '&:hover, &.Mui-focused': {
-                    backgroundColor: 'white',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-                  }
-                }
-              }}
-            />
-            <Button
-              variant="contained"
-              endIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SendIcon />}
-              onClick={handleSendMessage}
-              disabled={!message.trim() || loading}
-              sx={{ 
-                borderRadius: 3,
-                minWidth: '100px',
-                height: '56px',
-                boxShadow: 2,
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  boxShadow: 3,
-                  transform: 'translateY(-2px)'
-                }
-              }}
-            >
-              Send
-            </Button>
-          </Box>
-        </Box>
-      </Paper>
-
-      {/* History Menu */}
-      <Menu
-        anchorEl={historyMenuAnchor}
-        open={Boolean(historyMenuAnchor)}
-        onClose={() => setHistoryMenuAnchor(null)}
-        PaperProps={{
-          sx: { width: 320, maxHeight: 500, maxWidth: '90vw' }
-        }}
-      >
-        <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-          <Typography variant="h6">Conversation History</Typography>
-        </Box>
-        <Box sx={{ maxHeight: 400, overflow: 'auto' }}>
-          {conversations.length === 0 ? (
-            <MenuItem disabled>No conversations found</MenuItem>
-          ) : (
-            conversations.map((conv) => (
-              <MenuItem 
-                key={conv.id}
-                selected={conv.id === currentConversationId}
-                sx={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between',
-                  borderBottom: '1px solid',
-                  borderColor: 'divider',
-                  py: 1.5
-                }}
-              >
-                <Box 
-                  onClick={() => handleSelectConversation(conv.id)}
-                  sx={{ 
-                    flex: 1,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  <Typography variant="body1" noWrap>{conv.name}</Typography>
-                  <Typography variant="caption" color="textSecondary" noWrap>
-                    {new Date(conv.createdAt).toLocaleDateString()}
-                  </Typography>
-                </Box>
-                <IconButton 
-                  size="small" 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteConversation(conv.id);
-                  }}
-                  sx={{ visibility: conversations.length > 1 ? 'visible' : 'hidden' }}
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </MenuItem>
-            ))
-          )}
-        </Box>
-      </Menu>
-
-      {/* Message Context Menu */}
-      <Menu
-        anchorEl={contextMenuAnchor}
-        open={Boolean(contextMenuAnchor)}
-        onClose={handleCloseContextMenu}
-        PaperProps={{
-          sx: { minWidth: 150 }
-        }}
-      >
-        <MenuItem onClick={handleCopyMessage}>
-          <ContentCopyIcon fontSize="small" sx={{ mr: 1 }} />
-          Copy
-        </MenuItem>
-        <MenuItem onClick={handleDeleteMessage}>
-          <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
-          Delete
-        </MenuItem>
-      </Menu>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog
-        open={showDeleteDialog}
-        onClose={() => setShowDeleteDialog(false)}
-        PaperProps={{
-          sx: { borderRadius: 2, p: 1 }
-        }}
-      >
-        <DialogTitle>Delete Message</DialogTitle>
-        <DialogContent>
-          <Typography>Are you sure you want to delete this message?</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowDeleteDialog(false)}>Cancel</Button>
-          <Button onClick={confirmDeleteMessage} color="error">Delete</Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={3000}
-        onClose={() => setSnackbarOpen(false)}
-        message={snackbarMessage}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        sx={{ mb: 2 }}
-      />
-    </motion.div>
+        <InputContainer>
+          <TextField
+            fullWidth
+            placeholder="Type a question..."
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+            variant="outlined"
+            inputRef={inputRef}
+            size="small"
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '24px',
+                backgroundColor: '#f5f5f5',
+                fontSize: isMobile ? '0.875rem' : 'inherit'
+              },
+              '& .MuiOutlinedInput-input': {
+                padding: isMobile ? '10px 14px' : undefined
+              }
+            }}
+          />
+          <IconButton
+            onClick={handleSendMessage}
+            disabled={!message.trim() || loading}
+            sx={{ 
+              ml: 1,
+              bgcolor: message.trim() ? '#7445f8' : 'rgba(0, 0, 0, 0.1)',
+              color: 'white',
+              '&:hover': {
+                bgcolor: message.trim() ? '#6333e4' : 'rgba(0, 0, 0, 0.1)',
+              },
+              width: isMobile ? 36 : 40,
+              height: isMobile ? 36 : 40
+            }}
+          >
+            <SendIcon fontSize={isMobile ? "small" : "medium"} />
+          </IconButton>
+        </InputContainer>
+      </PageContainer>
+    </ErrorBoundary>
   );
 }
 
-export default AIHelp; 
+export default AIHelp;
