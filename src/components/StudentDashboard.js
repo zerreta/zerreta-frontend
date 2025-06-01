@@ -28,6 +28,7 @@ import {
   SmartToy as SmartToyIcon,
   EmojiEvents as EmojiEventsIcon,
   BookmarkBorder as BookmarkIcon,
+  History as HistoryIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Progress from './Progress';
@@ -35,11 +36,12 @@ import Analytics from './Analytics';
 import AIHelp from './AIHelp';
 import Leaderboard from './Leaderboard';
 import Resources from './Resources';
+import TestHistory from './TestHistory';
 
 const drawerWidth = 240;
 
 const sidebarItems = [
-  { text: 'Home', icon: <DashboardIcon />, path: '/student-dashboard' },
+  { text: 'Test History', icon: <HistoryIcon />, path: '/student-dashboard' },
   { text: 'Progress', icon: <TimelineIcon />, path: '/student-dashboard/progress' },
   { text: 'Analytics', icon: <SchoolIcon />, path: '/student-dashboard/analytics' },
   { text: 'Resources', icon: <BookmarkIcon />, path: '/student-dashboard/resources' },
@@ -81,78 +83,7 @@ function StudentDashboard() {
       case '/student-dashboard/leaderboard':
         return <Leaderboard />;
       default:
-        return (
-          <Box>
-            <Typography variant="h4" gutterBottom>
-              Welcome back, Student!
-            </Typography>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6} lg={4}>
-                <Card sx={{ 
-                  height: '100%',
-                  transition: 'transform 0.3s',
-                  '&:hover': {
-                    transform: 'translateY(-5px)',
-                    boxShadow: '0 6px 20px rgba(0,0,0,0.1)'
-                  }
-                }}>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Upcoming Assignments
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary">
-                      No upcoming assignments
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} md={6} lg={4}>
-                <Card sx={{ 
-                  height: '100%',
-                  transition: 'transform 0.3s',
-                  '&:hover': {
-                    transform: 'translateY(-5px)',
-                    boxShadow: '0 6px 20px rgba(0,0,0,0.1)'
-                  }
-                }}>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Recent Courses
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary">
-                      No recent courses
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} md={6} lg={4}>
-                <Card 
-                  sx={{ 
-                    height: '100%',
-                    cursor: 'pointer',
-                    bgcolor: '#f5f9ff',
-                    transition: 'transform 0.3s',
-                    '&:hover': {
-                      transform: 'translateY(-5px)',
-                      boxShadow: '0 6px 20px rgba(0,0,0,0.1)'
-                    }
-                  }}
-                  onClick={() => handleNavigation('/student-dashboard/resources')}
-                >
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-                      <BookmarkIcon sx={{ mr: 1 }} color="primary" />
-                      Learning Resources
-                    </Typography>
-                    <Typography variant="body2">
-                      Access video tutorials, study materials and more for NEET preparation.
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
-          </Box>
-        );
+        return <TestHistory />;
     }
   };
 

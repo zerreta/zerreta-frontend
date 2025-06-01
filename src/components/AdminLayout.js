@@ -28,7 +28,8 @@ import {
   ChevronLeft as ChevronLeftIcon,
   QuestionAnswer as QuestionIcon,
   Person as PersonIcon,
-  EmojiEvents as TrophyIcon
+  EmojiEvents as TrophyIcon,
+  Assessment as AssessmentIcon
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import zerLogo from '../assets/zer-logo.png';
@@ -105,10 +106,12 @@ const StyledListItemText = styled(ListItemText)(({ active, theme }) => ({
 const menuItems = [
   { path: '/admin', label: 'Dashboard', icon: DashboardIcon },
   { path: '/admin/institutions', label: 'Institutions', icon: SchoolIcon },
-  { path: '/admin/questions', label: 'Question Manager', icon: QuestionIcon },
+  { path: '/admin/questions', label: 'NEET Questions', icon: QuestionIcon },
+  { path: '/admin/grammar-questions', label: 'Grammar Questions', icon: QuestionIcon },
   { path: '/admin/student-levels', label: 'Student Levels', icon: SchoolIcon },
   { path: '/admin/student-points', label: 'Student N.POINTS', icon: TrophyIcon },
   { path: '/admin/student-data', label: 'Student Data', icon: PeopleIcon },
+  { path: '/admin/test-history', label: 'Test History', icon: AssessmentIcon },
 ];
 
 const AdminLayout = () => {
@@ -257,4 +260,4 @@ const AdminLayout = () => {
   );
 };
 
-export default AdminLayout; 
+export default AdminLayout;

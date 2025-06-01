@@ -1,5 +1,7 @@
 {
   "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": "build",
   "routes": [
     {
       "src": "/static/(.*)",
@@ -31,6 +33,6 @@
     }
   ],
   "env": {
-    "REACT_APP_API_URL": "https://zer-backend.onrender.com"
+    "REACT_APP_API_URL": "https://zerreta-backend.onrender.com"
   }
 } 

@@ -52,7 +52,8 @@ import {
   ArrowDownward as ArrowDownwardIcon,
   ArrowUpward as ArrowUpwardIcon,
   Refresh as RefreshIcon,
-  AccessTime as AccessTimeIcon
+  AccessTime as AccessTimeIcon,
+  Visibility as VisibilityIcon
 } from '@mui/icons-material';
 import axiosInstance from './axios-config';
 import { format } from 'date-fns';
@@ -98,13 +99,95 @@ function TestHistory() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState(null);
   const [realTimeEnabled, setRealTimeEnabled] = useState(true);
+  const [currentStudentInfo, setCurrentStudentInfo] = useState(null);
+  const [profileLoaded, setProfileLoaded] = useState(false);
 
   // Create a ref to store the unsubscribe function
   const unsubscribeRef = useRef(null);
 
+  // Add direct student fetch function
+  const fetchCurrentStudentDirectly = async () => {
+    try {
+      console.log('Directly fetching current student information');
+      setProfileLoaded(false); // Reset profile loaded state
+      
+      // Fetch profile from the new endpoint
+      const response = await axiosInstance.get('/student/profile');
+      
+      if (response.data) {
+        console.log('Successfully fetched student profile:', response.data);
+        
+        // Use complete data from response
+        const studentInfo = {
+          name: response.data.name || 'Student',
+          studentId: response.data.studentId || response.data._id || 'N/A',
+          username: response.data.username || '',
+          _id: response.data._id || '',
+          grade: response.data.grade,
+          school: response.data.school,
+          email: response.data.email,
+          phone: response.data.phone,
+        };
+        
+        setCurrentStudentInfo(studentInfo);
+        setProfileLoaded(true);
+        
+        // Store in localStorage as a fallback
+        localStorage.setItem('currentStudentInfo', JSON.stringify({
+          ...studentInfo,
+          timestamp: Date.now()
+        }));
+        
+        return response.data;
+      }
+    } catch (error) {
+      console.error('Error fetching student profile:', error);
+      
+      // Try to get from token as fallback
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          const tokenData = JSON.parse(atob(token.split('.')[1]));
+          const studentInfo = {
+            name: tokenData.username || 'Student',
+            studentId: tokenData.userId || 'N/A',
+            username: tokenData.username || '',
+            _id: tokenData.userId || ''
+          };
+          
+          console.log('Using token data for student info:', studentInfo);
+          setCurrentStudentInfo(studentInfo);
+          setProfileLoaded(true);
+          
+          // Store in localStorage
+          localStorage.setItem('currentStudentInfo', JSON.stringify({
+            ...studentInfo,
+            timestamp: Date.now()
+          }));
+          
+          return studentInfo;
+        }
+      } catch (err) {
+        console.error('Error using token data:', err);
+      }
+    }
+    
+    setProfileLoaded(true); // Mark as loaded even if failed
+    return null;
+  };
+
   useEffect(() => {
-    // Initial fetch of test history
+    // Fetch student info first to ensure we have it
+    fetchCurrentStudentDirectly()
+      .then(() => {
+        // Then fetch test history
     fetchTestHistory();
+      })
+      .catch(err => {
+        console.error('Error in initial data loading:', err);
+        // Still try to fetch test history even if student info fails
+        fetchTestHistory();
+      });
 
     // Set up real-time listener
     if (realTimeEnabled) {
@@ -119,6 +202,23 @@ function TestHistory() {
       }
     };
   }, [realTimeEnabled]);
+
+  useEffect(() => {
+    if (profileLoaded && currentStudentInfo) {
+      console.log('Profile loaded, fetching test history with student info:', currentStudentInfo);
+      // Update test history to use current student info
+      const updatedHistory = testHistory.map(test => ({
+        ...test,
+        studentName: currentStudentInfo.name || test.studentName,
+        studentId: currentStudentInfo.studentId || test.studentId
+      }));
+      
+      setTestHistory(updatedHistory);
+      
+      // Also apply filters and sorting with updated data
+      applyFiltersAndSorting();
+    }
+  }, [profileLoaded, currentStudentInfo]);
 
   useEffect(() => {
     // Apply filters and sorting whenever the raw data or filter settings change
@@ -147,14 +247,14 @@ function TestHistory() {
         // Process the incoming data
         const processedHistory = processHistoryData(updatedTests);
         
-        // Limit to last 3 tests
-        const limitedHistory = processedHistory.slice(0, 3);
+        // Don't limit the history, show all tests
+        // const limitedHistory = processedHistory.slice(0, 3);
         
-        // Update state
-        setTestHistory(limitedHistory);
+        // Update state with all history
+        setTestHistory(processedHistory);
         
         // Extract unique subjects
-        const subjects = [...new Set(limitedHistory.map(test => test.subject))];
+        const subjects = [...new Set(processedHistory.map(test => test.subject))];
         setUniqueSubjects(subjects);
         
         // Mark as not cached since it's real-time data
@@ -203,6 +303,19 @@ function TestHistory() {
         return [];
       }
 
+      // Parse and log user information from token for debugging
+      try {
+        const tokenData = JSON.parse(atob(token.split('.')[1]));
+        console.log('TOKEN DEBUG INFO:', {
+          userId: tokenData.userId,
+          username: tokenData.username,
+          role: tokenData.role,
+          allFields: Object.keys(tokenData)
+        });
+      } catch (err) {
+        console.error('Error parsing token for debugging:', err);
+      }
+
       // Always fetch fresh data if forceRefresh is true
       if (forceRefresh) {
         TEST_HISTORY_CACHE.invalidate();
@@ -212,37 +325,50 @@ function TestHistory() {
       if (!forceRefresh && TEST_HISTORY_CACHE.isValid()) {
         console.log('Using cached test history data');
         const cachedData = TEST_HISTORY_CACHE.data;
-        // Only return the last 3 tests from cache
-        const limitedData = cachedData.slice(0, 3);
-        setTestHistory(limitedData);
+        
+        // Use all cached data instead of limiting to just 10
+        setTestHistory(cachedData);
         setIsCachedData(true);
         
         // Extract unique subjects
-        const subjects = [...new Set(limitedData.map(test => test.subject))];
+        const subjects = [...new Set(cachedData.map(test => test.subject))];
         setUniqueSubjects(subjects);
         
         setLoading(false);
-        return limitedData;
+        return cachedData;
       }
 
       console.log('Fetching fresh test history data from backend...');
+      
+      // Get student ID from token
+      const tokenData = JSON.parse(atob(token.split('.')[1]));
+      const currentUserId = tokenData.userId;
+      const studentName = tokenData.username || 'Student';
+      
+      console.log('Current user ID from token:', currentUserId);
+      console.log('Current username from token:', studentName);
       
       // Try with alternative endpoints if needed
       let response;
       try {
         response = await axiosInstance.get('/student/all-test-history', {
           params: {
-            batchSize: 10, // Request only recent tests
-            includeDetails: true // Get comprehensive test data
+            studentId: currentUserId,
+            batchSize: 100, // Increase to get more history (up from 50)
+            includeDetails: true
           }
         });
+        console.log('Response from primary endpoint:', response.data);
       } catch (initialError) {
         console.error('Error with primary endpoint:', initialError);
         console.log('Trying alternative endpoint...');
         
         // Try alternative endpoint if the first fails
         response = await axiosInstance.get('/student/test-history', {
-          params: { includeAll: true }
+          params: { 
+            studentId: currentUserId,
+            includeAll: true 
+          }
         });
       }
       
@@ -251,6 +377,16 @@ function TestHistory() {
         // Ensure test history is an array
         if (Array.isArray(response.data) && response.data.length > 0) {
         console.log(`Received ${response.data.length} tests from backend`);
+        // Log the first test record in detail to debug structure
+        if (response.data[0]) {
+          console.log('FIRST TEST RECORD STRUCTURE:', {
+            id: response.data[0]._id,
+            studentId: response.data[0].studentId,
+            studentInfo: response.data[0].studentInfo,
+            studentIdType: typeof response.data[0].studentId,
+            fields: Object.keys(response.data[0])
+          });
+        }
         historyData = response.data;
         } else if (response.data && typeof response.data === 'object') {
           console.log('Test history is not an array, converting to array format');
@@ -274,23 +410,20 @@ function TestHistory() {
       // Process and format the history data for consistency
       const processedHistory = processHistoryData(historyData);
       
-      // Get only the last 3 tests
-      const limitedHistory = processedHistory.slice(0, 3);
+      // Use all processed data instead of limiting to just 10
+      setTestHistory(processedHistory);
       
-      // Update state with processed data
-      setTestHistory(limitedHistory);
-      
-      // Update the cache with all processed data (not just limited)
+      // Update the cache with all processed data
       TEST_HISTORY_CACHE.set(processedHistory);
       setIsCachedData(false);
       
       // Extract unique subjects
-      const subjects = [...new Set(limitedHistory.map(test => test.subject))];
+      const subjects = [...new Set(processedHistory.map(test => test.subject))];
       setUniqueSubjects(subjects);
       
-      console.log(`Showing ${limitedHistory.length} most recent tests`);
+      console.log(`Showing ${processedHistory.length} test history records`);
       setLoading(false);
-      return limitedHistory;
+      return processedHistory;
     } catch (error) {
       console.error('Error fetching test history from backend:', error);
       setError('Failed to load test history. Please try refreshing the page.');
@@ -365,12 +498,131 @@ function TestHistory() {
       return [];
     }
     
+    // Get the cached student info from state or localStorage
+    const cachedStudentInfo = currentStudentInfo || (() => {
+      try {
+        const cached = localStorage.getItem('currentStudentInfo');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          // Check if cache is fresh (less than 30 minutes old)
+          if (Date.now() - parsed.timestamp < 30 * 60 * 1000) {
+            console.log('Using cached student info from localStorage:', parsed);
+            return parsed;
+          }
+        }
+      } catch (err) {
+        console.error('Error parsing cached student info:', err);
+      }
+      return null;
+    })();
+    
+    console.log('Processing history data with cached student info:', cachedStudentInfo);
+    
     return historyData.map(test => {
+      // If we have current student info and this test belongs to current user, use our info directly
+      const token = localStorage.getItem('token');
+      let tokenData = null;
+      if (token) {
+        try {
+          tokenData = JSON.parse(atob(token.split('.')[1]));
+        } catch (e) {
+          console.error('Error parsing token:', e);
+        }
+      }
+      
+      // Determine if this test belongs to the current user
+      const isCurrentUserTest = tokenData && (
+        (test.studentId === tokenData.userId) || 
+        (typeof test.studentId === 'object' && test.studentId?._id === tokenData.userId) ||
+        (test.studentInfo && test.studentInfo.studentId === tokenData.userId)
+      );
+      
+      let studentName = 'Unknown';
+      let studentId = 'N/A';
+      let studentInfoSource = 'none';
+      
+      // First priority: If this is the current user's test, use our profile data
+      if (isCurrentUserTest && cachedStudentInfo) {
+        studentName = cachedStudentInfo.name;
+        studentId = cachedStudentInfo.studentId;
+        studentInfoSource = 'current_user_profile';
+        console.log(`Using current user profile for test ${test._id}`);
+      }
+      // Second priority: Use test's studentInfo object if available
+      else if (test.studentInfo) {
+        studentName = test.studentInfo.name || 'Unknown';
+        studentId = test.studentInfo.studentId || 'N/A';
+        studentInfoSource = 'studentInfo';
+        console.log(`Using studentInfo object: ${studentName} (${studentId})`);
+      }
+      // Third priority: Use test's studentId as object
+      else if (test.studentId && typeof test.studentId === 'object') {
+        studentName = test.studentId.name || 'Unknown';
+        studentId = test.studentId.studentId || test.studentId._id || 'N/A';
+        studentInfoSource = 'studentId_object';
+        console.log(`Using studentId object: ${studentName} (${studentId})`);
+      }
+      // Fourth priority: Try matching studentId string with cached info or token
+      else if (test.studentId && typeof test.studentId === 'string') {
+        studentId = test.studentId;
+        studentInfoSource = 'studentId_string';
+        
+        if (cachedStudentInfo && (cachedStudentInfo._id === studentId || cachedStudentInfo.studentId === studentId)) {
+          studentName = cachedStudentInfo.name;
+          studentInfoSource = 'studentId_string_with_cache_match';
+          console.log(`Matched studentId with cached info: ${studentName} (${studentId})`);
+        } 
+        else if (tokenData && tokenData.userId === studentId) {
+          studentName = tokenData.username || 'Unknown';
+          studentInfoSource = 'studentId_string_with_token_match';
+          console.log(`Matched studentId with token: ${studentName} (${studentId})`);
+        }
+        else {
+          console.log(`No match for studentId string: ${studentId}`);
+          // Use default values already set
+        }
+      }
+      
+      // Improve score calculation in processHistoryData function
+      let score = 0;
+      if (typeof test.score === 'number' && test.score > 0) {
+        score = test.score;
+      } else if (test.questions && test.questions.length > 0) {
+        const correctCount = test.questions.filter(q => q && q.isCorrect).length;
+        const totalQuestions = test.questions.length;
+        console.log(`Calculating score from questions: ${correctCount}/${totalQuestions}`);
+        if (totalQuestions > 0) {
+          score = Math.round((correctCount / totalQuestions) * 100);
+        }
+      } else if (test.performanceMetrics?.correctAnswers && test.performanceMetrics?.totalQuestions) {
+        const correctCount = test.performanceMetrics.correctAnswers;
+        const totalQuestions = test.performanceMetrics.totalQuestions;
+        console.log(`Calculating score from metrics: ${correctCount}/${totalQuestions}`);
+        if (totalQuestions > 0) {
+          score = Math.round((correctCount / totalQuestions) * 100);
+        }
+      } else if (test.originalData && typeof test.originalData.score === 'number') {
+        score = test.originalData.score;
+        console.log(`Using original data score: ${score}`);
+      }
+      
+      // Log the calculated score for debugging
+      console.log(`Final calculated score for test ${test._id}: ${score}%`);
+      
+      // Log the final processed data for this test
+      console.log('FINAL PROCESSED TEST:', {
+        id: test._id || test.testId || test.firebaseKey || `temp-${Date.now()}-${Math.random()}`,
+        studentName,
+        studentId,
+        studentInfoSource,
+        subject: test.subject || 'Unknown'
+      });
+      
       // Ensure all required fields exist
       return {
         _id: test._id || test.testId || test.firebaseKey || `temp-${Date.now()}-${Math.random()}`,
         subject: test.subject || 'Unknown',
-        score: typeof test.score === 'number' ? test.score : 0,
+        score: score,
         date: test.date || test.endTime || test.startTime || new Date().toISOString(),
         totalTime: test.totalTime || 0,
         questionCount: Array.isArray(test.questions) ? test.questions.length : 0,
@@ -381,6 +633,10 @@ function TestHistory() {
         mode: test.mode || test.testMode || 'practice',
         stage: test.stage || '',
         level: test.level || '',
+        // Add student information
+        studentName,
+        studentId,
+        studentInfoSource,
         // Additional metrics if available
         performanceMetrics: test.performanceMetrics || {},
         // Keep the original data for detailed view
@@ -480,9 +736,14 @@ function TestHistory() {
     setActiveTab(newValue);
   };
 
-  const handleViewDetails = (testId) => {
-    console.log('Navigating to test details for ID:', testId);
-    navigate(`/test-results/${testId}`);
+  const handleViewTestDetails = (testId) => {
+    if (!testId) {
+      console.error('Test ID is undefined');
+      return;
+    }
+    
+    // Navigate to test details page
+    navigate(`/student-dashboard/test-details/${testId}`);
   };
 
   // Add the missing handleRetakeTest function
@@ -666,96 +927,169 @@ function TestHistory() {
     );
   };
 
-  // Update the renderTestCard function to include enhanced metrics
+  // Improved function to render test card with better student information display
   const renderTestCard = (test) => {
-    const correctCount = test.correctCount;
-    const questionCount = test.questionCount;
-    const accuracy = questionCount > 0 ? Math.round((correctCount / questionCount) * 100) : 0;
+    console.log('Rendering test card with data:', test);
+    
+    // Properly handle dates
+    let testDate = null;
+    try {
+      testDate = new Date(test.date);
+      // Check if date is valid
+      if (isNaN(testDate.getTime())) {
+        console.warn('Invalid date detected in test record, using fallback:', test.date);
+        testDate = new Date(); // Use current date as fallback
+      }
+    } catch (e) {
+      console.error('Error parsing date:', e, test.date);
+      testDate = new Date(); // Use current date as fallback
+    }
+    
+    const formattedDate = testDate.toLocaleDateString();
+    const formattedTime = testDate.toLocaleTimeString();
+    
+    // Get subject info with proper capitalization
+    const subject = test.subject ? test.subject.charAt(0).toUpperCase() + test.subject.slice(1) : 'Unknown Subject';
+    
+    // Ensure question count and score have default values
+    const totalQuestions = test.questionCount || 0;
+    const score = typeof test.score === 'number' ? test.score : 0;
+    
+    // Log values for debugging
+    console.log(`Test ${test._id} card details:`, {
+      subject,
+      date: formattedDate,
+      time: formattedTime,
+      questions: totalQuestions,
+      score: score
+    });
     
     return (
-      <Card sx={{ mb: 2, overflow: 'visible' }} key={test._id}>
+      <Card
+        key={test._id}
+        sx={{
+          mb: 2,
+          transition: 'transform 0.2s',
+          '&:hover': {
+            transform: 'translateY(-4px)',
+            boxShadow: 4,
+          },
+          borderLeft: `6px solid ${
+            score >= 70 ? '#4caf50' : 
+            score >= 40 ? '#ff9800' : 
+            '#f44336'
+          }`,
+        }}
+      >
         <CardContent>
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={7}>
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                <Avatar 
+          {/* Student information section with highlight */}
+          <Box 
                   sx={{ 
-                    bgcolor: test.score >= 70 ? 'success.main' : 'error.main',
-                    width: 40, 
-                    height: 40,
-                    fontSize: '1.1rem'
-                  }}
-                >
-                  {Math.round(test.score)}%
-                </Avatar>
-                
-                <Box>
-                  <Typography variant="h6" component="div" sx={{ fontSize: '1rem', fontWeight: 'bold' }}>
-                    {capitalize(test.subject)} {test.mode === 'practice' && test.topicNumber ? `- Topic ${test.topicNumber}` : ''}
+              bgcolor: 'background.paper', 
+              p: 1, 
+              mb: 2, 
+              borderRadius: 1,
+              border: '1px solid',
+              borderColor: 'divider'
+            }}
+          >
+            <Typography variant="subtitle2" color="text.secondary">
+              Student Information
                   </Typography>
-                  
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    {test.mode === 'practice' ? 'Practice Test' : 'Assessment'} • {formatDate(test.date)}
+            <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+              {test.studentName || 'Unknown'} 
+              {test.studentId && <span> (ID: {test.studentId})</span>}
                   </Typography>
-                  
-                  <Box sx={{ 
-                    display: 'flex', 
-                    gap: 2, 
-                    mt: 1, 
-                    flexWrap: 'wrap',
-                    alignItems: 'center'
-                  }}>
-                    <Chip 
-                      icon={<AccessTimeIcon fontSize="small" />} 
-                      label={formatTime(test.totalTime)}
-                      size="small"
-                      variant="outlined"
-                    />
-                    
-                    <Chip 
-                      icon={<AssignmentIcon fontSize="small" />} 
-                      label={`${correctCount}/${questionCount} correct`}
-                      size="small"
-                      variant="outlined"
-                    />
-                    
-                    <Chip 
-                      icon={accuracy >= 70 ? <CheckCircleIcon fontSize="small" /> : <CancelIcon fontSize="small" />} 
-                      label={`${accuracy}% accuracy`}
-                      size="small"
-                      color={accuracy >= 70 ? "success" : "error"}
-                      variant="outlined"
-                    />
-                  </Box>
-                </Box>
+          </Box>
+
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={8}>
+              <Typography variant="h6" component="div">
+                {subject}
+              </Typography>
+              <Typography color="text.secondary" gutterBottom>
+                {formattedDate} at {formattedTime}
+              </Typography>
+              <Box sx={{ mt: 1, display: 'flex', alignItems: 'center' }}>
+                <AssignmentIcon sx={{ mr: 1, color: 'primary.main' }} />
+                <Typography variant="body2">
+                  {totalQuestions} questions
+                </Typography>
               </Box>
             </Grid>
-            
-            <Grid item xs={12} md={5} sx={{ 
+            <Grid item xs={12} sm={4} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
+              <Box 
+                sx={{ 
               display: 'flex', 
-              justifyContent: { xs: 'flex-start', md: 'flex-end' },
               alignItems: 'center',
-              gap: 1,
-              mt: { xs: 2, md: 0 }
-            }}>
+                  justifyContent: 'center',
+                  width: 80,
+                  height: 80,
+                  borderRadius: '50%',
+                  bgcolor: score >= 70 ? 'success.light' : score >= 40 ? 'warning.light' : 'error.light',
+                  color: 'white',
+                  mb: 1
+                }}
+              >
+                <Typography variant="h4">
+                  {score}%
+                </Typography>
+              </Box>
               <Button
                 variant="outlined"
                 size="small"
-                startIcon={<RemoveRedEyeIcon />}
-                onClick={() => handleViewDetails(test._id)}
+                onClick={() => handleViewTestDetails(test._id)}
+                startIcon={<VisibilityIcon />}
               >
-                View Results
+                View Details
               </Button>
-              
-              <Button
-                variant="outlined"
-                size="small"
-                color="secondary"
-                startIcon={<ReplayIcon />}
-                onClick={() => handleRetakeTest(test)}
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  // Add a StudentInfoCard component to display at the top of the page
+  const StudentInfoCard = () => {
+    if (!currentStudentInfo) return null;
+    
+    return (
+      <Card sx={{ mb: 4, bgcolor: 'primary.main', color: 'white' }}>
+        <CardContent>
+          <Grid container alignItems="center" spacing={2}>
+            <Grid item>
+              <Avatar 
+                sx={{ 
+                  width: 60, 
+                  height: 60,
+                  bgcolor: 'white',
+                  color: 'primary.main',
+                  fontWeight: 'bold',
+                  fontSize: '1.5rem'
+                }}
               >
-                Retake
-              </Button>
+                {currentStudentInfo.name.charAt(0).toUpperCase()}
+              </Avatar>
+            </Grid>
+            <Grid item xs>
+              <Typography variant="h5" component="div" sx={{ fontWeight: 'bold' }}>
+                {currentStudentInfo.name}
+              </Typography>
+              <Typography variant="body1">
+                ID: {currentStudentInfo.studentId}
+              </Typography>
+              <Typography variant="body2">
+                {currentStudentInfo.username}
+              </Typography>
+            </Grid>
+            <Grid item>
+              <Typography variant="h6">
+                Test History
+              </Typography>
+              <Typography variant="body1">
+                {testHistory.length} tests taken
+              </Typography>
             </Grid>
           </Grid>
         </CardContent>
@@ -781,6 +1115,8 @@ function TestHistory() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
+      <StudentInfoCard />
+      
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
         <HistoryIcon color="primary" sx={{ fontSize: 32, mr: 2 }} />
@@ -889,7 +1225,12 @@ function TestHistory() {
                   </Typography>
                   <Typography variant="h3" fontWeight="bold" color="success.main">
                     {filteredHistory.length > 0 
-                      ? Math.round((filteredHistory.filter(test => test.passedLevel).length / filteredHistory.length) * 100) 
+                      ? Math.round((filteredHistory.filter(test => {
+                          // Consider it passed if score is at least 70%
+                          return typeof test.score === 'number' && !isNaN(test.score) && test.score >= 70;
+                        }).length / filteredHistory.filter(test => 
+                          typeof test.score === 'number' && !isNaN(test.score)
+                        ).length) * 100) || 0
                       : 0}%
                   </Typography>
                 </Box>
@@ -909,7 +1250,14 @@ function TestHistory() {
                   </Typography>
                   <Typography variant="h3" fontWeight="bold" color="info.main">
                     {filteredHistory.length > 0
-                      ? Math.round(filteredHistory.reduce((acc, test) => acc + (typeof test.score === 'number' ? test.score : 0), 0) / filteredHistory.length)
+                      ? (() => {
+                          const validScores = filteredHistory.filter(test => 
+                            typeof test.score === 'number' && !isNaN(test.score)
+                          );
+                          return validScores.length > 0 
+                            ? Math.round(validScores.reduce((acc, test) => acc + test.score, 0) / validScores.length) 
+                            : 0;
+                        })()
                       : 0}%
                   </Typography>
                 </Box>

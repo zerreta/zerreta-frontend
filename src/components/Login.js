@@ -110,8 +110,10 @@ const StyledButton = styled(Button)(({ theme }) => ({
   textTransform: 'none',
   backgroundColor: '#7445f8',
   color: '#fff',
+  border: '2px solid #7445f8',
   '&:hover': {
     backgroundColor: '#5c33d4',
+    color: '#7445f8',
   }
 }));
 

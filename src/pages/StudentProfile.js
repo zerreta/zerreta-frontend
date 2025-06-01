@@ -4,383 +4,229 @@ import {
   Typography, 
   Paper, 
   Avatar, 
-  Grid, 
-  Card, 
-  CardContent, 
-  CardHeader,
+  Container,
   Divider,
-  TextField,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemAvatar,
-  IconButton,
-  Chip,
-  Badge,
   useTheme,
-  CircularProgress
+  CircularProgress,
+  Grid,
+  alpha
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { 
-  Edit as EditIcon, 
-  Save as SaveIcon,
-  Email as EmailIcon,
-  Phone as PhoneIcon,
-  LocationOn as LocationIcon,
-  CalendarMonth as CalendarIcon,
-  CloudUpload as UploadIcon,
-  Close as CloseIcon
-} from '@mui/icons-material';
 import { motion } from 'framer-motion';
-import axios from 'axios';
+import axiosInstance from '../components/axios-config';
 
+// Style the profile avatar
 const ProfileAvatar = styled(Avatar)(({ theme }) => ({
-  width: 150,
-  height: 150,
-  border: '4px solid white',
-  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-  margin: '-75px auto 0',
-  position: 'relative',
-  zIndex: 5
+  width: 100,
+  height: 100,
+  border: '3px solid white',
+  boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
+  fontSize: '2.5rem',
+  fontWeight: 'bold',
+  background: 'linear-gradient(135deg, #3253b7 0%, #190a5c 100%)'
 }));
 
-const ProfileCover = styled(Box)(({ theme }) => ({
-  height: 200,
-  width: '100%',
-  background: 'linear-gradient(135deg, #7445f8, #a17ffd)',
-  position: 'relative',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'flex-end',
-  borderRadius: '16px 16px 0 0',
-  overflow: 'hidden'
-}));
-
-const StyledCard = styled(Card)(({ theme }) => ({
+// Style the profile container
+const ProfileContainer = styled(Paper)(({ theme }) => ({
   borderRadius: 12,
-  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
+  backgroundColor: alpha(theme.palette.primary.main, 0.03),
+  backgroundImage: 'linear-gradient(160deg, #1a237e 0%, #303f9f 100%)',
+  color: 'white',
+  padding: theme.spacing(3),
   overflow: 'hidden',
-  height: '100%',
+  boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
+  position: 'relative'
+}));
+
+// Style the info box
+const InfoBox = styled(Box)(({ theme }) => ({
+  backgroundColor: alpha(theme.palette.common.white, 0.15),
+  backdropFilter: 'blur(8px)',
+  borderRadius: 8,
+  padding: theme.spacing(2),
+  marginBottom: theme.spacing(2),
+  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+  transition: 'transform 0.3s ease',
   '&:hover': {
-    boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
+    transform: 'translateY(-4px)',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
   }
 }));
 
-const UploadButton = styled(IconButton)(({ theme }) => ({
-  position: 'absolute',
-  bottom: 5,
-  right: 5,
-  borderRadius: '50%',
-  padding: 8,
-  background: 'white',
-  color: '#7445f8',
-  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-  '&:hover': {
-    background: 'rgba(255, 255, 255, 0.9)',
-  }
+// Style the info labels
+const InfoLabel = styled(Typography)(({ theme }) => ({
+  color: alpha(theme.palette.common.white, 0.7),
+  fontWeight: 500,
+  fontSize: '0.75rem',
+  textTransform: 'uppercase',
+  letterSpacing: '0.5px',
+  marginBottom: theme.spacing(0.5)
+}));
+
+// Style the info values
+const InfoValue = styled(Typography)(({ theme }) => ({
+  color: theme.palette.common.white,
+  fontWeight: 600,
+  fontSize: '1.1rem'
 }));
 
 const StudentProfile = () => {
   const theme = useTheme();
-  const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
-  
   const [profileData, setProfileData] = useState({
     name: '',
-    email: '',
-    phone: '',
-    location: '',
-    joinDate: '',
-    bio: ''
+    studentId: '',
+    institution: ''
   });
   
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchStudentProfile = async () => {
       try {
         setLoading(true);
         const token = localStorage.getItem('token');
-        if (!token) return;
+        if (!token) {
+          setLoading(false);
+          return;
+        }
 
-        const response = await axios.get('/api/user/profile', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await axiosInstance.get('/student/profile');
         
-        if (response.data && response.data.user) {
+        if (response.data) {
           setProfileData({
-            name: response.data.user.name || 'User',
-            email: response.data.user.email || 'email@example.com',
-            phone: response.data.user.phone || 'Not provided',
-            location: response.data.user.location || 'Not provided',
-            joinDate: response.data.user.createdAt ? new Date(response.data.user.createdAt).toLocaleDateString('en-US', { 
-              year: 'numeric', 
-              month: 'long' 
-            }) : 'Not available',
-            bio: response.data.user.bio || 'No bio available'
+            name: response.data.name || 'Student',
+            studentId: response.data.studentId || response.data._id || 'N/A',
+            institution: response.data.institution || 'NEET Academy'
           });
         }
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        console.error('Error fetching student profile:', error);
         // Set fallback data
         setProfileData({
-          name: 'User',
-          email: 'email@example.com',
-          phone: 'Not provided',
-          location: 'Not provided',
-          joinDate: 'Not available',
-          bio: 'No bio available'
+          name: 'Student',
+          studentId: 'N/A',
+          institution: 'NEET Academy'
         });
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUserData();
+    fetchStudentProfile();
   }, []);
-  
-  const handleInputChange = (e) => {
-    setProfileData({
-      ...profileData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handleSaveProfile = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
-      await axios.put('/api/user/profile', profileData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      setEditMode(false);
-    } catch (error) {
-      console.error('Error updating profile:', error);
-    }
-  };
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', py: 10 }}>
-        <CircularProgress sx={{ color: '#7445f8' }} />
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        background: 'linear-gradient(160deg, #1a237e 0%, #303f9f 100%)'
+      }}>
+        <CircularProgress sx={{ color: 'white' }} />
       </Box>
     );
   }
 
   return (
-    <Box>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <Paper sx={{ borderRadius: 3, mb: 4, overflow: 'hidden' }}>
-          <ProfileCover>
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                opacity: 0.3,
-                backgroundImage: 'url(https://images.unsplash.com/photo-1532777946373-b6783242f211)',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }}
-            />
-          </ProfileCover>
-          
-          <Box sx={{ position: 'relative' }}>
-            <Box sx={{ position: 'relative', display: 'inline-block' }}>
-              <ProfileAvatar 
-                src="/student-avatar.jpg" 
-                alt={profileData.name}
-              >
-                {profileData.name ? profileData.name.charAt(0) : 'U'}
-              </ProfileAvatar>
-              <Badge
-                overlap="circular"
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                badgeContent={
-                  <UploadButton size="small">
-                    <UploadIcon fontSize="small" />
-                  </UploadButton>
-                }
-              >
-                <span />
-              </Badge>
-            </Box>
-          </Box>
-          
-          <Box sx={{ textAlign: 'center', p: 3 }}>
-            <Typography variant="h4" fontWeight="bold" gutterBottom>
-              {profileData.name}
-            </Typography>
-            <Typography variant="body1" color="text.secondary" gutterBottom>
-              Student
-            </Typography>
-            <Chip 
-              label="NEET Aspirant" 
-              sx={{ bgcolor: 'rgba(116, 69, 248, 0.1)', color: '#7445f8', fontWeight: 500 }}
-            />
-          </Box>
-        </Paper>
-          
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={5}>
-            <StyledCard>
-              <CardHeader 
-                title="Personal Information" 
-                action={
-                  <IconButton 
-                    onClick={() => setEditMode(!editMode)}
-                    color={editMode ? "error" : "default"}
-                  >
-                    {editMode ? <CloseIcon /> : <EditIcon />}
-                  </IconButton>
-                }
-              />
-              <Divider />
-              <CardContent>
-                {editMode ? (
-                  <Box component="form">
-                    <TextField
-                      fullWidth
-                      label="Full Name"
-                      name="name"
-                      value={profileData.name}
-                      onChange={handleInputChange}
-                      margin="normal"
-                      variant="outlined"
-                    />
-                    <TextField
-                      fullWidth
-                      label="Email"
-                      name="email"
-                      type="email"
-                      value={profileData.email}
-                      onChange={handleInputChange}
-                      margin="normal"
-                      variant="outlined"
-                    />
-                    <TextField
-                      fullWidth
-                      label="Phone"
-                      name="phone"
-                      value={profileData.phone}
-                      onChange={handleInputChange}
-                      margin="normal"
-                      variant="outlined"
-                    />
-                    <TextField
-                      fullWidth
-                      label="Location"
-                      name="location"
-                      value={profileData.location}
-                      onChange={handleInputChange}
-                      margin="normal"
-                      variant="outlined"
-                    />
-                    <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-                      <IconButton
-                        color="primary"
-                        onClick={handleSaveProfile}
-                        sx={{ color: '#7445f8' }}
-                      >
-                        <SaveIcon />
-                      </IconButton>
-                    </Box>
-                  </Box>
-                ) : (
-                  <List disablePadding>
-                    <ListItem
-                      disableGutters
-                      sx={{ py: 1.5 }}
-                    >
-                      <ListItemAvatar>
-                        <Avatar sx={{ bgcolor: 'rgba(116, 69, 248, 0.1)' }}>
-                          <EmailIcon sx={{ color: '#7445f8' }} />
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText 
-                        primary="Email" 
-                        secondary={profileData.email}
-                      />
-                    </ListItem>
-                    <ListItem
-                      disableGutters
-                      sx={{ py: 1.5 }}
-                    >
-                      <ListItemAvatar>
-                        <Avatar sx={{ bgcolor: 'rgba(116, 69, 248, 0.1)' }}>
-                          <PhoneIcon sx={{ color: '#7445f8' }} />
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText 
-                        primary="Phone" 
-                        secondary={profileData.phone}
-                      />
-                    </ListItem>
-                    <ListItem
-                      disableGutters
-                      sx={{ py: 1.5 }}
-                    >
-                      <ListItemAvatar>
-                        <Avatar sx={{ bgcolor: 'rgba(116, 69, 248, 0.1)' }}>
-                          <LocationIcon sx={{ color: '#7445f8' }} />
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText 
-                        primary="Location" 
-                        secondary={profileData.location}
-                      />
-                    </ListItem>
-                    <ListItem
-                      disableGutters
-                      sx={{ py: 1.5 }}
-                    >
-                      <ListItemAvatar>
-                        <Avatar sx={{ bgcolor: 'rgba(116, 69, 248, 0.1)' }}>
-                          <CalendarIcon sx={{ color: '#7445f8' }} />
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText 
-                        primary="Joined" 
-                        secondary={profileData.joinDate}
-                      />
-                    </ListItem>
-                  </List>
-                )}
-              </CardContent>
-            </StyledCard>
-          </Grid>
-          
-          <Grid item xs={12} md={7}>
-            <StyledCard>
-              <CardHeader title="About Me" />
-              <Divider />
-              <CardContent>
-                {editMode ? (
-                  <TextField
-                    fullWidth
-                    name="bio"
-                    value={profileData.bio}
-                    onChange={handleInputChange}
-                    multiline
-                    rows={4}
-                    variant="outlined"
-                  />
-                ) : (
-                  <Typography variant="body1">
-                    {profileData.bio}
+    <Box sx={{ 
+      py: { xs: 2, md: 4 }, 
+      px: { xs: 1, sm: 2, md: 3 },
+      background: theme.palette.grey[100],
+      minHeight: '100vh'
+    }}>
+      <Container maxWidth="sm" sx={{ mx: 'auto' }}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <ProfileContainer elevation={3}>
+            {/* Background decoration */}
+            <Box sx={{
+              position: 'absolute',
+              top: -80,
+              right: -80,
+              width: 200,
+              height: 200,
+              borderRadius: '50%',
+              backgroundColor: alpha('#fff', 0.05),
+              zIndex: 0
+            }} />
+            
+            <Box sx={{
+              position: 'absolute',
+              bottom: -60,
+              left: -60,
+              width: 150,
+              height: 150,
+              borderRadius: '50%',
+              backgroundColor: alpha('#fff', 0.05),
+              zIndex: 0
+            }} />
+
+            {/* Profile information */}
+            <Box sx={{ position: 'relative', zIndex: 1 }}>
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { xs: 'center', sm: 'flex-start' },
+                textAlign: { xs: 'center', sm: 'left' },
+                mb: 3
+              }}>
+                <ProfileAvatar alt={profileData.name}>
+                  {profileData.name.charAt(0)}
+                </ProfileAvatar>
+                
+                <Box sx={{ 
+                  ml: { xs: 0, sm: 2 },
+                  mt: { xs: 2, sm: 0 }
+                }}>
+                  <Typography variant="h4" fontWeight="bold">
+                    {profileData.name}
                   </Typography>
-                )}
-              </CardContent>
-            </StyledCard>
-          </Grid>
-        </Grid>
-      </motion.div>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      opacity: 0.7, 
+                      mt: 0.5,
+                      px: 1.5,
+                      py: 0.5,
+                      borderRadius: 5,
+                      display: 'inline-block',
+                      bgcolor: alpha('#fff', 0.1)
+                    }}
+                  >
+                    NEET Aspirant
+                  </Typography>
+                </Box>
+              </Box>
+              
+              <Divider sx={{ 
+                mb: 3, 
+                borderColor: alpha('#fff', 0.1),
+                opacity: 0.6
+              }} />
+              
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <InfoBox>
+                    <InfoLabel>Student ID</InfoLabel>
+                    <InfoValue>{profileData.studentId}</InfoValue>
+                  </InfoBox>
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <InfoBox>
+                    <InfoLabel>Institution</InfoLabel>
+                    <InfoValue>{profileData.institution}</InfoValue>
+                  </InfoBox>
+                </Grid>
+              </Grid>
+            </Box>
+          </ProfileContainer>
+        </motion.div>
+      </Container>
     </Box>
   );
 };

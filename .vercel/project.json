@@ -1,1 +1,15 @@
-{"projectId":"prj_QWDOdZFKybK0r7ggzXXTLl2Hz2ju","orgId":"team_7k87LfxfbSQNa5GIYvUiasK0"}
+{
+  "projectId": "prj_QWDOdZFKybK0r7ggzXXTLl2Hz2ju",
+  "orgId": "team_7k87LfxfbSQNa5GIYvUiasK0",
+  "settings": {
+    "createdAt": 1742442140400,
+    "framework": "create-react-app",
+    "devCommand": null,
+    "installCommand": "npm install",
+    "buildCommand": "CI=false npm run build",
+    "outputDirectory": null,
+    "rootDirectory": null,
+    "directoryListing": false,
+    "nodeVersion": "22.x"
+  }
+}

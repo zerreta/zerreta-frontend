@@ -531,6 +531,133 @@ function TestResults() {
               </Grid>
         </Paper>
 
+        {/* Additional Metrics Section */}
+        <Paper 
+          elevation={3}
+          sx={{
+            p: 3, 
+            borderRadius: 2,
+            mb: 4,
+            mt: 4
+          }}
+        >
+          <Typography variant="h6" fontWeight="500" sx={{ mb: 3 }}>
+            Detailed Performance Analysis
+          </Typography>
+          
+          <Grid container spacing={3}>
+            {/* Metrics Cards */}
+            <Grid item xs={12} md={4}>
+              <Paper 
+                elevation={1} 
+                sx={{ 
+                  p: 2, 
+                  textAlign: 'center',
+                  height: '100%',
+                  background: testData.score >= 90 ? 'linear-gradient(to right bottom, #4caf50, #66bb6a)' :
+                            testData.score >= 70 ? 'linear-gradient(to right bottom, #66bb6a, #81c784)' :
+                            testData.score >= 50 ? 'linear-gradient(to right bottom, #ff9800, #ffb74d)' :
+                            'linear-gradient(to right bottom, #f44336, #e57373)',
+                  color: 'white'
+                }}
+              >
+                <Typography variant="subtitle2" sx={{ fontWeight: 'normal', opacity: 0.9 }}>
+                  SCORE EVALUATION
+                </Typography>
+                <Typography variant="h4" sx={{ my: 1, fontWeight: 'bold' }}>
+                  {testData.score}%
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 'normal', opacity: 0.9 }}>
+                  {testData.score >= 90 ? 'Excellent!' : 
+                   testData.score >= 70 ? 'Good Performance' : 
+                   testData.score >= 50 ? 'Average - Needs Improvement' : 
+                   'Needs Significant Improvement'}
+                    </Typography>
+              </Paper>
+            </Grid>
+            
+            <Grid item xs={12} md={4}>
+              <Paper 
+                elevation={1} 
+                sx={{ 
+                  p: 2, 
+                  textAlign: 'center',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center'
+                }}
+              >
+                <Typography variant="subtitle2" color="text.secondary">
+                  TIME EFFICIENCY
+                </Typography>
+                <Typography variant="h4" sx={{ my: 1 }}>
+                  {testData.timeTaken ? 
+                    `${Math.floor(testData.timeTaken / 60)}:${(testData.timeTaken % 60).toString().padStart(2, '0')}` : 
+                    '00:00'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {testData.totalQuestions && testData.timeTaken ? (
+                    <>
+                      <span style={{ fontWeight: 'bold' }}>
+                        {Math.round(testData.timeTaken / testData.totalQuestions)} sec
+                      </span> per question
+                    </>
+                  ) : 'No time data available'}
+                </Typography>
+              </Paper>
+            </Grid>
+            
+            <Grid item xs={12} md={4}>
+              <Paper 
+                elevation={1} 
+                sx={{ 
+                  p: 2, 
+                  textAlign: 'center',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center'
+                }}
+              >
+                <Typography variant="subtitle2" color="text.secondary">
+                  ACCURACY RATE
+                </Typography>
+                <Typography variant="h4" sx={{ my: 1 }}>
+                  {testData.correctAnswers && testData.totalQuestions ? 
+                    `${Math.round((testData.correctAnswers / testData.totalQuestions) * 100)}%` :
+                    '0%'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {testData.correctAnswers || 0} correct out of {testData.totalQuestions || 0}
+                    </Typography>
+              </Paper>
+            </Grid>
+          </Grid>
+
+          {/* Level Result / Next Steps */}
+          <Box 
+            sx={{ 
+              mt: 3, 
+              p: 2, 
+              borderRadius: 1,
+              bgcolor: testData.score >= 70 ? 'success.light' : 'warning.light',
+              color: 'white'
+            }}
+          >
+            <Typography variant="subtitle1" fontWeight="medium">
+              {testData.score >= 70 
+                ? 'Level Passed! You may proceed to the next level.' 
+                : 'Level not passed. Review the questions and try again.'}
+            </Typography>
+            {testData.score < 70 && (
+              <Typography variant="body2" sx={{ mt: 1, opacity: 0.9 }}>
+                Focus on reviewing areas where you made mistakes before attempting again.
+              </Typography>
+            )}
+          </Box>
+        </Paper>
+
         {/* Detailed Results */}
         <Box sx={{ mb: 4 }}>
           <Typography variant="h5" fontWeight="bold" gutterBottom>

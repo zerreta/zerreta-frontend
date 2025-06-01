@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Zerreta NEET Login</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .login-container {
+      background-color: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      width: 380px;
+      text-align: center;
+    }
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      color: #4a6baf;
+      margin-bottom: 25px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 30px;
+      font-weight: 500;
+    }
+    .form-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #555;
+    }
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      box-sizing: border-box;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+    input:focus, select:focus {
+      border-color: #4a6baf;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(74, 107, 175, 0.2);
+    }
+    .radio-group {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .radio-option {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+    .radio-option input {
+      width: auto;
+      margin-right: 8px;
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      background-color: #4a6baf;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #3a5998;
+    }
+    .error {
+      color: #e74c3c;
+      margin-top: 15px;
+      text-align: center;
+      padding: 10px;
+      border-radius: 4px;
+      background-color: rgba(231, 76, 60, 0.1);
+      display: none;
+    }
+    .success {
+      color: #2ecc71;
+      margin-top: 15px;
+      text-align: center;
+      padding: 10px;
+      border-radius: 4px;
+      background-color: rgba(46, 204, 113, 0.1);
+      display: none;
+    }
+    .loader {
+      display: none;
+      border: 3px solid #f3f3f3;
+      border-radius: 50%;
+      border-top: 3px solid #4a6baf;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+      margin: 15px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="logo">Zerreta NEET</div>
+    <h1>Welcome Back</h1>
+    
+    <div class="form-group">
+      <label for="username">Username</label>
+      <input type="text" id="username" placeholder="Enter your username" value="admin">
+    </div>
+    
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="Enter your password" value="admin123">
+    </div>
+    
+    <div class="form-group">
+      <label>Role</label>
+      <div class="radio-group">
+        <label class="radio-option">
+          <input type="radio" name="role" value="admin" checked> Admin
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="role" value="student"> Student
+        </label>
+      </div>
+    </div>
+    
+    <button onclick="login()">Login</button>
+    <div class="loader" id="loader"></div>
+    <div id="error" class="error"></div>
+    <div id="success" class="success"></div>
+  </div>
+
+  <script>
+    function login() {
+      // Get form values
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const roleElements = document.getElementsByName('role');
+      let role = 'admin';
+      
+      for (let i = 0; i < roleElements.length; i++) {
+        if (roleElements[i].checked) {
+          role = roleElements[i].value;
+          break;
+        }
+      }
+      
+      // Validation
+      if (!username || !password) {
+        showError('Please enter both username and password');
+        return;
+      }
+      
+      // Show loading indicator
+      document.getElementById('loader').style.display = 'block';
+      document.getElementById('error').style.display = 'none';
+      document.getElementById('success').style.display = 'none';
+      
+      // Backend URL - hardcoded to the correct one
+      const backendUrl = 'https://zer-backend.onrender.com';
+      
+      console.log(`Sending login request as ${role} to: ${backendUrl}/login`);
+      
+      // Send the login request with fetch API
+      fetch(`${backendUrl}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ username, password, role })
+      })
+      .then(response => {
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+          return response.text().then(text => {
+            throw new Error(`Server returned ${response.status}: ${text || 'Unknown error'}`);
+          });
+        }
+        
+        return response.json();
+      })
+      .then(data => {
+        // Clear any previous data
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Handle successful login
+        console.log('Login successful:', data);
+        document.getElementById('success').textContent = 'Login successful! Redirecting...';
+        document.getElementById('success').style.display = 'block';
+        
+        // Store token in localStorage
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('role', role);
+        localStorage.setItem('user', JSON.stringify({username: username, role: role}));
+        
+        // Log what was stored
+        console.log('Stored in localStorage:', {
+          token: data.token,
+          role: role,
+          user: JSON.stringify({username: username, role: role})
+        });
+        
+        // Redirect after a short delay
+        setTimeout(() => {
+          if (role === 'admin') {
+            window.location.href = '/admin';
+          } else {
+            window.location.href = '/student-dashboard';
+          }
+        }, 2000);
+      })
+      .catch(error => {
+        // Handle login error
+        console.error('Login error:', error);
+        showError(error.message || 'Login failed, please try again');
+      })
+      .finally(() => {
+        // Hide loading indicator
+        document.getElementById('loader').style.display = 'none';
+      });
+    }
+    
+    function showError(message) {
+      const errorElement = document.getElementById('error');
+      errorElement.textContent = message;
+      errorElement.style.display = 'block';
+    }
+    
+    // Add event listener for Enter key
+    document.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        login();
+      }
+    });
+  </script>
+</body>
+</html> 

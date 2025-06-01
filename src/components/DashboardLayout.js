@@ -16,6 +16,8 @@ import {
   Badge,
   Button,
   useTheme,
+  Popover,
+  Paper,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -36,11 +38,16 @@ import {
   Lightbulb as LightbulbIcon,
   EmojiEvents as TrophyIcon,
   Psychology as PsychologyIcon,
-  BookmarkBorder as BookmarkIcon
+  BookmarkBorder as BookmarkIcon,
+  RecordVoiceOver as SpeakyIcon,
+  Calculate as AptiIcon,
+  Extension as ExtrasIcon,
+  Code as CodeIcon,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import axiosInstance from './axios-config';
 import zerLogo from '../assets/zer-logo.png';
+import { useSidebar } from '../context/SidebarContext';
 
 const drawerWidth = 260;
 
@@ -119,7 +126,17 @@ const menuItems = [
   { text: 'Resources', icon: <BookmarkIcon />, path: '/student-dashboard/resources' },
   { text: 'Test History', icon: <AssignmentIcon />, path: '/student-dashboard/test-history' },
   { text: 'AI Help', icon: <LightbulbIcon />, path: '/student-dashboard/ai-help' },
-  { text: 'Leaderboard', icon: <TrophyIcon />, path: '/student-dashboard/leaderboard' }
+  { text: 'Leaderboard', icon: <TrophyIcon />, path: '/student-dashboard/leaderboard' },
+  { 
+    text: 'Extras', 
+    icon: <ExtrasIcon />, 
+    path: '/student-dashboard/extras',
+    subItems: [
+      { text: 'Speaky', icon: <SpeakyIcon />, path: '/student-dashboard/speaky' },
+      { text: 'Codezy', icon: <CodeIcon />, path: '/student-dashboard/codezy' },
+      { text: 'Apti', icon: <AptiIcon />, path: '/student-dashboard/apti' }
+    ]
+  }
 ];
 
 const DashboardLayout = () => {
@@ -128,6 +145,7 @@ const DashboardLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
+  const { mainSidebarVisible } = useSidebar();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -160,6 +178,13 @@ const DashboardLayout = () => {
     window.location.href = '/login';
   };
 
+  const handleItemClick = (item) => {
+    navigate(item.path);
+    if (mobileOpen) {
+      setMobileOpen(false);
+    }
+  };
+
   const drawer = (
     <>
       <DrawerHeader>
@@ -175,7 +200,7 @@ const DashboardLayout = () => {
             }
           }}
           onClick={handleDrawerToggle}
-          display={{ xs: 'block', sm: 'none' }}
+          display={{ xs: 'block', md: 'none' }}
         >
           <ChevronLeftIcon />
         </IconButton>
@@ -185,17 +210,24 @@ const DashboardLayout = () => {
       <Box sx={{ mt: 2 }}>
         <List>
           {menuItems.map((item) => (
-            <MenuItemContainer
-              button
-              key={item.path}
-              active={location.pathname === item.path}
-              onClick={() => navigate(item.path)}
-            >
-              <StyledListItemIcon active={location.pathname === item.path}>
-                {item.icon}
-              </StyledListItemIcon>
-              <StyledListItemText active={location.pathname === item.path} primary={item.text} />
-            </MenuItemContainer>
+            <React.Fragment key={item.text}>
+              <MenuItemContainer
+                button
+                active={location.pathname === item.path || 
+                  (item.subItems && item.subItems.some(subItem => location.pathname === subItem.path))}
+                onClick={() => handleItemClick(item)}
+              >
+                <StyledListItemIcon active={location.pathname === item.path || 
+                  (item.subItems && item.subItems.some(subItem => location.pathname === subItem.path))}>
+                  {item.icon}
+                </StyledListItemIcon>
+                <StyledListItemText 
+                  active={location.pathname === item.path || 
+                    (item.subItems && item.subItems.some(subItem => location.pathname === subItem.path))} 
+                  primary={item.text} 
+                />
+              </MenuItemContainer>
+            </React.Fragment>
           ))}
         </List>
       </Box>
@@ -259,7 +291,7 @@ const DashboardLayout = () => {
             onClick={handleDrawerToggle}
             sx={{ 
               mr: 2, 
-              display: { sm: 'none' },
+              display: { md: 'none' },
               '&:hover': {
                 backgroundColor: 'transparent',
               }
@@ -269,10 +301,6 @@ const DashboardLayout = () => {
           </IconButton>
           
           <Box sx={{ flexGrow: 1 }} />
-          
-          
-          
-          {/* Profile button removed */}
         </Toolbar>
       </StyledAppBar>
 
@@ -284,34 +312,42 @@ const DashboardLayout = () => {
           onClose={handleDrawerToggle}
           ModalProps={{ keepMounted: true }}
           sx={{
-            display: { xs: 'block', sm: 'none' },
+            display: { xs: 'block', md: 'none' },
             '& .MuiDrawer-paper': { width: drawerWidth, boxSizing: 'border-box', overflowX: 'hidden' },
           }}
         >
           {drawer}
         </Drawer>
 
-        {/* Desktop drawer */}
+        {/* Desktop drawer - respect the mainSidebarVisible state */}
         <StyledDrawer
           variant="permanent"
-          sx={{ display: { xs: 'none', sm: 'block' } }}
+          sx={{ 
+            display: { 
+              xs: 'none', 
+              md: mainSidebarVisible ? 'block' : 'none' 
+            } 
+          }}
           open
         >
           {drawer}
         </StyledDrawer>
       </Box>
 
-      {/* Main content */}
+      {/* Main content - adjust based on sidebar visibility */}
       <Box
         component="main"
         sx={{
           flexGrow: 1,
           p: 3,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          mt: 8, // Add space for the AppBar
+          width: { 
+            md: mainSidebarVisible ? `calc(100% - ${drawerWidth}px)` : '100%' 
+          },
+          mt: 8,
           backgroundColor: '#f8f9fa',
           minHeight: '100vh',
-          overflowX: 'hidden', // Prevent horizontal scrolling
+          overflowX: 'hidden',
+          transition: 'width 0.3s ease'
         }}
       >
         <Outlet />

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Test Page</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+    button { padding: 10px; margin: 5px; cursor: pointer; }
+    pre { background: #f5f5f5; padding: 10px; border-radius: 5px; overflow: auto; }
+    .error { color: red; }
+    .success { color: green; }
+    .card { border: 1px solid #ddd; border-radius: 5px; padding: 15px; margin-bottom: 15px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <h1>Backend API Test</h1>
+  <p>This page tests direct connections to the backend API without going through React.</p>
+  
+  <div class="card">
+    <h2>Test Connectivity</h2>
+    <button onclick="testRootEndpoint('https://zer-backend.onrender.com')">Test zer-backend</button>
+    <button onclick="testRootEndpoint('https://zerreta-backend-1.onrender.com')">Test zerreta-backend-1</button>
+    <div id="connectivityResult"></div>
+  </div>
+
+  <div class="card">
+    <h2>Health Check</h2>
+    <button onclick="testHealthEndpoint('https://zer-backend.onrender.com')">Health Check zer-backend</button>
+    <button onclick="testHealthEndpoint('https://zerreta-backend-1.onrender.com')">Health Check zerreta-backend-1</button>
+    <div id="healthResult"></div>
+  </div>
+
+  <div class="card">
+    <h2>Login Test</h2>
+    <div>
+      <label for="baseUrl">Backend URL:</label>
+      <select id="baseUrl">
+        <option value="https://zer-backend.onrender.com">zer-backend.onrender.com</option>
+        <option value="https://zerreta-backend-1.onrender.com">zerreta-backend-1.onrender.com</option>
+      </select>
+    </div>
+    <div>
+      <label for="username">Username:</label>
+      <input type="text" id="username" value="admin">
+    </div>
+    <div>
+      <label for="password">Password:</label>
+      <input type="password" id="password" value="admin123">
+    </div>
+    <div>
+      <label for="role">Role:</label>
+      <select id="role">
+        <option value="admin">Admin</option>
+        <option value="student">Student</option>
+      </select>
+    </div>
+    <button onclick="testLogin()">Test Login</button>
+    <div id="loginResult"></div>
+  </div>
+
+  <div id="tokenInfo" class="card hidden">
+    <h2>JWT Token Info</h2>
+    <div id="tokenDisplay"></div>
+  </div>
+
+  <script>
+    // Test the root endpoint
+    async function testRootEndpoint(baseUrl) {
+      const resultDiv = document.getElementById('connectivityResult');
+      resultDiv.innerHTML = '<p>Testing connection...</p>';
+      
+      try {
+        const response = await fetch(baseUrl);
+        const data = await response.json();
+        
+        resultDiv.innerHTML = `
+          <p class="success">Successfully connected to ${baseUrl}</p>
+          <pre>${JSON.stringify(data, null, 2)}</pre>
+        `;
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <p class="error">Error connecting to ${baseUrl}</p>
+          <pre>${error.message}</pre>
+        `;
+      }
+    }
+
+    // Test the health endpoint
+    async function testHealthEndpoint(baseUrl) {
+      const resultDiv = document.getElementById('healthResult');
+      resultDiv.innerHTML = '<p>Testing health endpoint...</p>';
+      
+      try {
+        const response = await fetch(`${baseUrl}/api/health`);
+        const data = await response.json();
+        
+        resultDiv.innerHTML = `
+          <p class="success">Health check successful for ${baseUrl}</p>
+          <pre>${JSON.stringify(data, null, 2)}</pre>
+        `;
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <p class="error">Health check failed for ${baseUrl}</p>
+          <pre>${error.message}</pre>
+        `;
+      }
+    }
+
+    // Test login
+    async function testLogin() {
+      const baseUrl = document.getElementById('baseUrl').value;
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const role = document.getElementById('role').value;
+      
+      const resultDiv = document.getElementById('loginResult');
+      resultDiv.innerHTML = '<p>Testing login...</p>';
+      
+      try {
+        const response = await fetch(`${baseUrl}/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ username, password, role })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          resultDiv.innerHTML = `
+            <p class="success">Login successful!</p>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+          
+          // Display token info
+          if (data.token) {
+            displayTokenInfo(data.token);
+          }
+        } else {
+          resultDiv.innerHTML = `
+            <p class="error">Login failed with status ${response.status}</p>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <p class="error">Login request failed</p>
+          <pre>${error.message}</pre>
+        `;
+      }
+    }
+
+    // Display token information
+    function displayTokenInfo(token) {
+      const tokenDiv = document.getElementById('tokenInfo');
+      const tokenDisplay = document.getElementById('tokenDisplay');
+      
+      tokenDiv.classList.remove('hidden');
+      
+      // Parse the JWT token (note: this is not secure for production)
+      const tokenParts = token.split('.');
+      if (tokenParts.length === 3) {
+        const header = JSON.parse(atob(tokenParts[0]));
+        const payload = JSON.parse(atob(tokenParts[1]));
+        
+        tokenDisplay.innerHTML = `
+          <p><strong>Token:</strong> ${token.substring(0, 20)}...</p>
+          <p><strong>Header:</strong></p>
+          <pre>${JSON.stringify(header, null, 2)}</pre>
+          <p><strong>Payload:</strong></p>
+          <pre>${JSON.stringify(payload, null, 2)}</pre>
+        `;
+      } else {
+        tokenDisplay.innerHTML = `<p>Invalid token format</p>`;
+      }
+    }
+  </script>
+</body>
+</html> 

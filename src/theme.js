@@ -143,25 +143,19 @@ let theme = createTheme({
           padding: '8px 16px',
           textTransform: 'none',
           fontWeight: 600,
-          '&:hover': {
-            backgroundColor: 'transparent',
-            '& .MuiButton-label': {
-              color: 'inherit',
-            },
-          },
         },
         containedPrimary: {
           backgroundColor: '#7445f8',
           '&:hover': {
-            backgroundColor: '#7445f8',
+            backgroundColor: '#5c33d4',
           },
         },
         outlinedPrimary: {
           borderColor: '#7445f8',
           color: '#7445f8',
           '&:hover': {
-            backgroundColor: 'transparent',
-            borderColor: '#7445f8',
+            backgroundColor: 'rgba(116, 69, 248, 0.08)',
+            borderColor: '#5c33d4',
           },
         },
       },
@@ -211,8 +205,8 @@ let theme = createTheme({
           fontWeight: 600,
           minHeight: 48,
           '&:hover': {
-            backgroundColor: 'transparent',
-            color: 'inherit',
+            backgroundColor: 'rgba(116, 69, 248, 0.04)',
+            color: '#7445f8',
           },
           '&.Mui-selected': {
             color: '#7445f8',
@@ -307,7 +301,7 @@ let theme = createTheme({
       styleOverrides: {
         root: {
           '&:hover': {
-            backgroundColor: 'transparent',
+            backgroundColor: 'rgba(0, 0, 0, 0.04)',
           },
         },
       },
@@ -316,12 +310,12 @@ let theme = createTheme({
       styleOverrides: {
         root: {
           '&:hover': {
-            backgroundColor: 'transparent',
+            backgroundColor: 'rgba(0, 0, 0, 0.04)',
           },
         },
         button: {
           '&:hover': {
-            backgroundColor: 'transparent',
+            backgroundColor: 'rgba(116, 69, 248, 0.04)',
           },
         },
       },
@@ -330,7 +324,7 @@ let theme = createTheme({
       styleOverrides: {
         root: {
           '&:hover': {
-            backgroundColor: 'transparent',
+            backgroundColor: 'rgba(116, 69, 248, 0.04)',
           },
         },
       },
@@ -339,7 +333,7 @@ let theme = createTheme({
       styleOverrides: {
         root: {
           '&:hover': {
-            backgroundColor: 'transparent',
+            backgroundColor: 'rgba(116, 69, 248, 0.04)',
             textDecoration: 'none',
           },
         },
@@ -349,7 +343,7 @@ let theme = createTheme({
       styleOverrides: {
         root: {
           '&:hover': {
-            backgroundColor: 'transparent',
+            backgroundColor: 'rgba(0, 0, 0, 0.04)',
           },
         },
       },
@@ -357,13 +351,6 @@ let theme = createTheme({
     MuiButtonBase: {
       defaultProps: {
         disableRipple: true,
-      },
-      styleOverrides: {
-        root: {
-          '&:hover': {
-            backgroundColor: 'transparent !important',
-          },
-        },
       },
     },
   },

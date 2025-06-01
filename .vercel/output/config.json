@@ -1,0 +1,78 @@
+{
+  "version": 3,
+  "routes": [
+    {
+      "src": "/static/(.*)",
+      "headers": {
+        "cache-control": "s-maxage=31536000, immutable"
+      },
+      "continue": true
+    },
+    {
+      "src": "/service-worker.js",
+      "headers": {
+        "cache-control": "s-maxage=0"
+      },
+      "continue": true
+    },
+    {
+      "src": "^/static/(.*)$",
+      "dest": "/static/$1",
+      "headers": {
+        "Access-Control-Allow-Origin": "*"
+      }
+    },
+    {
+      "src": "^/favicon.ico$",
+      "dest": "/favicon.ico"
+    },
+    {
+      "src": "^/manifest.json$",
+      "dest": "/manifest.json"
+    },
+    {
+      "src": "^/logo192.png$",
+      "dest": "/logo192.png"
+    },
+    {
+      "src": "^/(.*)$",
+      "dest": "/index.html",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "X-Requested-With, Content-Type, Accept, Authorization"
+      }
+    },
+    {
+      "src": "/sockjs-node/(.*)",
+      "dest": "/sockjs-node/$1"
+    },
+    {
+      "handle": "error"
+    },
+    {
+      "status": 404,
+      "src": "^(?!/api).*$",
+      "dest": "/404.html"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/static/(.*)",
+      "status": 404,
+      "dest": "/404.html"
+    },
+    {
+      "src": "/(.*)",
+      "headers": {
+        "cache-control": "s-maxage=0"
+      },
+      "dest": "/index.html"
+    }
+  ],
+  "framework": {
+    "version": "5.0.1"
+  },
+  "crons": []
+}

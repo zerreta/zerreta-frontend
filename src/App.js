@@ -33,6 +33,34 @@ import Resources from './components/Resources';
 // Import the new AdvancedAssessment component
 import AdvancedAssessment from './components/AdvancedAssessment';
 
+// Import the new AdminTestHistory component
+import AdminTestHistory from './components/AdminTestHistory';
+
+// Import Grammar components
+import GrammarQuestionManager from './components/GrammarQuestionManager';
+import GrammarTest from './components/GrammarTest';
+
+// Import Speaky, Apti, Codezy, and ExtrasPage components
+import Speaky from './components/Speaky';
+import SpeakyGrammar from './components/SpeakyGrammar';
+import BeginnerGrammar from './components/BeginnerGrammar';
+import Vocabulary from './components/Vocabulary';
+import Reading from './components/Reading';
+import Listening from './components/Listening';
+import ListeningA1 from './components/ListeningA1';
+import ListeningB1 from './components/ListeningB1';
+import ListeningC1 from './components/ListeningC1';
+import ListeningPack from './components/ListeningPack';
+import Apti from './components/Apti';
+import Codezy from './components/Codezy';
+import ExtrasPage from './components/ExtrasPage';
+
+// Import the new EnglishLevelTest component
+import EnglishLevelTest from './pages/EnglishLevelTest';
+
+// Import the SidebarProvider
+import { SidebarProvider } from './context/SidebarContext';
+
 // Create a simple TestSelection component
 const TestSelection = () => {
   return (
@@ -146,6 +174,7 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       {globalStyles}
+      <SidebarProvider>
       <Router>
         <PWAInstallPrompt />
         <Routes>
@@ -179,11 +208,13 @@ function App() {
           >
             <Route index element={<AdminDashboard />} />
             <Route path="questions" element={<QuestionManager />} />
+            <Route path="grammar-questions" element={<GrammarQuestionManager />} />
             <Route path="student-levels" element={<StudentLevels />} />
             <Route path="student-points" element={<StudentPoints />} />
             <Route path="student-data" element={<StudentData />} />
             <Route path="institutions" element={<InstitutionsList />} />
             <Route path="institutions/:institution" element={<InstitutionStudents />} />
+            <Route path="test-history" element={<AdminTestHistory />} />
           </Route>
           
           {/* Student Dashboard routes */}
@@ -204,6 +235,15 @@ function App() {
             <Route path="ai-help" element={<AIHelp />} />
             <Route path="leaderboard" element={<LeaderboardPage />} />
             <Route path="test-history" element={<TestHistory />} />
+            {/* Extras page and individual features */}
+            <Route path="extras" element={<ExtrasPage />} />
+            <Route path="speaky" element={<Speaky />} />
+            <Route path="speaky/grammar" element={<SpeakyGrammar />} />
+            <Route path="speaky/vocabulary" element={<Vocabulary />} />
+            <Route path="speaky/reading" element={<Reading />} />
+            <Route path="speaky/listening" element={<Listening />} />
+            <Route path="apti" element={<Apti />} />
+            <Route path="codezy" element={<Codezy />} />
           </Route>
           
           {/* TestResults routes */}
@@ -255,8 +295,113 @@ function App() {
               <TestPage />
             </StudentRoute>
           } />
+          
+          {/* Add a new route for test details */}
+          <Route
+            path="/student-dashboard/test-details/:testId"
+            element={
+              <StudentRoute>
+                <TestResults />
+              </StudentRoute>
+            }
+          />
+          
+          {/* Add a new route for the English Level Test */}
+          <Route
+            path="/challenge/english-level-test"
+            element={
+              <StudentRoute>
+                <EnglishLevelTest />
+              </StudentRoute>
+            }
+          />
+          
+          {/* Add Grammar Test route */}
+          <Route
+            path="/grammar-test"
+            element={
+              <StudentRoute>
+                <GrammarTest />
+              </StudentRoute>
+            }
+          />
+          
+          {/* Direct routes for speaky modules */}
+          <Route
+            path="/speaky/grammar"
+            element={
+              <StudentRoute>
+                <SpeakyGrammar />
+              </StudentRoute>
+            }
+          />
+          <Route
+            path="/speaky/grammar/beginner"
+            element={
+              <StudentRoute>
+                <BeginnerGrammar />
+              </StudentRoute>
+            }
+          />
+          <Route
+            path="/speaky/vocabulary"
+            element={
+              <StudentRoute>
+                <Vocabulary />
+              </StudentRoute>
+            }
+          />
+          <Route
+            path="/speaky/reading"
+            element={
+              <StudentRoute>
+                <Reading />
+              </StudentRoute>
+            }
+          />
+          <Route
+            path="/speaky/listening"
+            element={
+              <StudentRoute>
+                <Listening />
+              </StudentRoute>
+            }
+          />
+          <Route
+            path="/speaky/listening/a1"
+            element={
+              <StudentRoute>
+                <ListeningA1 />
+              </StudentRoute>
+            }
+          />
+          <Route
+            path="/speaky/listening/b1"
+            element={
+              <StudentRoute>
+                <ListeningB1 />
+              </StudentRoute>
+            }
+          />
+          <Route
+            path="/speaky/listening/c1"
+            element={
+              <StudentRoute>
+                <ListeningC1 />
+              </StudentRoute>
+            }
+          />
+          <Route
+            path="/speaky/listening/:level/pack/:packId"
+            element={
+              <StudentRoute>
+                <ListeningPack />
+              </StudentRoute>
+            }
+          />
         </Routes>
       </Router>
+      </SidebarProvider>
     </ThemeProvider>
   );
 }
