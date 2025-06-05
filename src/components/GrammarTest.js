@@ -191,6 +191,13 @@ function GrammarTest() {
     }
   }, [testStarted, testCompleted, currentQuestionIndex, questions.length]);
 
+  // Scroll to top when test results are shown
+  useEffect(() => {
+    if (testCompleted && results) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [testCompleted, results]);
+
   const handleStartTest = () => {
     setShowRules(false);
     setTestStarted(true);
@@ -410,7 +417,7 @@ function GrammarTest() {
 
   // Show test results
   if (testCompleted && results) {
-    const { score, performanceMetrics } = results;
+    const { score, performanceMetrics, questions: reviewQuestions } = results;
     const passed = score >= 70;
 
     return (
@@ -476,6 +483,157 @@ function GrammarTest() {
                 </Box>
               </Grid>
             </Grid>
+
+            {/* Detailed Test Review Section */}
+            <Divider sx={{ my: 4 }}>
+              <Typography variant="h6" color="primary">
+                📝 Test Review
+              </Typography>
+            </Divider>
+
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3, textAlign: 'center' }}>
+              Review each question to understand your performance and learn from explanations
+            </Typography>
+
+            {reviewQuestions && reviewQuestions.map((question, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1, duration: 0.3 }}
+              >
+                <Paper 
+                  elevation={1} 
+                  sx={{ 
+                    p: 3, 
+                    mb: 3, 
+                    border: '2px solid',
+                    borderColor: question.isCorrect ? 'success.main' : (question.selectedOption ? 'error.main' : 'warning.main'),
+                    borderRadius: 2,
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '4px',
+                      height: '100%',
+                      backgroundColor: question.isCorrect ? 'success.main' : (question.selectedOption ? 'error.main' : 'warning.main'),
+                    }
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="h6" sx={{ mr: 2 }}>
+                      Question {index + 1}
+                    </Typography>
+                    {question.isCorrect ? (
+                      <Chip icon={<CheckCircleIcon />} label="Correct" color="success" size="small" />
+                    ) : question.selectedOption ? (
+                      <Chip icon={<CancelIcon />} label="Incorrect" color="error" size="small" />
+                    ) : (
+                      <Chip icon={<ErrorIcon />} label="Not Answered" color="warning" size="small" />
+                    )}
+                    <Box sx={{ ml: 'auto' }}>
+                      <Chip 
+                        label={`Time: ${formatTime(question.timeSpent || 0)}`} 
+                        variant="outlined" 
+                        size="small" 
+                      />
+                    </Box>
+                  </Box>
+
+                  <Typography variant="body1" sx={{ mb: 3, fontWeight: 500, lineHeight: 1.6 }}>
+                    {question.text}
+                  </Typography>
+
+                  <Grid container spacing={2} sx={{ mb: 3 }}>
+                    <Grid item xs={12} md={6}>
+                      <Box sx={{ 
+                        p: 2, 
+                        border: '1px solid', 
+                        borderColor: question.selectedOption ? 
+                          (question.isCorrect ? 'success.main' : 'error.main') : 
+                          'warning.main',
+                        borderRadius: 1,
+                        backgroundColor: question.selectedOption ? 
+                          (question.isCorrect ? 'success.50' : 'error.50') : 
+                          'warning.50',
+                        transition: 'all 0.2s ease'
+                      }}>
+                        <Typography variant="subtitle2" gutterBottom fontWeight="bold">
+                          {question.selectedOption ? 
+                            (question.isCorrect ? '✅ Your Answer:' : '❌ Your Answer:') : 
+                            '⚠️ Your Answer:'
+                          }
+                        </Typography>
+                        <Typography variant="body1">
+                          {question.selectedOption || 'Not answered'}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Box sx={{ 
+                        p: 2, 
+                        border: '1px solid', 
+                        borderColor: 'success.main',
+                        borderRadius: 1,
+                        backgroundColor: 'success.50',
+                        transition: 'all 0.2s ease'
+                      }}>
+                        <Typography variant="subtitle2" gutterBottom fontWeight="bold">
+                          ✅ Correct Answer:
+                        </Typography>
+                        <Typography variant="body1">
+                          {question.correctOption}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  </Grid>
+
+                  {question.explanation && (
+                    <Box sx={{ 
+                      p: 2, 
+                      backgroundColor: 'info.50', 
+                      borderRadius: 1,
+                      border: '1px solid',
+                      borderColor: 'info.main',
+                      transition: 'all 0.2s ease'
+                    }}>
+                      <Typography variant="subtitle2" gutterBottom color="info.dark" fontWeight="bold">
+                        <InfoIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'middle' }} />
+                        Explanation:
+                      </Typography>
+                      <Typography variant="body2" color="info.dark" sx={{ lineHeight: 1.6 }}>
+                        {question.explanation}
+                      </Typography>
+                    </Box>
+                  )}
+
+                  {/* Show grammar rule and category if available */}
+                  {(question.category || question.grammarRule) && (
+                    <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                      {question.category && (
+                        <Chip 
+                          label={`Category: ${question.category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}`} 
+                          color="secondary" 
+                          size="small"
+                          variant="outlined"
+                        />
+                      )}
+                      {question.grammarRule && (
+                        <Chip 
+                          label={`Rule: ${question.grammarRule}`} 
+                          color="info" 
+                          size="small"
+                          variant="outlined"
+                        />
+                      )}
+                    </Box>
+                  )}
+                </Paper>
+              </motion.div>
+            ))}
 
             <Box sx={{ textAlign: 'center', mt: 4 }}>
               <Button

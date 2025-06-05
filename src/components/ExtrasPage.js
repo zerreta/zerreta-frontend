@@ -16,11 +16,13 @@ import {
   RecordVoiceOver as SpeakyIcon,
   Calculate as AptiIcon,
   Code as CodeIcon,
-  ArrowBack as ArrowBackIcon
+  ArrowBack as ArrowBackIcon,
+  Functions as MathIcon
 } from '@mui/icons-material';
 import codezyImage from '../assets/codezy.png';
 import speakyImage from '../assets/speaky.png';
 import aptiImage from '../assets/apti.png';
+import mathOrbitImage from '../assets/mathorbit.png';
 
 const ExtrasPage = () => {
   const navigate = useNavigate();
@@ -46,6 +48,13 @@ const ExtrasPage = () => {
       icon: <img src={aptiImage} alt="Apti" style={{ width: '100%', height: '200px', objectFit: 'cover', objectPosition: '0% 30%' }} />,
       path: '/student-dashboard/apti',
       color: '#fff4e3'
+    },
+    {
+      title: 'MathOrbit',
+      description: 'Explore the solar system while solving math problems! Interactive orbital mechanics meets mathematics.',
+      icon: <img src={mathOrbitImage} alt="MathOrbit" style={{ width: '100%', height: '200px', objectFit: 'cover', objectPosition: '0% 30%' }} />,
+      path: '/student-dashboard/mathorbit',
+      color: '#f0f4ff'
     }
   ];
 
@@ -54,7 +63,7 @@ const ExtrasPage = () => {
   };
 
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="xl">
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Button
           variant="outlined"
@@ -82,9 +91,9 @@ const ExtrasPage = () => {
         </Typography>
       </Box>
 
-      <Grid container spacing={4}>
+      <Grid container spacing={3}>
         {extras.map((extra) => (
-          <Grid item xs={12} md={4} key={extra.title}>
+          <Grid item xs={12} sm={6} md={3} key={extra.title}>
             <Card 
               sx={{ 
                 height: '100%', 

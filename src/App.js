@@ -40,7 +40,7 @@ import AdminTestHistory from './components/AdminTestHistory';
 import GrammarQuestionManager from './components/GrammarQuestionManager';
 import GrammarTest from './components/GrammarTest';
 
-// Import Speaky, Apti, Codezy, and ExtrasPage components
+// Import Speaky, Apti, Codezy, MathOrbit, and ExtrasPage components
 import Speaky from './components/Speaky';
 import SpeakyGrammar from './components/SpeakyGrammar';
 import BeginnerGrammar from './components/BeginnerGrammar';
@@ -53,6 +53,7 @@ import ListeningC1 from './components/ListeningC1';
 import ListeningPack from './components/ListeningPack';
 import Apti from './components/Apti';
 import Codezy from './components/Codezy';
+import MathOrbit from './components/MathOrbit';
 import ExtrasPage from './components/ExtrasPage';
 
 // Import the new EnglishLevelTest component
@@ -244,6 +245,7 @@ function App() {
             <Route path="speaky/listening" element={<Listening />} />
             <Route path="apti" element={<Apti />} />
             <Route path="codezy" element={<Codezy />} />
+            <Route path="mathorbit" element={<MathOrbit />} />
           </Route>
           
           {/* TestResults routes */}

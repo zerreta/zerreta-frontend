@@ -51,9 +51,11 @@ function GrammarQuestionManager() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [tabValue, setTabValue] = useState(0);
+  const [bulkTabValue, setBulkTabValue] = useState(0);
   const [openDialog, setOpenDialog] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [bulkQuestions, setBulkQuestions] = useState('');
+  const [userFormatQuestions, setUserFormatQuestions] = useState('');
   const [csvFile, setCsvFile] = useState(null);
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
@@ -144,6 +146,10 @@ function GrammarQuestionManager() {
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
+  };
+
+  const handleBulkTabChange = (event, newValue) => {
+    setBulkTabValue(newValue);
   };
 
   const handleFilterChange = (event) => {
@@ -262,6 +268,130 @@ function GrammarQuestionManager() {
         console.error('Error deleting grammar question:', err);
         setError('Failed to delete grammar question. Please try again.');
       }
+    }
+  };
+
+  const handleUserFormatUpload = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        setError('Authentication token missing. Please log in again.');
+        setLoading(false);
+        return;
+      }
+
+      // Parse the JSON input - first filter out comment lines that start with "//"
+      let parsedQuestions;
+      try {
+        // Split into lines, filter out comment lines (starting with "//"), then rejoin
+        const cleanedJsonText = userFormatQuestions
+          .split('\n')
+          .filter(line => !line.trim().startsWith('//'))
+          .join('\n');
+        
+        console.log('Original JSON:', userFormatQuestions);
+        console.log('Cleaned JSON (without comment lines):', cleanedJsonText);
+        
+        parsedQuestions = JSON.parse(cleanedJsonText);
+      } catch (error) {
+        setError(`Invalid JSON format: ${error.message}`);
+        setLoading(false);
+        return;
+      }
+
+      // Convert user format to our internal format
+      const convertedQuestions = parsedQuestions.map((q, index) => {
+        // Validate required fields in user format
+        if (!q.module || !q.moduleNumber || !q.question || !q.options || !q.correctOption) {
+          throw new Error(`Question ${index + 1} is missing required fields: module, moduleNumber, question, options, or correctOption`);
+        }
+
+        // Find the index of the correct option
+        const correctOptionIndex = q.options.findIndex(option => option === q.correctOption);
+        if (correctOptionIndex === -1) {
+          throw new Error(`Question ${index + 1}: correctOption "${q.correctOption}" not found in options array`);
+        }
+
+        // Map module to grammar module format
+        let module = 'beginner'; // Default
+        const moduleKey = q.module.toLowerCase();
+        if (moduleKey.includes('beginner') || q.moduleNumber < 11) {
+          module = 'beginner';
+        } else if (moduleKey.includes('basic') || (q.moduleNumber >= 11 && q.moduleNumber < 21)) {
+          module = 'basic';
+        } else if (moduleKey.includes('intermediate') || (q.moduleNumber >= 21 && q.moduleNumber < 36)) {
+          module = 'intermediate';
+        } else if (moduleKey.includes('advanced') || q.moduleNumber >= 36) {
+          module = 'advanced';
+        }
+
+        return {
+          module: module,
+          topicNumber: q.moduleNumber.toString(),
+          questionText: q.question,
+          options: [...q.options],
+          correctOption: correctOptionIndex,
+          explanation: q.explanation || '',
+          difficulty: q.difficulty ? q.difficulty.toLowerCase() : 'medium',
+          timeAllocation: q.timeAllocation ? parseInt(q.timeAllocation.replace(/\D/g, '')) : 60,
+          grammarRule: q.grammarRule || '',
+          category: 'others' // Default category
+        };
+      });
+
+      // Validate converted questions
+      for (let i = 0; i < convertedQuestions.length; i++) {
+        const question = convertedQuestions[i];
+        
+        // Validate options array
+        if (!Array.isArray(question.options) || question.options.length !== 4) {
+          setError(`Question ${i + 1}: Options must be an array with exactly 4 items`);
+          setLoading(false);
+          return;
+        }
+        
+        // Validate correctOption is in 0-3 range
+        if (typeof question.correctOption !== 'number' || question.correctOption < 0 || question.correctOption > 3) {
+          setError(`Question ${i + 1}: correctOption index is invalid`);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Upload questions
+      try {
+        const response = await axiosInstance.post(
+          '/admin/grammar-questions/bulk',
+          { questions: convertedQuestions },
+          {
+            headers: { 
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        
+        setSuccess(`${response.data.count} grammar questions uploaded successfully`);
+        setUserFormatQuestions('');
+        setLoading(false);
+        fetchQuestions();
+      } catch (err) {
+        console.error("Detailed upload error:", err);
+        if (err.response) {
+          setError(`Failed to upload questions: ${err.response.data.message || err.response.statusText}`);
+        } else if (err.request) {
+          setError('Failed to upload questions: No response from server. Please check your connection.');
+        } else {
+          setError(`Failed to upload questions: ${err.message}`);
+        }
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error("Error uploading questions:", err);
+      setError(`Error processing questions: ${err.message}`);
+      setLoading(false);
     }
   };
 
@@ -478,44 +608,120 @@ function GrammarQuestionManager() {
               Upload multiple grammar questions at once using JSON format or CSV file.
             </Typography>
             
-            <TextField
-              fullWidth
-              multiline
-              rows={10}
-              placeholder="Paste your questions in JSON format here..."
-              value={bulkQuestions}
-              onChange={(e) => setBulkQuestions(e.target.value)}
-              sx={{ mb: 2 }}
-            />
+            <Tabs value={bulkTabValue} onChange={handleBulkTabChange} sx={{ mb: 3 }}>
+              <Tab label="Standard JSON" />
+              <Tab label="Team JSON Format" />
+              <Tab label="CSV Format" />
+            </Tabs>
             
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-              <Button
-                variant="contained"
-                onClick={() => {/* Handle bulk upload */}}
-                disabled={!bulkQuestions.trim()}
-              >
-                Upload Questions
-              </Button>
-              
-              <Typography variant="body2" color="text.secondary">
-                or
-              </Typography>
-              
-              <input
-                type="file"
-                accept=".csv"
-                ref={fileInputRef}
-                style={{ display: 'none' }}
-                onChange={(e) => setCsvFile(e.target.files[0])}
-              />
-              <Button
-                variant="outlined"
-                startIcon={<FileUploadIcon />}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                Upload CSV
-              </Button>
-            </Box>
+            {bulkTabValue === 0 && (
+              <Box sx={{ mb: 4 }}>
+                <Typography variant="subtitle1" gutterBottom>
+                  Standard JSON
+                </Typography>
+                <Typography variant="body2" color="textSecondary" paragraph>
+                  Paste JSON array of questions. Each question must include: module, topicNumber, questionText, options, correctOption, explanation, difficulty, timeAllocation.
+                </Typography>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={10}
+                  placeholder="Paste your questions in JSON format here..."
+                  value={bulkQuestions}
+                  onChange={(e) => setBulkQuestions(e.target.value)}
+                  sx={{ mb: 2 }}
+                />
+                <Button
+                  variant="contained"
+                  onClick={() => {/* Handle standard bulk upload */}}
+                  disabled={!bulkQuestions.trim()}
+                >
+                  Upload Standard JSON
+                </Button>
+              </Box>
+            )}
+            
+            {bulkTabValue === 1 && (
+              <Box sx={{ mb: 4 }}>
+                <Typography variant="subtitle1" gutterBottom>
+                  Team JSON Format
+                </Typography>
+                <Typography variant="body2" color="textSecondary" paragraph>
+                  Paste your team's JSON format. Each question should have: module, moduleNumber, question, options, correctOption, difficulty, timeAllocation, explanation.
+                </Typography>
+                <Typography variant="body2" color="primary" sx={{ mb: 2, p: 2, bgcolor: 'primary.50', borderRadius: 1 }}>
+                  <strong>Example Format (// lines are comments and will be ignored):</strong>
+                  <br />
+                  {`// This is a comment line - will be ignored`}
+                  <br />
+                  {`[{`}
+                  <br />
+                  {`  // Grammar question example`}
+                  <br />
+                  {`  "module": "Sentence Structure",`}
+                  <br />
+                  {`  "moduleNumber": 6,`}
+                  <br />
+                  {`  "question": "What is missing in: '_ reads a book.'?",`}
+                  <br />
+                  {`  "options": ["Object", "Verb", "Subject", "Adverb"],`}
+                  <br />
+                  {`  "correctOption": "Subject",`}
+                  <br />
+                  {`  "difficulty": "Easy",`}
+                  <br />
+                  {`  "timeAllocation": "30 sec",`}
+                  <br />
+                  {`  "explanation": "The subject is missing."`}
+                  <br />
+                  {`}]`}
+                  <br />
+                  {`// Comment lines starting with "//" will be automatically filtered out`}
+                </Typography>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={10}
+                  placeholder="Paste your team's JSON format here... (Lines starting with // will be ignored as comments)"
+                  value={userFormatQuestions}
+                  onChange={(e) => setUserFormatQuestions(e.target.value)}
+                  sx={{ mb: 2 }}
+                />
+                <Button
+                  variant="contained"
+                  onClick={handleUserFormatUpload}
+                  disabled={!userFormatQuestions.trim() || loading}
+                  startIcon={loading ? <CircularProgress size={20} /> : <CloudUploadIcon />}
+                >
+                  {loading ? 'Uploading...' : 'Upload Team JSON'}
+                </Button>
+              </Box>
+            )}
+            
+            {bulkTabValue === 2 && (
+              <Box>
+                <Typography variant="subtitle1" gutterBottom>
+                  CSV Format
+                </Typography>
+                <Typography variant="body2" color="textSecondary" paragraph>
+                  Upload a CSV file with grammar questions.
+                </Typography>
+                <input
+                  type="file"
+                  accept=".csv"
+                  ref={fileInputRef}
+                  style={{ display: 'none' }}
+                  onChange={(e) => setCsvFile(e.target.files[0])}
+                />
+                <Button
+                  variant="outlined"
+                  startIcon={<FileUploadIcon />}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Upload CSV
+                </Button>
+              </Box>
+            )}
           </CardContent>
         </Card>
       )}
