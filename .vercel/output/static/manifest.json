@@ -1,6 +1,6 @@
 {
-  "short_name": "Zerreta NEET",
-  "name": "Zerreta NEET Learning Platform",
+  "short_name": "Zerreta",
+  "name": "Zerreta Learnings",
   "icons": [
     {
       "src": "favicon.ico",
@@ -9,12 +9,17 @@
     },
     {
       "src": "zer-logo.png",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "zer-logo.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any maskable"
     },
     {
-      "src": "zer-logo1.png",
+      "src": "zer-logo.png",
       "type": "image/png",
       "sizes": "512x512"
     }
@@ -23,7 +28,7 @@
   "display": "standalone",
   "theme_color": "#7445f8",
   "background_color": "#ffffff",
-  "description": "An advanced learning platform for NEET preparation",
+  "description": "An advanced learning platform for students",
   "orientation": "portrait-primary",
   "categories": ["education", "learning", "productivity"]
 }

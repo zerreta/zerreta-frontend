@@ -52,9 +52,11 @@ function QuestionManager() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [tabValue, setTabValue] = useState(0);
+  const [bulkTabValue, setBulkTabValue] = useState(0);
   const [openDialog, setOpenDialog] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [bulkQuestions, setBulkQuestions] = useState('');
+  const [userFormatQuestions, setUserFormatQuestions] = useState('');
   const [csvFile, setCsvFile] = useState(null);
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
@@ -140,6 +142,10 @@ function QuestionManager() {
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
+  };
+
+  const handleBulkTabChange = (event, newValue) => {
+    setBulkTabValue(newValue);
   };
 
   const handleFilterChange = (event) => {
@@ -446,6 +452,120 @@ function QuestionManager() {
       } else {
         setError(`Failed to upload questions: ${err.message}`);
       }
+      setLoading(false);
+    }
+  };
+
+  const handleUserFormatUpload = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        setError('Authentication token missing. Please log in again.');
+        setLoading(false);
+        return;
+      }
+
+      // Parse the JSON input
+      let parsedQuestions;
+      try {
+        parsedQuestions = JSON.parse(userFormatQuestions);
+      } catch (error) {
+        setError(`Invalid JSON format: ${error.message}`);
+        setLoading(false);
+        return;
+      }
+
+      // Convert user format to our internal format
+      const convertedQuestions = parsedQuestions.map((q, index) => {
+        // Validate required fields in user format
+        if (!q.module || !q.moduleNumber || !q.question || !q.options || !q.correctOption) {
+          throw new Error(`Question ${index + 1} is missing required fields: module, moduleNumber, question, options, or correctOption`);
+        }
+
+        // Find the index of the correct option
+        const correctOptionIndex = q.options.findIndex(option => option === q.correctOption);
+        if (correctOptionIndex === -1) {
+          throw new Error(`Question ${index + 1}: correctOption "${q.correctOption}" not found in options array`);
+        }
+
+        // Map module to subject
+        let subject;
+        const moduleToSubject = {
+          'physics': 'physics',
+          'chemistry': 'chemistry',
+          'biology': 'biology',
+          'sentence structure': 'physics', // Default mapping for English topics
+          'vocabulary': 'physics',
+          'grammar': 'physics'
+        };
+        
+        const moduleKey = q.module.toLowerCase();
+        subject = moduleToSubject[moduleKey] || 'physics'; // Default to physics
+
+        return {
+          subject: subject,
+          topicNumber: q.moduleNumber.toString(),
+          questionText: q.question,
+          options: [...q.options],
+          correctOption: correctOptionIndex,
+          explanation: q.explanation || '',
+          difficulty: q.difficulty ? q.difficulty.toLowerCase() : 'medium',
+          timeAllocation: q.timeAllocation ? parseInt(q.timeAllocation.replace(/\D/g, '')) : 60
+        };
+      });
+
+      // Validate converted questions
+      for (let i = 0; i < convertedQuestions.length; i++) {
+        const question = convertedQuestions[i];
+        
+        // Validate options array
+        if (!Array.isArray(question.options) || question.options.length !== 4) {
+          setError(`Question ${i + 1}: Options must be an array with exactly 4 items`);
+          setLoading(false);
+          return;
+        }
+        
+        // Validate correctOption is in 0-3 range
+        if (typeof question.correctOption !== 'number' || question.correctOption < 0 || question.correctOption > 3) {
+          setError(`Question ${i + 1}: correctOption index is invalid`);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Upload questions
+      try {
+        const response = await axiosInstance.post(
+          '/admin/questions/bulk',
+          { questions: convertedQuestions },
+          {
+            headers: { 
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        
+        setSuccess(`${response.data.count} questions uploaded successfully`);
+        setUserFormatQuestions('');
+        setLoading(false);
+        fetchQuestions();
+      } catch (err) {
+        console.error("Detailed upload error:", err);
+        if (err.response) {
+          setError(`Failed to upload questions: ${err.response.data.message || err.response.statusText}`);
+        } else if (err.request) {
+          setError('Failed to upload questions: No response from server. Please check your connection.');
+        } else {
+          setError(`Failed to upload questions: ${err.message}`);
+        }
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error("Error uploading questions:", err);
+      setError(`Error processing questions: ${err.message}`);
       setLoading(false);
     }
   };
@@ -875,29 +995,31 @@ function QuestionManager() {
               Bulk Upload Questions
             </Typography>
             
-            <Tabs value={0} sx={{ mb: 3 }}>
-              <Tab label="JSON Format" />
+            <Tabs value={bulkTabValue} onChange={handleBulkTabChange} sx={{ mb: 3 }}>
+              <Tab label="Standard JSON" />
+              <Tab label="Team JSON Format" />
               <Tab label="CSV Format" />
             </Tabs>
             
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="subtitle1" gutterBottom>
-                JSON Format
-              </Typography>
-              <Typography variant="body2" color="textSecondary" paragraph>
-                Paste JSON array of questions below. Each question must include: subject (physics, chemistry, biology), 
-                topicNumber (based on the topic number in syllabus), questionText, options (array of 4 option strings), 
-                correctOption (1-4 index of correct answer). Optional fields: explanation, difficulty (easy, medium, hard), 
-                imageUrl, timeAllocation (seconds).
-                <br />
-                <strong>Note:</strong> Options are numbered 1-4 in the UI for clarity, but are stored as 0-3 in the database.
-              </Typography>
-              <TextField
-                fullWidth
-                multiline
-                rows={10}
-                variant="outlined"
-                placeholder={`[
+            {bulkTabValue === 0 && (
+              <Box sx={{ mb: 4 }}>
+                <Typography variant="subtitle1" gutterBottom>
+                  Standard JSON
+                </Typography>
+                <Typography variant="body2" color="textSecondary" paragraph>
+                  Paste JSON array of questions below. Each question must include: subject (physics, chemistry, biology), 
+                  topicNumber (based on the topic number in syllabus), questionText, options (array of 4 option strings), 
+                  correctOption (1-4 index of correct answer). Optional fields: explanation, difficulty (easy, medium, hard), 
+                  imageUrl, timeAllocation (seconds).
+                  <br />
+                  <strong>Note:</strong> Options are numbered 1-4 in the UI for clarity, but are stored as 0-3 in the database.
+                </Typography>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={10}
+                  variant="outlined"
+                  placeholder={`[
   {
     "subject": "physics",
     "topicNumber": "1",
@@ -918,72 +1040,130 @@ function QuestionManager() {
     "difficulty": "medium"
   }
 ]`}
-                value={bulkQuestions}
-                onChange={(e) => setBulkQuestions(e.target.value)}
-                sx={{ mb: 2 }}
-              />
-              <Button
-                variant="contained"
-                startIcon={<CloudUploadIcon />}
-                onClick={handleBulkUpload}
-                disabled={loading || !bulkQuestions}
-              >
-                Upload JSON
-              </Button>
-            </Box>
-            
-            <Box>
-              <Typography variant="subtitle1" gutterBottom>
-                CSV Format
-              </Typography>
-              <Typography variant="body2" color="textSecondary" paragraph>
-                Upload a CSV file with the following headers: subject, topicNumber, questionText, options, correctOption, explanation, difficulty, timeAllocation.
-                Required fields: subject (physics, chemistry, biology), topicNumber, questionText, options, correctOption (1-4).
-                <br />
-                <strong>Note:</strong> Options are numbered 1-4 in the UI for clarity, but are stored as 0-3 in the database.
-                <br />
-                For options, use pipe (|) to separate the 4 options, e.g., "Option A|Option B|Option C|Option D"
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  value={bulkQuestions}
+                  onChange={(e) => setBulkQuestions(e.target.value)}
+                  sx={{ mb: 2 }}
+                />
                 <Button
                   variant="contained"
-                  component="label"
-                  startIcon={<FileUploadIcon />}
+                  startIcon={<CloudUploadIcon />}
+                  onClick={handleBulkUpload}
+                  disabled={loading || !bulkQuestions}
                 >
-                  Select CSV File
-                  <input
-                    type="file"
-                    accept=".csv"
-                    hidden
-                    onChange={handleFileChange}
-                    ref={fileInputRef}
-                  />
+                  Upload JSON
                 </Button>
-                <Typography variant="body2" sx={{ ml: 2 }}>
-                  {csvFile ? csvFile.name : 'No file selected'}
-                </Typography>
               </Box>
-              <Button
-                variant="contained"
-                startIcon={<CloudUploadIcon />}
-                onClick={handleCsvUpload}
-                disabled={loading || !csvFile}
-              >
-                Upload CSV
-              </Button>
-            </Box>
+            )}
             
-            <Box sx={{ mt: 3 }}>
-              <Typography variant="subtitle2" color="textSecondary">
-                CSV Template Format:
-              </Typography>
-              <Typography variant="body2" color="textSecondary" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}>
-                subject,topicNumber,questionText,options,correctOption,explanation,difficulty,timeAllocation
-                physics,1,What is the SI unit of force?,Newton|Joule|Watt|Pascal,1,Newton is the SI unit of force.,easy,60
-                chemistry,3,Which element has the symbol 'Na'?,Nitrogen|Sodium|Nickel|Neon,2,Sodium has the symbol 'Na' in the periodic table.,medium,60
-                biology,8,Which organelle is known as the powerhouse of the cell?,Nucleus|Ribosome|Mitochondria|Golgi apparatus,3,Mitochondria are responsible for cellular respiration and energy production.,medium,45
-              </Typography>
-            </Box>
+            {bulkTabValue === 1 && (
+              <Box sx={{ mb: 4 }}>
+                <Typography variant="subtitle1" gutterBottom>
+                  Team JSON Format
+                </Typography>
+                <Typography variant="body2" color="textSecondary" paragraph>
+                  Paste JSON array of questions in your team's format below. Each question must include: module, 
+                  moduleNumber, question, options (array of 4 option strings), correctOption (exact text of correct answer). 
+                  Optional fields: explanation, difficulty (Easy, Medium, Hard), timeAllocation (e.g., "30 sec").
+                  <br />
+                  <strong>Example format:</strong> Copy and paste your team's JSON directly - the system will automatically convert it.
+                </Typography>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={10}
+                  variant="outlined"
+                  placeholder={`[
+  {
+    "module": "Sentence Structure",
+    "moduleNumber": 6,
+    "question": "What is missing in: '_ reads a book.'?",
+    "options": ["Object", "Verb", "Subject", "Adverb"],
+    "correctOption": "Subject",
+    "difficulty": "Easy",
+    "timeAllocation": "30 sec",
+    "explanation": "The subject (who reads) is missing (e.g., 'He')."
+  },
+  {
+    "module": "Sentence Structure",
+    "moduleNumber": 6,
+    "question": "Which is NOT SVO?",
+    "options": ["They play chess.", "The flowers bloom.", "She drinks tea.", "We watch movies."],
+    "correctOption": "The flowers bloom.",
+    "difficulty": "Medium",
+    "timeAllocation": "40 sec",
+    "explanation": "'Bloom' is intransitive (no object)."
+  }
+]`}
+                  value={userFormatQuestions}
+                  onChange={(e) => setUserFormatQuestions(e.target.value)}
+                  sx={{ mb: 2 }}
+                />
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  startIcon={<CloudUploadIcon />}
+                  onClick={handleUserFormatUpload}
+                  disabled={loading || !userFormatQuestions}
+                >
+                  Upload Team JSON
+                </Button>
+              </Box>
+            )}
+            
+            {bulkTabValue === 2 && (
+              <Box>
+                <Typography variant="subtitle1" gutterBottom>
+                  CSV Format
+                </Typography>
+                <Typography variant="body2" color="textSecondary" paragraph>
+                  Upload a CSV file with the following headers: subject, topicNumber, questionText, options, correctOption, explanation, difficulty, timeAllocation.
+                  Required fields: subject (physics, chemistry, biology), topicNumber, questionText, options, correctOption (1-4).
+                  <br />
+                  <strong>Note:</strong> Options are numbered 1-4 in the UI for clarity, but are stored as 0-3 in the database.
+                  <br />
+                  For options, use pipe (|) to separate the 4 options, e.g., "Option A|Option B|Option C|Option D"
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Button
+                    variant="contained"
+                    component="label"
+                    startIcon={<FileUploadIcon />}
+                  >
+                    Select CSV File
+                    <input
+                      type="file"
+                      accept=".csv"
+                      hidden
+                      onChange={handleFileChange}
+                      ref={fileInputRef}
+                    />
+                  </Button>
+                  <Typography variant="body2" sx={{ ml: 2 }}>
+                    {csvFile ? csvFile.name : 'No file selected'}
+                  </Typography>
+                </Box>
+                <Button
+                  variant="contained"
+                  startIcon={<CloudUploadIcon />}
+                  onClick={handleCsvUpload}
+                  disabled={loading || !csvFile}
+                >
+                  Upload CSV
+                </Button>
+                
+                <Box sx={{ mt: 3 }}>
+                  <Typography variant="subtitle2" color="textSecondary">
+                    CSV Template Format:
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}>
+                    subject,topicNumber,questionText,options,correctOption,explanation,difficulty,timeAllocation
+                    physics,1,What is the SI unit of force?,Newton|Joule|Watt|Pascal,1,Newton is the SI unit of force.,easy,60
+                    chemistry,3,Which element has the symbol 'Na'?,Nitrogen|Sodium|Nickel|Neon,2,Sodium has the symbol 'Na' in the periodic table.,medium,60
+                    biology,8,Which organelle is known as the powerhouse of the cell?,Nucleus|Ribosome|Mitochondria|Golgi apparatus,3,Mitochondria are responsible for cellular respiration and energy production.,medium,45
+                  </Typography>
+                </Box>
+              </Box>
+            )}
           </CardContent>
         </Card>
       )}

@@ -16,47 +16,16 @@
       "continue": true
     },
     {
-      "src": "^/static/(.*)$",
-      "dest": "/static/$1",
-      "headers": {
-        "Access-Control-Allow-Origin": "*"
-      }
-    },
-    {
-      "src": "^/favicon.ico$",
-      "dest": "/favicon.ico"
-    },
-    {
-      "src": "^/manifest.json$",
-      "dest": "/manifest.json"
-    },
-    {
-      "src": "^/logo192.png$",
-      "dest": "/logo192.png"
-    },
-    {
-      "src": "^/(.*)$",
-      "dest": "/index.html",
-      "headers": {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-        "Access-Control-Allow-Headers": "X-Requested-With, Content-Type, Accept, Authorization"
-      }
-    },
-    {
       "src": "/sockjs-node/(.*)",
       "dest": "/sockjs-node/$1"
     },
     {
-      "handle": "error"
-    },
-    {
-      "status": 404,
-      "src": "^(?!/api).*$",
-      "dest": "/404.html"
-    },
-    {
       "handle": "filesystem"
+    },
+    {
+      "src": "^(?:/(.*))$",
+      "dest": "/index.html",
+      "check": true
     },
     {
       "src": "/static/(.*)",
@@ -69,6 +38,14 @@
         "cache-control": "s-maxage=0"
       },
       "dest": "/index.html"
+    },
+    {
+      "handle": "error"
+    },
+    {
+      "status": 404,
+      "src": "^(?!/api).*$",
+      "dest": "/404.html"
     }
   ],
   "framework": {

@@ -1,8 +1,22 @@
 {
   "files": {
-    "main.css": "/static/css/main.211aede5.css",
-    "main.js": "/static/js/main.6897ca77.js",
+    "main.css": "/static/css/main.44640a36.css",
+    "main.js": "/static/js/main.d02b1ac6.js",
+    "static/js/977.afb7bd73.chunk.js": "/static/js/977.afb7bd73.chunk.js",
+    "static/js/455.2f3f2747.chunk.js": "/static/js/455.2f3f2747.chunk.js",
     "static/js/453.abd36b29.chunk.js": "/static/js/453.abd36b29.chunk.js",
+    "static/media/Vocabulary.png": "/static/media/Vocabulary.2871ea6b43bc3cc4e00e.png",
+    "static/media/grammar.png": "/static/media/grammar.88746fda4ed2a4fe38a9.png",
+    "static/media/writing.png": "/static/media/writing.1430ecc0f21ef4d88e37.png",
+    "static/media/reading.png": "/static/media/reading.0877eb69a95963b2cded.png",
+    "static/media/codezy.png": "/static/media/codezy.f46c35869474b14cbb2e.png",
+    "static/media/speaky.png": "/static/media/speaky.cb779f6c8ac598d6cda1.png",
+    "static/media/apti.png": "/static/media/apti.c8c4fc190aaf76f08f5c.png",
+    "static/media/speaking.png": "/static/media/speaking.fce43bb57107c663688c.png",
+    "static/media/Storyline.png": "/static/media/Storyline.c542ef8b50fa6480c66e.png",
+    "static/media/oxfordowl.png": "/static/media/oxfordowl.28a0aef7744557c4410c.png",
+    "static/media/starfall.png": "/static/media/starfall.06fcbe1966f91ee1ad6e.png",
+    "static/media/pbs.png": "/static/media/pbs.605e7b030feb18f856ce.png",
     "static/media/zer-logo.png": "/static/media/zer-logo.9a99058c9c29bb20562a.png",
     "static/media/kid-quote.png": "/static/media/kid-quote.a4118e3f96b21730bb42.png",
     "static/media/KaTeX_AMS-Regular.ttf": "/static/media/KaTeX_AMS-Regular.853be92419a6c3766b9a.ttf",
@@ -68,12 +82,14 @@
     "static/media/KaTeX_Size3-Regular.woff": "/static/media/KaTeX_Size3-Regular.7947224e8a9914fa332b.woff",
     "static/media/KaTeX_Size3-Regular.woff2": "/static/media/KaTeX_Size3-Regular.e1951519f6f0596f7356.woff2",
     "index.html": "/index.html",
-    "main.211aede5.css.map": "/static/css/main.211aede5.css.map",
-    "main.6897ca77.js.map": "/static/js/main.6897ca77.js.map",
+    "main.44640a36.css.map": "/static/css/main.44640a36.css.map",
+    "main.d02b1ac6.js.map": "/static/js/main.d02b1ac6.js.map",
+    "977.afb7bd73.chunk.js.map": "/static/js/977.afb7bd73.chunk.js.map",
+    "455.2f3f2747.chunk.js.map": "/static/js/455.2f3f2747.chunk.js.map",
     "453.abd36b29.chunk.js.map": "/static/js/453.abd36b29.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.211aede5.css",
-    "static/js/main.6897ca77.js"
+    "static/css/main.44640a36.css",
+    "static/js/main.d02b1ac6.js"
   ]
 }

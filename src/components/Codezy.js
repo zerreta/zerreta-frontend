@@ -287,15 +287,41 @@ const languages = [
   }
 ];
 
-// Simple XML toolbox that's guaranteed to work
+// Enhanced XML toolbox with complete Scratch-like blocks
 const BLOCKLY_TOOLBOX = `
 <xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">
-  <!-- Motion category (similar to Scratch motion) -->
+  <!-- Motion category (enhanced with sprite movement) -->
   <category name="Motion" colour="#4C97FF" expanded="false">
     <block type="move_steps">
       <value name="STEPS">
         <shadow type="math_number">
           <field name="NUM">10</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="turn_right">
+      <value name="DEGREES">
+        <shadow type="math_number">
+          <field name="NUM">15</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="point_direction">
+      <value name="DIRECTION">
+        <shadow type="math_number">
+          <field name="NUM">90</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="goto_xy">
+      <value name="X">
+        <shadow type="math_number">
+          <field name="NUM">0</field>
+        </shadow>
+      </value>
+      <value name="Y">
+        <shadow type="math_number">
+          <field name="NUM">0</field>
         </shadow>
       </value>
     </block>
@@ -311,66 +337,28 @@ const BLOCKLY_TOOLBOX = `
         </shadow>
       </value>
     </block>
-    <block type="math_single">
-      <value name="NUM">
-        <shadow type="math_number">
-          <field name="NUM">9</field>
-        </shadow>
-      </value>
-    </block>
-    <block type="math_trig">
-      <value name="NUM">
-        <shadow type="math_number">
-          <field name="NUM">45</field>
-        </shadow>
-      </value>
-    </block>
-    <block type="math_constant"></block>
-    <block type="math_round">
-      <value name="NUM">
-        <shadow type="math_number">
-          <field name="NUM">3.1</field>
-        </shadow>
-      </value>
-    </block>
   </category>
 
-  <!-- Looks category (similar to Scratch looks) -->
+  <!-- Looks category (enhanced with sprite appearance) -->
   <category name="Looks" colour="#9966FF" expanded="false">
-    <block type="text"></block>
-    <block type="text_join">
-      <mutation items="2"></mutation>
-    </block>
-    <block type="text_append">
+    <block type="say_text">
       <value name="TEXT">
-        <shadow type="text"></shadow>
-      </value>
-    </block>
-    <block type="text_length">
-      <value name="VALUE">
         <shadow type="text">
-          <field name="TEXT">abc</field>
+          <field name="TEXT">Hello!</field>
         </shadow>
       </value>
     </block>
-    <block type="text_isEmpty">
-      <value name="VALUE">
-        <shadow type="text">
-          <field name="TEXT"></field>
+    <block type="show_sprite"></block>
+    <block type="hide_sprite"></block>
+    <block type="set_size">
+      <value name="SIZE">
+        <shadow type="math_number">
+          <field name="NUM">100</field>
         </shadow>
       </value>
     </block>
-    <block type="text_indexOf">
-      <value name="VALUE">
-        <block type="variables_get">
-          <field name="VAR">text</field>
-        </block>
-      </value>
-      <value name="FIND">
-        <shadow type="text">
-          <field name="TEXT">abc</field>
-        </shadow>
-      </value>
+    <block type="backdrop_color">
+      <field name="COLOR">white</field>
     </block>
     <block type="text_print">
       <value name="TEXT">
@@ -379,9 +367,13 @@ const BLOCKLY_TOOLBOX = `
         </shadow>
       </value>
     </block>
+    <block type="text"></block>
+    <block type="text_join">
+      <mutation items="2"></mutation>
+    </block>
   </category>
 
-  <!-- Sound category (similar to Scratch sound) -->
+  <!-- Sound category -->
   <category name="Sound" colour="#D65CD6" expanded="false">
     <block type="play_sound">
       <field name="SOUND">meow</field>
@@ -389,20 +381,18 @@ const BLOCKLY_TOOLBOX = `
     <block type="text_prompt_ext">
       <value name="TEXT">
         <shadow type="text">
-          <field name="TEXT">ABC</field>
+          <field name="TEXT">What's your name?</field>
         </shadow>
       </value>
     </block>
-    <block type="stop_all_sounds"></block>
   </category>
 
-  <!-- Events category (similar to Scratch events) -->
+  <!-- Events category -->
   <category name="Events" colour="#FFD500" expanded="false">
     <block type="when_flag_clicked"></block>
     <block type="when_key_pressed">
       <field name="KEY">space</field>
     </block>
-    <block type="when_sprite_clicked"></block>
     <block type="procedures_defnoreturn">
       <field name="NAME">do something</field>
     </block>
@@ -411,10 +401,15 @@ const BLOCKLY_TOOLBOX = `
     </block>
   </category>
 
-  <!-- Control category (similar to Scratch control) -->
+  <!-- Control category (enhanced with timing) -->
   <category name="Control" colour="#FFAB19" expanded="false">
-    <block type="controls_if"></block>
-    <block type="controls_ifelse"></block>
+    <block type="wait_seconds">
+      <value name="SECONDS">
+        <shadow type="math_number">
+          <field name="NUM">1</field>
+        </shadow>
+      </value>
+    </block>
     <block type="controls_repeat_ext">
       <value name="TIMES">
         <shadow type="math_number">
@@ -422,6 +417,8 @@ const BLOCKLY_TOOLBOX = `
         </shadow>
       </value>
     </block>
+    <block type="controls_if"></block>
+    <block type="controls_ifelse"></block>
     <block type="controls_whileUntil"></block>
     <block type="controls_for">
       <value name="FROM">
@@ -440,49 +437,32 @@ const BLOCKLY_TOOLBOX = `
         </shadow>
       </value>
     </block>
-    <block type="stop_this_script"></block>
   </category>
 
-  <!-- Sensing category (similar to Scratch sensing) -->
+  <!-- Sensing category -->
   <category name="Sensing" colour="#4CBFE6" expanded="false">
-    <block type="logic_compare"></block>
-    <block type="logic_operation"></block>
-    <block type="logic_negate"></block>
-    <block type="logic_boolean"></block>
-    <block type="logic_ternary"></block>
-    <block type="logic_null"></block>
-  </category>
-
-  <!-- Operators category (similar to Scratch operators) -->
-  <category name="Operators" colour="#40BF4A" expanded="false">
-    <block type="math_modulo">
-      <value name="DIVIDEND">
-        <shadow type="math_number">
-          <field name="NUM">64</field>
-        </shadow>
-      </value>
-      <value name="DIVISOR">
-        <shadow type="math_number">
-          <field name="NUM">10</field>
-        </shadow>
-      </value>
-    </block>
-    <block type="math_constrain">
-      <value name="VALUE">
-        <shadow type="math_number">
-          <field name="NUM">50</field>
-        </shadow>
-      </value>
-      <value name="LOW">
+    <block type="logic_compare">
+      <value name="A">
         <shadow type="math_number">
           <field name="NUM">1</field>
         </shadow>
       </value>
-      <value name="HIGH">
+      <value name="B">
         <shadow type="math_number">
-          <field name="NUM">100</field>
+          <field name="NUM">1</field>
         </shadow>
       </value>
+    </block>
+    <block type="logic_operation"></block>
+    <block type="logic_negate"></block>
+    <block type="logic_boolean"></block>
+    <block type="logic_ternary"></block>
+  </category>
+
+  <!-- Operators category -->
+  <category name="Operators" colour="#40BF4A" expanded="false">
+    <block type="math_number">
+      <field name="NUM">0</field>
     </block>
     <block type="math_random_int">
       <value name="FROM">
@@ -496,70 +476,32 @@ const BLOCKLY_TOOLBOX = `
         </shadow>
       </value>
     </block>
-    <block type="math_random_float"></block>
-    <block type="math_on_list"></block>
-  </category>
-
-  <!-- Data category - Lists (similar to Scratch lists) -->
-  <category name="Lists" colour="#FF661A" expanded="false">
-    <block type="lists_create_with">
-      <mutation items="0"></mutation>
+    <block type="math_modulo">
+      <value name="DIVIDEND">
+        <shadow type="math_number">
+          <field name="NUM">64</field>
+        </shadow>
+      </value>
+      <value name="DIVISOR">
+        <shadow type="math_number">
+          <field name="NUM">10</field>
+        </shadow>
+      </value>
     </block>
-    <block type="lists_create_with">
-      <mutation items="3"></mutation>
-    </block>
-    <block type="lists_repeat">
+    <block type="math_round">
       <value name="NUM">
         <shadow type="math_number">
-          <field name="NUM">5</field>
+          <field name="NUM">3.1</field>
         </shadow>
       </value>
     </block>
-    <block type="lists_length"></block>
-    <block type="lists_isEmpty"></block>
-    <block type="lists_indexOf">
-      <value name="VALUE">
-        <block type="variables_get">
-          <field name="VAR">list</field>
-        </block>
-      </value>
-    </block>
-    <block type="lists_getIndex">
-      <value name="VALUE">
-        <block type="variables_get">
-          <field name="VAR">list</field>
-        </block>
-      </value>
-    </block>
-    <block type="lists_setIndex">
-      <value name="LIST">
-        <block type="variables_get">
-          <field name="VAR">list</field>
-        </block>
-      </value>
-    </block>
-    <block type="lists_getSublist">
-      <value name="LIST">
-        <block type="variables_get">
-          <field name="VAR">list</field>
-        </block>
-      </value>
-    </block>
-    <block type="lists_split">
-      <value name="DELIM">
-        <shadow type="text">
-          <field name="TEXT">,</field>
-        </shadow>
-      </value>
-    </block>
-    <block type="lists_sort"></block>
   </category>
 
-  <!-- Variables category (similar to Scratch variables) -->
-  <category name="Variables" colour="#FF8C1A" custom="VARIABLE"></category>
-
-  <!-- Functions category (similar to Scratch "My Blocks") -->
-  <category name="My Blocks" colour="#FF6680" custom="PROCEDURE"></category>
+  <!-- Variables category -->
+  <category name="Variables" colour="#FF8C1A" custom="VARIABLE" expanded="false"></category>
+  
+  <!-- My Blocks category -->
+  <category name="My Blocks" colour="#FF6680" custom="PROCEDURE" expanded="false"></category>
 </xml>
 `;
 
@@ -608,7 +550,7 @@ const SpriteThumbnail = styled(Box)`
   }
 `;
 
-// Initialize custom Blockly blocks
+// Initialize custom Blockly blocks with enhanced sprite functionality
 const initCustomBlocks = () => {
   if (typeof window !== 'undefined') {
     // If Blockly is already loaded, use it directly
@@ -629,7 +571,7 @@ const initCustomBlocks = () => {
         }
       };
       
-      // Define "move steps" block
+      // Enhanced "move steps" block
       Blockly.Blocks['move_steps'] = {
         init: function() {
           this.appendValueInput("STEPS")
@@ -644,8 +586,140 @@ const initCustomBlocks = () => {
           this.setHelpUrl("");
         }
       };
+
+      // Turn blocks
+      Blockly.Blocks['turn_right'] = {
+        init: function() {
+          this.appendValueInput("DEGREES")
+              .setCheck("Number")
+              .appendField("turn")
+              .appendField(new Blockly.FieldNumber(15), "DEGREES")
+              .appendField("degrees");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(160);
+          this.setTooltip("Turns the sprite clockwise");
+        }
+      };
+
+      // Point in direction block
+      Blockly.Blocks['point_direction'] = {
+        init: function() {
+          this.appendValueInput("DIRECTION")
+              .setCheck("Number")
+              .appendField("point in direction")
+              .appendField(new Blockly.FieldNumber(90), "DIRECTION");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(160);
+          this.setTooltip("Points the sprite in the specified direction");
+        }
+      };
+
+      // Go to position block
+      Blockly.Blocks['goto_xy'] = {
+        init: function() {
+          this.appendValueInput("X")
+              .setCheck("Number")
+              .appendField("go to x:");
+          this.appendValueInput("Y")
+              .setCheck("Number")
+              .appendField("y:");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(160);
+          this.setTooltip("Moves the sprite to the specified coordinates");
+        }
+      };
+
+      // Show/Hide sprite blocks
+      Blockly.Blocks['show_sprite'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("show");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(300);
+          this.setTooltip("Makes the sprite visible");
+        }
+      };
+
+      Blockly.Blocks['hide_sprite'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("hide");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(300);
+          this.setTooltip("Makes the sprite invisible");
+        }
+      };
+
+      // Set size block
+      Blockly.Blocks['set_size'] = {
+        init: function() {
+          this.appendValueInput("SIZE")
+              .setCheck("Number")
+              .appendField("set size to")
+              .appendField(new Blockly.FieldNumber(100), "SIZE")
+              .appendField("%");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(300);
+          this.setTooltip("Changes the sprite size");
+        }
+      };
+
+      // Change backdrop color
+      Blockly.Blocks['backdrop_color'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("switch backdrop to")
+              .appendField(new Blockly.FieldDropdown([
+                  ["white", "white"],
+                  ["blue", "#87CEEB"],
+                  ["green", "#90EE90"],
+                  ["yellow", "#FFFF99"],
+                  ["pink", "#FFB6C1"],
+                  ["purple", "#DDA0DD"]
+              ]), "COLOR");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(300);
+          this.setTooltip("Changes the stage background color");
+        }
+      };
+
+      // Say block for visual speech bubbles
+      Blockly.Blocks['say_text'] = {
+        init: function() {
+          this.appendValueInput("TEXT")
+              .setCheck("String")
+              .appendField("say")
+              .appendField(new Blockly.FieldTextInput("Hello!"), "TEXT");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(300);
+          this.setTooltip("Makes the sprite say something");
+        }
+      };
+
+      // Wait block
+      Blockly.Blocks['wait_seconds'] = {
+        init: function() {
+          this.appendValueInput("SECONDS")
+              .setCheck("Number")
+              .appendField("wait")
+              .appendField(new Blockly.FieldNumber(1), "SECONDS")
+              .appendField("seconds");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(350);
+          this.setTooltip("Pauses the script for the specified time");
+        }
+      };
       
-      // Define "play sound" block
+      // ... existing sound blocks ...
       Blockly.Blocks['play_sound'] = {
         init: function() {
           this.appendDummyInput()
@@ -663,20 +737,7 @@ const initCustomBlocks = () => {
         }
       };
       
-      // Define "stop all sounds" block
-      Blockly.Blocks['stop_all_sounds'] = {
-        init: function() {
-          this.appendDummyInput()
-              .appendField("stop all sounds");
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour(300);
-          this.setTooltip("Stops all sounds that are playing");
-          this.setHelpUrl("");
-        }
-      };
-      
-      // Define "when key pressed" block
+      // ... existing event blocks ...
       Blockly.Blocks['when_key_pressed'] = {
         init: function() {
           this.appendDummyInput()
@@ -697,69 +758,80 @@ const initCustomBlocks = () => {
         }
       };
       
-      // Define "when sprite clicked" block
-      Blockly.Blocks['when_sprite_clicked'] = {
-        init: function() {
-          this.appendDummyInput()
-              .appendField("when this sprite clicked");
-          this.setNextStatement(true, null);
-          this.setColour(230);
-          this.setTooltip("Runs the blocks below when this sprite is clicked");
-          this.setHelpUrl("");
-        }
-      };
-      
-      // Define "stop this script" block
-      Blockly.Blocks['stop_this_script'] = {
-        init: function() {
-          this.appendDummyInput()
-              .appendField("stop this script");
-          this.setPreviousStatement(true, null);
-          this.setColour(350);
-          this.setTooltip("Stops this script");
-          this.setHelpUrl("");
-        }
-      };
-      
-      // Determine which JavaScript generator to use
+      // ... existing control blocks ...
+
+      // JavaScript generators for enhanced blocks
       const jsGenerator = BlocklyJS.javascriptGenerator;
       
       if (jsGenerator) {
         console.log("JavaScript generator found:", jsGenerator);
         
-        // Add JavaScript generator stubs for the custom blocks
+        // Enhanced generator functions that work with sprite canvas
         jsGenerator['when_flag_clicked'] = function(block) {
-          return '// When flag clicked\n';
+          return '// When flag clicked\nsriteActions.length = 0;\n';
         };
         
         jsGenerator['move_steps'] = function(block) {
-          const steps = block.getFieldValue('STEPS');
-          return `console.log("Move ${steps} steps");\n`;
+          const steps = block.getFieldValue('STEPS') || jsGenerator.valueToCode(block, 'STEPS', jsGenerator.ORDER_ATOMIC) || '10';
+          return `spriteActions.push({type: 'move', steps: ${steps}});\n`;
+        };
+
+        jsGenerator['turn_right'] = function(block) {
+          const degrees = block.getFieldValue('DEGREES') || jsGenerator.valueToCode(block, 'DEGREES', jsGenerator.ORDER_ATOMIC) || '15';
+          return `spriteActions.push({type: 'turn', degrees: ${degrees}});\n`;
+        };
+
+        jsGenerator['point_direction'] = function(block) {
+          const direction = block.getFieldValue('DIRECTION') || jsGenerator.valueToCode(block, 'DIRECTION', jsGenerator.ORDER_ATOMIC) || '90';
+          return `spriteActions.push({type: 'turn', degrees: ${direction} - spriteDirection});\n`;
+        };
+
+        jsGenerator['goto_xy'] = function(block) {
+          const x = jsGenerator.valueToCode(block, 'X', jsGenerator.ORDER_ATOMIC) || '0';
+          const y = jsGenerator.valueToCode(block, 'Y', jsGenerator.ORDER_ATOMIC) || '0';
+          return `spriteActions.push({type: 'goto', x: ${x}, y: ${y}});\n`;
+        };
+
+        jsGenerator['show_sprite'] = function(block) {
+          return 'spriteActions.push({type: "show"});\n';
+        };
+
+        jsGenerator['hide_sprite'] = function(block) {
+          return 'spriteActions.push({type: "hide"});\n';
+        };
+
+        jsGenerator['set_size'] = function(block) {
+          const size = block.getFieldValue('SIZE') || jsGenerator.valueToCode(block, 'SIZE', jsGenerator.ORDER_ATOMIC) || '100';
+          return `spriteActions.push({type: 'size', size: ${size}});\n`;
+        };
+
+        jsGenerator['backdrop_color'] = function(block) {
+          const color = block.getFieldValue('COLOR');
+          return `spriteActions.push({type: 'backdrop', color: '${color}'});\n`;
+        };
+
+        jsGenerator['say_text'] = function(block) {
+          const text = block.getFieldValue('TEXT') || jsGenerator.valueToCode(block, 'TEXT', jsGenerator.ORDER_ATOMIC) || '"Hello!"';
+          return `spriteActions.push({type: 'say', text: ${text}});\nconsole.log("Sprite says: " + ${text});\n`;
+        };
+
+        jsGenerator['wait_seconds'] = function(block) {
+          const seconds = block.getFieldValue('SECONDS') || jsGenerator.valueToCode(block, 'SECONDS', jsGenerator.ORDER_ATOMIC) || '1';
+          return `spriteActions.push({type: 'wait', seconds: ${seconds}});\n`;
         };
         
         jsGenerator['play_sound'] = function(block) {
           const sound = block.getFieldValue('SOUND');
-          return `console.log("Play sound: ${sound}");\n`;
+          return `console.log("Play sound: ${sound}");\nspriteActions.push({type: 'sound', sound: '${sound}'});\n`;
         };
         
-        jsGenerator['stop_all_sounds'] = function(block) {
-          return 'console.log("Stop all sounds");\n';
-        };
-        
+        // ... existing generators ...
         jsGenerator['when_key_pressed'] = function(block) {
           const key = block.getFieldValue('KEY');
           return `// When ${key} key pressed\n`;
         };
         
-        jsGenerator['when_sprite_clicked'] = function(block) {
-          return '// When sprite clicked\n';
-        };
-        
-        jsGenerator['stop_this_script'] = function(block) {
-          return 'return;\n';
-        };
-        
-        console.log("Custom blocks initialized successfully");
+        console.log("Enhanced custom blocks initialized successfully");
       } else {
         console.error("JavaScript generator not found");
       }
@@ -845,6 +917,175 @@ const applySyntaxColoring = (text, language) => {
   }
 };
 
+// Enhanced Sprite Canvas Component
+const SpriteCanvas = ({ spriteActions, isRunning }) => {
+  const canvasRef = useRef(null);
+  const [sprite, setSprite] = useState({
+    x: 200,
+    y: 150,
+    direction: 90,
+    visible: true,
+    size: 100,
+    costume: 'cat'
+  });
+  const [stage, setStage] = useState({
+    backdrop: 'white',
+    sounds: []
+  });
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw stage background
+    ctx.fillStyle = stage.backdrop;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw grid lines for reference
+    ctx.strokeStyle = '#f0f0f0';
+    ctx.lineWidth = 1;
+    for (let x = 0; x <= canvas.width; x += 20) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, canvas.height);
+      ctx.stroke();
+    }
+    for (let y = 0; y <= canvas.height; y += 20) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(canvas.width, y);
+      ctx.stroke();
+    }
+    
+    // Draw sprite if visible
+    if (sprite.visible) {
+      ctx.save();
+      ctx.translate(sprite.x, sprite.y);
+      ctx.rotate((sprite.direction - 90) * Math.PI / 180);
+      
+      // Draw simple cat sprite
+      ctx.fillStyle = '#FF8C1A';
+      ctx.fillRect(-15, -15, 30, 30);
+      
+      // Cat face
+      ctx.fillStyle = '#000';
+      ctx.fillRect(-8, -8, 3, 3); // left eye
+      ctx.fillRect(5, -8, 3, 3);  // right eye
+      ctx.fillRect(-2, -3, 4, 2); // nose
+      
+      // Ears
+      ctx.fillStyle = '#FF8C1A';
+      ctx.beginPath();
+      ctx.moveTo(-15, -15);
+      ctx.lineTo(-10, -25);
+      ctx.lineTo(-5, -15);
+      ctx.fill();
+      
+      ctx.beginPath();
+      ctx.moveTo(5, -15);
+      ctx.lineTo(10, -25);
+      ctx.lineTo(15, -15);
+      ctx.fill();
+      
+      ctx.restore();
+    }
+  }, [sprite, stage]);
+
+  // Execute sprite actions
+  useEffect(() => {
+    if (spriteActions.length > 0 && isRunning) {
+      const executeActions = async () => {
+        for (const action of spriteActions) {
+          await executeAction(action);
+        }
+      };
+      executeActions();
+    }
+  }, [spriteActions, isRunning]);
+
+  const executeAction = (action) => {
+    return new Promise((resolve) => {
+      switch (action.type) {
+        case 'move':
+          const radians = (sprite.direction - 90) * Math.PI / 180;
+          const newX = Math.max(15, Math.min(385, sprite.x + Math.cos(radians) * action.steps));
+          const newY = Math.max(15, Math.min(285, sprite.y + Math.sin(radians) * action.steps));
+          
+          setSprite(prev => ({ ...prev, x: newX, y: newY }));
+          setTimeout(resolve, 500);
+          break;
+          
+        case 'turn':
+          setSprite(prev => ({ ...prev, direction: (prev.direction + action.degrees) % 360 }));
+          setTimeout(resolve, 300);
+          break;
+          
+        case 'goto':
+          setSprite(prev => ({ ...prev, x: action.x + 200, y: action.y + 150 }));
+          setTimeout(resolve, 300);
+          break;
+          
+        case 'show':
+          setSprite(prev => ({ ...prev, visible: true }));
+          setTimeout(resolve, 100);
+          break;
+          
+        case 'hide':
+          setSprite(prev => ({ ...prev, visible: false }));
+          setTimeout(resolve, 100);
+          break;
+          
+        case 'size':
+          setSprite(prev => ({ ...prev, size: Math.max(10, Math.min(200, action.size)) }));
+          setTimeout(resolve, 300);
+          break;
+          
+        case 'backdrop':
+          setStage(prev => ({ ...prev, backdrop: action.color }));
+          setTimeout(resolve, 100);
+          break;
+          
+        default:
+          setTimeout(resolve, 100);
+      }
+    });
+  };
+
+  return (
+    <Box sx={{ 
+      border: '2px solid #ddd', 
+      borderRadius: 2, 
+      overflow: 'hidden',
+      bgcolor: '#fff',
+      position: 'relative'
+    }}>
+      <canvas
+        ref={canvasRef}
+        width={400}
+        height={300}
+        style={{ display: 'block', width: '100%', height: 'auto' }}
+      />
+      <Box sx={{ 
+        position: 'absolute', 
+        top: 8, 
+        left: 8, 
+        bgcolor: 'rgba(255,255,255,0.8)', 
+        px: 1, 
+        py: 0.5, 
+        borderRadius: 1,
+        fontSize: '12px'
+      }}>
+        Sprite: ({Math.round(sprite.x - 200)}, {Math.round(150 - sprite.y)}) Direction: {sprite.direction}°
+      </Box>
+    </Box>
+  );
+};
+
 const Codezy = () => {
   const navigate = useNavigate();
   const theme = useTheme();
@@ -858,6 +1099,10 @@ const Codezy = () => {
   const codeInputRef = useRef(null);
   const [pythonInterpreterReady, setPythonInterpreterReady] = useState(false);
   const [highlightedCode, setHighlightedCode] = useState('');
+  
+  // Enhanced state for Scratch functionality
+  const [spriteActions, setSpriteActions] = useState([]);
+  const [isExecuting, setIsExecuting] = useState(false);
   
   // Get the main sidebar toggle function from context
   const { toggleMainSidebar } = useSidebar();
@@ -1235,9 +1480,11 @@ const Codezy = () => {
         setOutput("Python interpreter is not ready. Please wait or reload the page.");
       }
     } else if (currentFile.language === 'blockly') {
-      // Blockly code execution
+      // Enhanced Blockly code execution with sprite actions
       try {
-        // For Blockly, we'll evaluate the JavaScript code
+        setIsExecuting(true);
+        setSpriteActions([]); // Clear previous actions
+        
         const output = [];
         // Override console.log to capture output
         const originalLog = console.log;
@@ -1245,25 +1492,66 @@ const Codezy = () => {
           output.push(args.join(' '));
         };
         
+        // Create sprite actions array in global scope for the generated code
+        window.spriteActions = [];
+        
         // Safely evaluate the code
         try {
           if (code) {
+            // Execute the generated JavaScript code
             new Function(code)();
+            
+            // Get the sprite actions that were generated
+            const actions = window.spriteActions || [];
+            setSpriteActions([...actions]);
+            
+            if (actions.length > 0) {
+              output.push(`Executing ${actions.length} sprite actions...`);
+              // The sprite canvas will execute these actions
+              setIsExecuting(true);
+              
+              // Calculate total execution time
+              const totalTime = actions.reduce((time, action) => {
+                switch (action.type) {
+                  case 'move': return time + 500;
+                  case 'turn': return time + 300;
+                  case 'wait': return time + (action.seconds * 1000);
+                  default: return time + 200;
+                }
+              }, 0);
+              
+              // Stop execution after all actions complete
+              setTimeout(() => {
+                setIsExecuting(false);
+                setIsRunning(false);
+              }, totalTime + 500);
+            } else {
+              output.push("No sprite actions to execute");
+              setIsExecuting(false);
+            }
           } else {
-            output.push("No code generated from blocks yet");
+            output.push("No blocks connected yet. Try dragging some blocks together!");
+            setIsExecuting(false);
           }
         } catch (error) {
           output.push(`Error: ${error.message}`);
+          setIsExecuting(false);
         }
         
         // Restore console.log
         console.log = originalLog;
         
-        setOutput(output.join('\n') || "Your blocks ran successfully!");
-        setIsRunning(false);
+        setOutput(output.join('\n'));
+        
+        // If no sprite actions, stop running immediately
+        if (window.spriteActions.length === 0) {
+          setIsRunning(false);
+        }
+        
       } catch (e) {
         setOutput(`Error: ${e.message}`);
         setIsRunning(false);
+        setIsExecuting(false);
       }
     } else if (currentFile.language === 'javascript') {
       try {
@@ -1437,94 +1725,111 @@ const Codezy = () => {
                 </Grid>
 
                 {currentFile.language === 'blockly' ? (
-                  // Scratch-like interface for block-based programming
+                  // Enhanced Blockly interface with sprite canvas
                   <Grid container spacing={2}>
-                    <Grid item xs={12}>
-                      <ScratchHeader>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <GreenFlagButton size="small" onClick={() => handleRunCode()}>
-                            <FlagIcon />
-                          </GreenFlagButton>
-                          <IconButton size="small" sx={{ color: 'white' }}>
-                            <StopIcon />
-                          </IconButton>
-                        </Box>
-                        <Box sx={{ display: 'flex', gap: 2 }}>
-                          <Button variant="contained" sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}>
-                            Code
-                          </Button>
-                          <Button variant="contained" sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}>
-                            <ImageIcon sx={{ mr: 1 }} /> Costumes
-                          </Button>
-                          <Button variant="contained" sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}>
-                            <MicIcon sx={{ mr: 1 }} /> Sounds
-                          </Button>
-                        </Box>
-                        <Box>
-                          <IconButton size="small" sx={{ color: 'white' }}>
-                            <SettingsIcon />
-                          </IconButton>
-                        </Box>
-                      </ScratchHeader>
-                      
-                      <Grid container sx={{ mb: 2 }}>
-                        <Grid item xs={8}>
-                          <BlocklyContainer sx={{ height: '500px', borderRadius: '0 0 0 8px' }}>
-                            <div 
-                              ref={blocklyDivRef} 
-                              style={{ 
-                                width: '100%', 
-                                height: '100%', 
-                                position: 'absolute',
-                                top: 0,
-                                left: 0
-                              }} 
-                              id="blocklyDiv"
-                              className="blocklyDiv"
-                            />
-                          </BlocklyContainer>
+                    {/* Blockly Workspace */}
+                    <Grid item xs={12} lg={8}>
+                      <Paper sx={{ height: '500px', position: 'relative', overflow: 'hidden' }}>
+                        <Box
+                          ref={blocklyDivRef}
+                          sx={{
+                            height: '100%',
+                            width: '100%',
+                            '& .blocklyToolboxDiv': {
+                              zIndex: 10,
+                            }
+                          }}
+                        />
+                      </Paper>
+                    </Grid>
+
+                    {/* Sprite Stage and Controls */}
+                    <Grid item xs={12} lg={4}>
+                      <Grid container spacing={2}>
+                        {/* Sprite Canvas */}
+                        <Grid item xs={12}>
+                          <Typography variant="h6" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
+                            <PetsIcon sx={{ mr: 1, color: '#FF8C1A' }} />
+                            Stage
+                          </Typography>
+                          <SpriteCanvas 
+                            spriteActions={spriteActions} 
+                            isRunning={isExecuting}
+                          />
                         </Grid>
-                        <Grid item xs={4}>
-                          <ScratchStage sx={{ height: '300px', m: 1 }}>
-                            <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                              <PetsIcon sx={{ fontSize: 80, color: '#FF8C1A' }} />
+
+                        {/* Run Controls */}
+                        <Grid item xs={12}>
+                          <Paper sx={{ p: 2 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                              <Button
+                                variant="contained"
+                                onClick={handleRunCode}
+                                disabled={isRunning}
+                                startIcon={isRunning ? <CircularProgress size={16} /> : <FlagIcon />}
+                                sx={{
+                                  backgroundColor: '#4CBB17',
+                                  '&:hover': { backgroundColor: '#45a015' },
+                                  '&:disabled': { backgroundColor: '#ccc' }
+                                }}
+                              >
+                                {isRunning ? 'Running...' : 'Run Program'}
+                              </Button>
+                              <Button
+                                variant="outlined"
+                                onClick={() => {
+                                  setIsRunning(false);
+                                  setIsExecuting(false);
+                                  setSpriteActions([]);
+                                }}
+                                disabled={!isRunning}
+                                startIcon={<StopIcon />}
+                                color="error"
+                              >
+                                Stop
+                              </Button>
                             </Box>
+                            
+                            {/* Generated Code Preview */}
+                            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                              Generated Code:
+                            </Typography>
                             <Box sx={{ 
-                              bgcolor: '#f9f9f9', 
+                              bgcolor: '#f5f5f5', 
                               p: 1, 
-                              borderTop: '1px solid #ddd', 
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center'
+                              borderRadius: 1, 
+                              fontSize: '12px',
+                              fontFamily: 'monospace',
+                              maxHeight: '100px',
+                              overflow: 'auto',
+                              border: '1px solid #ddd'
                             }}>
-                              <Typography variant="caption">Sprite1</Typography>
-                              <Box>
-                                <IconButton size="small">
-                                  <FlagIcon sx={{ fontSize: 16, color: 'green' }} />
-                                </IconButton>
-                              </Box>
+                              {code || 'Connect blocks to generate code...'}
                             </Box>
-                          </ScratchStage>
-                          
-                          <Box sx={{ 
-                            bgcolor: '#f9f9f9', 
-                            p: 1, 
-                            m: 1,
-                            border: '1px solid #ddd',
-                            borderRadius: '4px',
-                            height: '180px',
-                            display: 'flex',
-                            alignItems: 'start',
-                            overflow: 'auto'
-                          }}>
-                            <SpriteThumbnail>
-                              <PetsIcon sx={{ fontSize: 40, color: '#FF8C1A' }} />
-                              <Typography variant="caption">Sprite1</Typography>
-                            </SpriteThumbnail>
-                            <IconButton size="small" sx={{ mt: 2, bgcolor: '#e0e0e0', width: 36, height: 36 }}>
-                              +
-                            </IconButton>
-                          </Box>
+                          </Paper>
+                        </Grid>
+
+                        {/* Sprite Info */}
+                        <Grid item xs={12}>
+                          <Paper sx={{ p: 2 }}>
+                            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                              Sprite Controls
+                            </Typography>
+                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                              <Button size="small" variant="outlined" disabled>
+                                <PetsIcon sx={{ fontSize: 16, mr: 0.5 }} />
+                                Cat Sprite
+                              </Button>
+                              <Button size="small" variant="outlined" disabled>
+                                <SettingsIcon sx={{ fontSize: 16, mr: 0.5 }} />
+                                Costumes
+                              </Button>
+                              <Button size="small" variant="outlined" disabled>
+                                <MicIcon sx={{ fontSize: 16, mr: 0.5 }} />
+                                Sounds
+                              </Button>
+                            </Box>
+                          </Paper>
                         </Grid>
                       </Grid>
                     </Grid>

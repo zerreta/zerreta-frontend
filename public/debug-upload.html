@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload Debug Test</title>
+</head>
+<body>
+    <h1>Upload Debug Test</h1>
+    <textarea id="jsonInput" rows="10" cols="80" placeholder="Paste your JSON here">
+[
+  {
+    "module": "Sentence Structure",
+    "moduleNumber": 6,
+    "question": "What is missing in: '_ reads a book.'?",
+    "options": ["Object", "Verb", "Subject", "Adverb"],
+    "correctOption": "Subject",
+    "difficulty": "Easy",
+    "timeAllocation": "30 sec",
+    "explanation": "The subject (who reads) is missing (e.g., 'He')."
+  }
+]
+    </textarea>
+    <br><br>
+    <button onclick="testUpload()">Test Upload</button>
+    <div id="result"></div>
+
+    <script>
+        async function testUpload() {
+            const resultDiv = document.getElementById('result');
+            const jsonInput = document.getElementById('jsonInput').value;
+            
+            try {
+                resultDiv.innerHTML = 'Testing...';
+                
+                // Parse the JSON
+                const parsedQuestions = JSON.parse(jsonInput);
+                console.log('Parsed questions:', parsedQuestions);
+                
+                // Convert format
+                const convertedQuestions = parsedQuestions.map((q, index) => {
+                    const correctOptionIndex = q.options.findIndex(option => option === q.correctOption);
+                    if (correctOptionIndex === -1) {
+                        throw new Error(`Question ${index + 1}: correctOption "${q.correctOption}" not found in options array`);
+                    }
+
+                    return {
+                        subject: 'physics', // Default mapping
+                        topicNumber: q.moduleNumber.toString(),
+                        questionText: q.question,
+                        options: [...q.options],
+                        correctOption: correctOptionIndex,
+                        explanation: q.explanation || '',
+                        difficulty: q.difficulty ? q.difficulty.toLowerCase() : 'medium',
+                        timeAllocation: q.timeAllocation ? parseInt(q.timeAllocation.replace(/\D/g, '')) : 60
+                    };
+                });
+                
+                console.log('Converted questions:', convertedQuestions);
+                
+                // Get token from localStorage
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    resultDiv.innerHTML = '<div style="color: red;">Error: No authentication token found. Please login first.</div>';
+                    return;
+                }
+                
+                // Make API call
+                const response = await fetch('http://localhost:5000/admin/questions/bulk', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ questions: convertedQuestions })
+                });
+                
+                const responseData = await response.json();
+                console.log('API Response:', responseData);
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<div style="color: green;">Success: ${responseData.message}</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div style="color: red;">Error: ${responseData.message}</div>`;
+                }
+                
+            } catch (error) {
+                console.error('Test error:', error);
+                resultDiv.innerHTML = `<div style="color: red;">Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html> 
