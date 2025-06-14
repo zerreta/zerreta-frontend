@@ -10,12 +10,12 @@ if (window.location.hostname === 'localhost' || window.location.hostname === '12
 } 
 // When deployed on Vercel - always use HTTPS
 else if (window.location.hostname.includes('vercel.app')) {
-  baseURL = 'https://zerreta-backend.onrender.com';
-  console.log('Deployed on Vercel, using render.com backend');
+  baseURL = 'https://zer-backend.onrender.com';
+  console.log('Deployed on Vercel, using zer-backend.onrender.com');
 }
 // Fallback to environment variable or default
 else {
-  baseURL = process.env.REACT_APP_API_URL || 'https://zerreta-backend.onrender.com';
+  baseURL = process.env.REACT_APP_API_URL || 'https://zer-backend.onrender.com';
   console.log('Using environment variable or default backend URL');
 }
 
