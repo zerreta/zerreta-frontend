@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/static/css/main.44640a36.css",
-    "main.js": "/static/js/main.d02b1ac6.js",
+    "main.js": "/static/js/main.737c7bf5.js",
     "static/js/977.afb7bd73.chunk.js": "/static/js/977.afb7bd73.chunk.js",
     "static/js/455.2f3f2747.chunk.js": "/static/js/455.2f3f2747.chunk.js",
     "static/js/453.abd36b29.chunk.js": "/static/js/453.abd36b29.chunk.js",
@@ -9,6 +9,7 @@
     "static/media/grammar.png": "/static/media/grammar.88746fda4ed2a4fe38a9.png",
     "static/media/writing.png": "/static/media/writing.1430ecc0f21ef4d88e37.png",
     "static/media/reading.png": "/static/media/reading.0877eb69a95963b2cded.png",
+    "static/media/mathorbit.png": "/static/media/mathorbit.a368b03509a4359b8a9c.png",
     "static/media/codezy.png": "/static/media/codezy.f46c35869474b14cbb2e.png",
     "static/media/speaky.png": "/static/media/speaky.cb779f6c8ac598d6cda1.png",
     "static/media/apti.png": "/static/media/apti.c8c4fc190aaf76f08f5c.png",
@@ -83,13 +84,13 @@
     "static/media/KaTeX_Size3-Regular.woff2": "/static/media/KaTeX_Size3-Regular.e1951519f6f0596f7356.woff2",
     "index.html": "/index.html",
     "main.44640a36.css.map": "/static/css/main.44640a36.css.map",
-    "main.d02b1ac6.js.map": "/static/js/main.d02b1ac6.js.map",
+    "main.737c7bf5.js.map": "/static/js/main.737c7bf5.js.map",
     "977.afb7bd73.chunk.js.map": "/static/js/977.afb7bd73.chunk.js.map",
     "455.2f3f2747.chunk.js.map": "/static/js/455.2f3f2747.chunk.js.map",
     "453.abd36b29.chunk.js.map": "/static/js/453.abd36b29.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.44640a36.css",
-    "static/js/main.d02b1ac6.js"
+    "static/js/main.737c7bf5.js"
   ]
 }

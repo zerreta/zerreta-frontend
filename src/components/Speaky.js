@@ -21,7 +21,7 @@ const Speaky = () => {
   const navigate = useNavigate();
 
   const handleGoBack = () => {
-    navigate('/student-dashboard/extras');
+    navigate('/student-dashboard/skills');
   };
 
   const modules = [
@@ -43,11 +43,11 @@ const Speaky = () => {
     },
     {
       id: 3,
-      title: 'Speaking',
-      bgColor: '#fff4e3',
-      image: speakingImage,
-      description: 'Improve your speaking and pronunciation',
-      path: '/speaky/speaking'
+      title: 'Writing',
+      bgColor: '#f0fdfa',
+      image: writingImage,
+      description: 'Master writing skills and composition',
+      path: '/speaky/writing'
     },
     {
       id: 4,
@@ -67,11 +67,11 @@ const Speaky = () => {
     },
     {
       id: 6,
-      title: 'Writing',
-      bgColor: '#f0fdfa',
-      image: writingImage,
-      description: 'Master writing skills and composition',
-      path: '/speaky/writing'
+      title: 'Speaking',
+      bgColor: '#fff4e3',
+      image: speakingImage,
+      description: 'Improve your speaking and pronunciation',
+      path: '/speaky/speaking'
     }
   ];
 
@@ -95,7 +95,7 @@ const Speaky = () => {
             }
           }}
         >
-          Back to Extras
+          Back to Skills
         </Button>
       </Box>
       

@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scratch Programming - Grade 5</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            background: #4C97FF;
+            overflow: hidden;
+        }
+        
+        #scratch-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .scratch-header {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .scratch-main {
+            flex: 1;
+            background: white;
+            border-radius: 8px 8px 0 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #4C97FF, #FF6680);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 1000;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top: 5px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .simple-scratch {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            background: #f8f9fa;
+        }
+        
+        .scratch-workspace {
+            display: flex;
+            height: 100%;
+        }
+        
+        .blocks-panel {
+            width: 300px;
+            background: #e9ecef;
+            border-right: 2px solid #dee2e6;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .scripts-area {
+            flex: 1;
+            background: white;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .stage-area {
+            width: 400px;
+            background: #f8f9fa;
+            border-left: 2px solid #dee2e6;
+            padding: 20px;
+        }
+        
+        .block {
+            background: #4C97FF;
+            color: white;
+            padding: 10px 15px;
+            margin: 10px 0;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+        
+        .block:hover {
+            background: #4088FF;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(64, 151, 255, 0.4);
+        }
+        
+        .block.motion { background: #4C97FF; }
+        .block.looks { background: #9966FF; }
+        .block.sound { background: #CF63CF; }
+        .block.events { background: #FFD500; color: #333; }
+        .block.control { background: #FFAB19; color: #333; }
+        
+        .stage {
+            width: 100%;
+            height: 300px;
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .sprite {
+            width: 50px;
+            height: 50px;
+            background: #FF6680;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .controls {
+            margin-top: 20px;
+        }
+        
+        .green-flag {
+            width: 60px;
+            height: 60px;
+            background: #00C853;
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            margin-right: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .green-flag:hover {
+            background: #00B248;
+            transform: scale(1.1);
+        }
+        
+        .stop-button {
+            width: 60px;
+            height: 60px;
+            background: #F44336;
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .stop-button:hover {
+            background: #E53935;
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div id="scratch-container">
+        <div class="scratch-header">
+            <div>🐱 Scratch Programming - Grade 5</div>
+            <div style="font-size: 14px; opacity: 0.8;">Create your first interactive story!</div>
+        </div>
+        
+        <div class="scratch-main">
+            <!-- Loading Screen -->
+            <div class="loading-screen" id="loadingScreen">
+                <div class="loading-spinner"></div>
+                <h2>Loading Scratch...</h2>
+                <p>Setting up your coding environment</p>
+            </div>
+            
+            <!-- Simple Scratch Interface -->
+            <div class="simple-scratch" id="scratchInterface">
+                <div class="scratch-workspace">
+                    <!-- Blocks Panel -->
+                    <div class="blocks-panel">
+                        <h3 style="margin-top: 0; color: #333;">Block Categories</h3>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="color: #666; font-size: 14px; margin-bottom: 10px;">Motion</h4>
+                            <div class="block motion">move 10 steps</div>
+                            <div class="block motion">turn right 15 degrees</div>
+                            <div class="block motion">go to x: 0 y: 0</div>
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="color: #666; font-size: 14px; margin-bottom: 10px;">Looks</h4>
+                            <div class="block looks">say Hello! for 2 seconds</div>
+                            <div class="block looks">change color effect by 25</div>
+                            <div class="block looks">show</div>
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="color: #666; font-size: 14px; margin-bottom: 10px;">Events</h4>
+                            <div class="block events">when green flag clicked</div>
+                            <div class="block events">when this sprite clicked</div>
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="color: #666; font-size: 14px; margin-bottom: 10px;">Control</h4>
+                            <div class="block control">wait 1 seconds</div>
+                            <div class="block control">repeat 10</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Scripts Area -->
+                    <div class="scripts-area">
+                        <h3 style="margin-top: 0; color: #333;">Scripts</h3>
+                        <p style="color: #666; margin-bottom: 30px;">
+                            Drag blocks from the left panel to create your program!
+                        </p>
+                        
+                        <div style="border: 2px dashed #dee2e6; padding: 40px; text-align: center; color: #999; border-radius: 8px;">
+                            <h4>Drop blocks here to create your script</h4>
+                            <p>Start with a "when green flag clicked" block</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Stage Area -->
+                    <div class="stage-area">
+                        <h3 style="margin-top: 0; color: #333;">Stage</h3>
+                        <div class="stage">
+                            <div class="sprite" id="sprite">🐱</div>
+                        </div>
+                        
+                        <div class="controls">
+                            <button class="green-flag" onclick="runProgram()" title="Run Program">▶</button>
+                            <button class="stop-button" onclick="stopProgram()" title="Stop Program">⏹</button>
+                        </div>
+                        
+                        <div style="margin-top: 20px; padding: 15px; background: rgba(76, 151, 255, 0.1); border-radius: 8px;">
+                            <h4 style="color: #4C97FF; margin: 0 0 10px 0;">💡 Tips</h4>
+                            <ul style="font-size: 12px; color: #666; margin: 0; padding-left: 20px;">
+                                <li>Drag blocks to the Scripts area</li>
+                                <li>Click the green flag to run</li>
+                                <li>Try making the cat move and talk!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple animation for demonstration
+        let isRunning = false;
+        let animationId;
+        
+        function showScratchInterface() {
+            document.getElementById('loadingScreen').style.display = 'none';
+            document.getElementById('scratchInterface').style.display = 'flex';
+        }
+        
+        function runProgram() {
+            if (isRunning) return;
+            
+            isRunning = true;
+            const sprite = document.getElementById('sprite');
+            let position = 0;
+            
+            function animate() {
+                if (!isRunning) return;
+                
+                position += 2;
+                sprite.style.transform = `translate(${Math.sin(position * 0.1) * 100}px, ${Math.cos(position * 0.05) * 50 - 50}%)`;
+                sprite.style.background = `hsl(${position * 2 % 360}, 70%, 60%)`;
+                
+                animationId = requestAnimationFrame(animate);
+            }
+            
+            animate();
+            
+            // Auto-stop after 5 seconds
+            setTimeout(() => {
+                if (isRunning) stopProgram();
+            }, 5000);
+        }
+        
+        function stopProgram() {
+            isRunning = false;
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            
+            const sprite = document.getElementById('sprite');
+            sprite.style.transform = 'translate(-50%, -50%)';
+            sprite.style.background = '#FF6680';
+        }
+        
+        // Add drag and drop functionality for blocks
+        const blocks = document.querySelectorAll('.block');
+        blocks.forEach(block => {
+            block.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', block.textContent);
+            });
+            block.draggable = true;
+        });
+        
+        // Load the interface after a short delay
+        setTimeout(showScratchInterface, 3000);
+        
+        // Try to load the real Scratch GUI if available
+        setTimeout(() => {
+            try {
+                // Attempt to load actual Scratch GUI
+                const iframe = document.createElement('iframe');
+                iframe.src = './index.html';
+                iframe.style.width = '100%';
+                iframe.style.height = '100%';
+                iframe.style.border = 'none';
+                iframe.onload = () => {
+                    document.querySelector('.scratch-main').innerHTML = '';
+                    document.querySelector('.scratch-main').appendChild(iframe);
+                };
+                iframe.onerror = () => {
+                    // If iframe fails, keep the simple interface
+                    console.log('Using simple Scratch interface');
+                };
+            } catch (error) {
+                console.log('Using simple Scratch interface due to error:', error);
+            }
+        }, 1000);
+    </script>
+</body>
+</html> 

@@ -170,19 +170,7 @@ function Login() {
     setError('');
   };
 
-  const fillDefaultCredentials = () => {
-    if (role === 'admin') {
-      setFormData({
-        username: 'admin',
-        password: 'admin123'
-      });
-    } else {
-      setFormData({
-        username: 'student',
-        password: 'student123'
-      });
-    }
-  };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -369,16 +357,7 @@ function Login() {
               )}
             </StyledButton>
             
-            <Box sx={{ textAlign: 'center', mt: 2 }}>
-              <Button
-                size="small"
-                color="primary"
-                onClick={fillDefaultCredentials}
-                sx={{ textTransform: 'none', color: '#7445f8' }}
-              >
-                Use demo credentials
-              </Button>
-            </Box>
+
           </Box>
         </LoginBox>
       </LoginRight>

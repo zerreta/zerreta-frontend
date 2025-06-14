@@ -108,6 +108,7 @@ const menuItems = [
   { path: '/admin/institutions', label: 'Institutions', icon: SchoolIcon },
   { path: '/admin/questions', label: 'NEET Questions', icon: QuestionIcon },
   { path: '/admin/grammar-questions', label: 'Grammar Questions', icon: QuestionIcon },
+  { path: '/admin/aptitude-questions', label: 'Aptitude Questions', icon: QuestionIcon },
   { path: '/admin/student-levels', label: 'Student Levels', icon: SchoolIcon },
   { path: '/admin/student-points', label: 'Student N.POINTS', icon: TrophyIcon },
   { path: '/admin/student-data', label: 'Student Data', icon: PeopleIcon },

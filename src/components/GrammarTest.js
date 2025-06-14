@@ -21,7 +21,10 @@ import {
   DialogActions,
   DialogContent,
   DialogContentText,
-  DialogTitle
+  DialogTitle,
+  Card,
+  CardContent,
+  Avatar
 } from '@mui/material';
 import {
   Timer as TimerIcon,
@@ -34,7 +37,8 @@ import {
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
   Replay as ReplayIcon,
-  Error as ErrorIcon
+  Error as ErrorIcon,
+  Quiz as QuizIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -353,65 +357,264 @@ function GrammarTest() {
   // Show test rules
   if (showRules && !testCompleted) {
     return (
-      <Container maxWidth="md" sx={{ mt: 4 }}>
-        <Paper elevation={3} sx={{ p: 4 }}>
-          <Typography variant="h4" gutterBottom align="center" color="primary">
-            📝 Grammar Test - {module.charAt(0).toUpperCase() + module.slice(1)} Level
-          </Typography>
-          {topicNumber && (
-            <Typography variant="h6" gutterBottom align="center" color="text.secondary">
-              Topic {topicNumber}
-            </Typography>
-          )}
-          
-          <Divider sx={{ my: 3 }} />
-          
-          <Typography variant="h6" gutterBottom>
-            📋 Test Instructions:
-          </Typography>
-          
-          <Box component="ul" sx={{ pl: 3, mb: 3 }}>
-            <Typography component="li" sx={{ mb: 1 }}>
-              You will have <strong>20 minutes</strong> to complete this grammar test
-            </Typography>
-            <Typography component="li" sx={{ mb: 1 }}>
-              The test contains <strong>{questions.length} questions</strong> from {module} grammar topics
-            </Typography>
-            <Typography component="li" sx={{ mb: 1 }}>
-              Each question has 4 options - choose the best answer
-            </Typography>
-            <Typography component="li" sx={{ mb: 1 }}>
-              You can navigate between questions using Next/Previous buttons
-            </Typography>
-            <Typography component="li" sx={{ mb: 1 }}>
-              The test will auto-submit when time is up
-            </Typography>
-            <Typography component="li" sx={{ mb: 1 }}>
-              Your progress will be saved and you'll see detailed results at the end
-            </Typography>
-          </Box>
+      <Box sx={{ minHeight: '100vh', backgroundColor: '#f8fafc', overflow: 'hidden' }}>
+        {/* Hero Section */}
+        <Box sx={{ 
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white',
+          py: 6
+        }}>
+          <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3 } }}>
+            <Grid container spacing={4} alignItems="center">
+              <Grid item xs={12} md={8}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: { xs: 'flex-start', sm: 'center' }, 
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  gap: 2, 
+                  mb: 2 
+                }}>
+                  <TrophyIcon sx={{ 
+                    fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
+                    color: '#fbbf24'
+                  }} />
+                  <Typography variant="h3" fontWeight={700} sx={{ 
+                    fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' }
+                  }}>
+                    Grammar Test
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    startIcon={<ArrowBackIcon />}
+                    onClick={handleGoBack}
+                    sx={{
+                      borderColor: 'rgba(255,255,255,0.3)',
+                      color: 'white',
+                      backgroundColor: 'rgba(255,255,255,0.1)',
+                      backdropFilter: 'blur(10px)',
+                      '&:hover': {
+                        borderColor: 'rgba(255,255,255,0.5)',
+                        backgroundColor: 'rgba(255,255,255,0.2)',
+                      },
+                      textTransform: 'none',
+                      fontWeight: 500,
+                      borderRadius: 2,
+                      px: 3,
+                      alignSelf: { xs: 'flex-start', sm: 'center' }
+                    }}
+                  >
+                    Back to Grammar
+                  </Button>
+                </Box>
+                <Typography variant="h5" fontWeight={600} sx={{ mb: 1, color: '#fbbf24' }}>
+                  {module.charAt(0).toUpperCase() + module.slice(1)} Level
+                  {topicNumber && ` - Topic ${topicNumber}`}
+                </Typography>
+                <Typography variant="h6" sx={{ opacity: 0.9, mb: 3, lineHeight: 1.6 }}>
+                  Test your grammar knowledge with {questions.length} carefully selected questions. 
+                  Take your time and demonstrate your understanding.
+                </Typography>
+                
+                {/* Test Stats */}
+                <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', mb: 3 }}>
+                  <Box sx={{ 
+                    backgroundColor: 'rgba(255,255,255,0.15)',
+                    backdropFilter: 'blur(10px)',
+                    borderRadius: 2,
+                    px: 3,
+                    py: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1
+                  }}>
+                    <TimerIcon />
+                    <Typography variant="body1" fontWeight={600}>
+                      20 Minutes
+                    </Typography>
+                  </Box>
+                  <Box sx={{ 
+                    backgroundColor: 'rgba(255,255,255,0.15)',
+                    backdropFilter: 'blur(10px)',
+                    borderRadius: 2,
+                    px: 3,
+                    py: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1
+                  }}>
+                    <QuizIcon />
+                    <Typography variant="body1" fontWeight={600}>
+                      {questions.length} Questions
+                    </Typography>
+                  </Box>
+                  <Box sx={{ 
+                    backgroundColor: 'rgba(255,255,255,0.15)',
+                    backdropFilter: 'blur(10px)',
+                    borderRadius: 2,
+                    px: 3,
+                    py: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1
+                  }}>
+                    <CheckIcon />
+                    <Typography variant="body1" fontWeight={600}>
+                      70% to Pass
+                    </Typography>
+                  </Box>
+                </Box>
+              </Grid>
+              <Grid item xs={12} md={4} sx={{ textAlign: 'center' }}>
+                <QuizIcon sx={{ 
+                  fontSize: '120px',
+                  opacity: 0.3,
+                  filter: 'drop-shadow(0 0 20px rgba(255,255,255,0.3))'
+                }} />
+              </Grid>
+            </Grid>
+          </Container>
+        </Box>
 
-          <Alert severity="info" sx={{ mb: 3 }}>
-            Make sure you have a stable internet connection before starting the test.
-          </Alert>
+        {/* Main Content */}
+        <Container maxWidth="lg" sx={{ py: 6, px: { xs: 2, sm: 3 } }}>
+          <Typography variant="h4" fontWeight={600} color="#1e293b" gutterBottom sx={{ mb: 1 }}>
+            Test Instructions
+          </Typography>
+          <Typography variant="body1" color="#64748b" sx={{ mb: 4 }}>
+            Please read the following instructions carefully before starting your test
+          </Typography>
 
-          <Box sx={{ textAlign: 'center' }}>
-            <Button
-              variant="contained"
-              size="large"
-              onClick={handleStartTest}
-              sx={{ px: 4, py: 1.5, fontSize: '1.1rem' }}
-            >
-              Start Grammar Test
-            </Button>
-            <Box sx={{ mt: 2 }}>
-              <Button variant="text" onClick={handleGoBack} startIcon={<ArrowBackIcon />}>
-                Back to Grammar
-              </Button>
-            </Box>
-          </Box>
-        </Paper>
-      </Container>
+          <Grid container spacing={4}>
+            {/* Instructions Card */}
+            <Grid item xs={12} md={8}>
+              <Card sx={{
+                borderRadius: 3,
+                border: '2px solid #e5e7eb',
+                backgroundColor: 'white',
+                transition: 'all 0.3s ease',
+                position: 'relative',
+                overflow: 'hidden'
+              }}>
+                {/* Top indicator */}
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 4,
+                    background: 'linear-gradient(90deg, #667eea, #764ba2)'
+                  }}
+                />
+
+                <CardContent sx={{ p: 4 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                    <Avatar sx={{
+                      backgroundColor: '#667eea',
+                      width: 56,
+                      height: 56,
+                      mr: 2
+                    }}>
+                      <InfoIcon sx={{ fontSize: '1.5rem' }} />
+                    </Avatar>
+                    <Typography variant="h5" fontWeight={600} color="#1e293b">
+                      Test Guidelines
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ pl: 2 }}>
+                    {[
+                      { icon: '⏱️', text: `You have 20 minutes to complete ${questions.length} questions` },
+                      { icon: '📝', text: 'Each question has 4 multiple choice options' },
+                      { icon: '🔄', text: 'Navigate between questions using Next/Previous buttons' },
+                      { icon: '💾', text: 'Your answers are saved automatically' },
+                      { icon: '⚡', text: 'Test auto-submits when time expires' },
+                      { icon: '📊', text: 'Detailed results and explanations provided at the end' }
+                    ].map((item, index) => (
+                      <Box key={index} sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
+                        <Typography sx={{ fontSize: '1.2rem', mr: 2, mt: 0.2 }}>
+                          {item.icon}
+                        </Typography>
+                        <Typography variant="body1" sx={{ lineHeight: 1.6, color: '#475569' }}>
+                          {item.text}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+
+                  <Alert severity="info" sx={{ mt: 3, borderRadius: 2 }}>
+                    <Typography variant="body2">
+                      <strong>Pro Tip:</strong> Ensure you have a stable internet connection. 
+                      Read each question carefully before selecting your answer.
+                    </Typography>
+                  </Alert>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Quick Stats */}
+            <Grid item xs={12} md={4}>
+              <Card sx={{
+                borderRadius: 3,
+                border: '2px solid #10b981',
+                backgroundColor: '#f0fdf4',
+                height: 'fit-content'
+              }}>
+                <CardContent sx={{ p: 4, textAlign: 'center' }}>
+                  <TrophyIcon sx={{ fontSize: '3rem', color: '#10b981', mb: 2 }} />
+                  <Typography variant="h6" fontWeight={600} color="#1e293b" gutterBottom>
+                    Ready to Excel?
+                  </Typography>
+                  <Typography variant="body2" color="#475569" sx={{ mb: 3 }}>
+                    Show your grammar expertise and achieve your best score!
+                  </Typography>
+                  
+                  <Box sx={{ textAlign: 'left', mb: 3 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography variant="body2" color="#6b7280">Questions:</Typography>
+                      <Typography variant="body2" fontWeight={600}>{questions.length}</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography variant="body2" color="#6b7280">Time Limit:</Typography>
+                      <Typography variant="body2" fontWeight={600}>20 minutes</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography variant="body2" color="#6b7280">Passing Score:</Typography>
+                      <Typography variant="body2" fontWeight={600}>70%</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="body2" color="#6b7280">Level:</Typography>
+                      <Typography variant="body2" fontWeight={600}>
+                        {module.charAt(0).toUpperCase() + module.slice(1)}
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  <Button
+                    variant="contained"
+                    size="large"
+                    fullWidth
+                    onClick={handleStartTest}
+                    sx={{
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      py: 1.5,
+                      fontSize: '1.1rem',
+                      fontWeight: 600,
+                      textTransform: 'none',
+                      borderRadius: 2,
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%)',
+                      }
+                    }}
+                  >
+                    Start Test Now
+                  </Button>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
     );
   }
 
@@ -421,236 +624,428 @@ function GrammarTest() {
     const passed = score >= 70;
 
     return (
-      <Container maxWidth="md" sx={{ mt: 4 }}>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Paper elevation={3} sx={{ p: 4 }}>
-            <Box sx={{ textAlign: 'center', mb: 4 }}>
-              <Typography variant="h4" gutterBottom>
-                {passed ? '🎉 Congratulations!' : '📚 Keep Learning!'}
-              </Typography>
-              <Typography variant="h5" color={passed ? 'success.main' : 'warning.main'}>
-                Your Score: {score.toFixed(1)}%
-              </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-                {module.charAt(0).toUpperCase() + module.slice(1)} Grammar Test
-                {topicNumber && ` - Topic ${topicNumber}`}
-              </Typography>
-            </Box>
-
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-              <Grid item xs={6} md={3}>
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography variant="h4" color="success.main">
-                    {performanceMetrics.correctAnswers}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Correct
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={6} md={3}>
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography variant="h4" color="error.main">
-                    {performanceMetrics.incorrectAnswers}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Incorrect
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={6} md={3}>
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography variant="h4" color="warning.main">
-                    {performanceMetrics.unanswered}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Unanswered
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={6} md={3}>
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography variant="h4" color="info.main">
-                    {formatTime(timeSpent)}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Time Taken
-                  </Typography>
-                </Box>
-              </Grid>
-            </Grid>
-
-            {/* Detailed Test Review Section */}
-            <Divider sx={{ my: 4 }}>
-              <Typography variant="h6" color="primary">
-                📝 Test Review
-              </Typography>
-            </Divider>
-
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3, textAlign: 'center' }}>
-              Review each question to understand your performance and learn from explanations
-            </Typography>
-
-            {reviewQuestions && reviewQuestions.map((question, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1, duration: 0.3 }}
-              >
-                <Paper 
-                  elevation={1} 
-                  sx={{ 
-                    p: 3, 
-                    mb: 3, 
-                    border: '2px solid',
-                    borderColor: question.isCorrect ? 'success.main' : (question.selectedOption ? 'error.main' : 'warning.main'),
-                    borderRadius: 2,
-                    position: 'relative',
-                    overflow: 'hidden',
-                    '&::before': {
-                      content: '""',
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '4px',
-                      height: '100%',
-                      backgroundColor: question.isCorrect ? 'success.main' : (question.selectedOption ? 'error.main' : 'warning.main'),
-                    }
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <Typography variant="h6" sx={{ mr: 2 }}>
-                      Question {index + 1}
+      <Box sx={{ minHeight: '100vh', backgroundColor: '#f8fafc' }}>
+        {/* Hero Results Section */}
+        <Box sx={{
+          background: passed ? 
+            'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 
+            'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+          py: 4,
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          <Container maxWidth="lg">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <Grid container spacing={4} alignItems="center">
+                <Grid item xs={12} md={8}>
+                  <Box sx={{ color: 'white' }}>
+                    <Typography variant="h4" fontWeight={700} gutterBottom>
+                      {passed ? 'Excellent Work!' : 'Keep Learning!'}
                     </Typography>
-                    {question.isCorrect ? (
-                      <Chip icon={<CheckCircleIcon />} label="Correct" color="success" size="small" />
-                    ) : question.selectedOption ? (
-                      <Chip icon={<CancelIcon />} label="Incorrect" color="error" size="small" />
-                    ) : (
-                      <Chip icon={<ErrorIcon />} label="Not Answered" color="warning" size="small" />
-                    )}
-                    <Box sx={{ ml: 'auto' }}>
+                    <Typography variant="h5" fontWeight={600} sx={{ mb: 1.5 }}>
+                      Your Score: {score.toFixed(1)}%
+                    </Typography>
+                    <Typography variant="body1" sx={{ opacity: 0.9, mb: 2 }}>
+                      {module.charAt(0).toUpperCase() + module.slice(1)} Grammar Test
+                      {topicNumber && ` - Topic ${topicNumber}`}
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
                       <Chip 
-                        label={`Time: ${formatTime(question.timeSpent || 0)}`} 
-                        variant="outlined" 
-                        size="small" 
+                        label={passed ? 'PASSED' : 'REVIEW NEEDED'} 
+                        sx={{ 
+                          backgroundColor: 'rgba(255,255,255,0.2)', 
+                          color: 'white',
+                          fontWeight: 600,
+                          fontSize: '1rem',
+                          py: 2,
+                          px: 1
+                        }} 
                       />
+                      <Chip 
+                        label={`${performanceMetrics.correctAnswers}/${questions.length} Correct`} 
+                        sx={{ 
+                          backgroundColor: 'rgba(255,255,255,0.2)', 
+                          color: 'white',
+                          fontWeight: 600,
+                          fontSize: '1rem',
+                          py: 2,
+                          px: 1
+                        }} 
+                      />
+                      <Chip 
+                        label={`Time: ${formatTime(timeSpent)}`} 
+                        sx={{ 
+                          backgroundColor: 'rgba(255,255,255,0.2)', 
+                          color: 'white',
+                          fontWeight: 600,
+                          fontSize: '1rem',
+                          py: 2,
+                          px: 1
+                        }} 
+                      />
+                      <Button 
+                        variant="outlined" 
+                        onClick={handleGoBack}
+                        sx={{
+                          borderColor: 'rgba(255,255,255,0.5)',
+                          color: 'white',
+                          fontWeight: 600,
+                          px: 3,
+                          py: 1,
+                          textTransform: 'none',
+                          borderRadius: 2,
+                          ml: 2,
+                          '&:hover': {
+                            backgroundColor: 'rgba(255,255,255,0.1)',
+                            borderColor: 'white'
+                          }
+                        }}
+                      >
+                        Back to Grammar
+                      </Button>
                     </Box>
                   </Box>
-
-                  <Typography variant="body1" sx={{ mb: 3, fontWeight: 500, lineHeight: 1.6 }}>
-                    {question.text}
-                  </Typography>
-
-                  <Grid container spacing={2} sx={{ mb: 3 }}>
-                    <Grid item xs={12} md={6}>
-                      <Box sx={{ 
-                        p: 2, 
-                        border: '1px solid', 
-                        borderColor: question.selectedOption ? 
-                          (question.isCorrect ? 'success.main' : 'error.main') : 
-                          'warning.main',
-                        borderRadius: 1,
-                        backgroundColor: question.selectedOption ? 
-                          (question.isCorrect ? 'success.50' : 'error.50') : 
-                          'warning.50',
-                        transition: 'all 0.2s ease'
-                      }}>
-                        <Typography variant="subtitle2" gutterBottom fontWeight="bold">
-                          {question.selectedOption ? 
-                            (question.isCorrect ? '✅ Your Answer:' : '❌ Your Answer:') : 
-                            '⚠️ Your Answer:'
-                          }
-                        </Typography>
-                        <Typography variant="body1">
-                          {question.selectedOption || 'Not answered'}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <Box sx={{ 
-                        p: 2, 
-                        border: '1px solid', 
-                        borderColor: 'success.main',
-                        borderRadius: 1,
-                        backgroundColor: 'success.50',
-                        transition: 'all 0.2s ease'
-                      }}>
-                        <Typography variant="subtitle2" gutterBottom fontWeight="bold">
-                          ✅ Correct Answer:
-                        </Typography>
-                        <Typography variant="body1">
-                          {question.correctOption}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                  </Grid>
-
-                  {question.explanation && (
-                    <Box sx={{ 
-                      p: 2, 
-                      backgroundColor: 'info.50', 
-                      borderRadius: 1,
-                      border: '1px solid',
-                      borderColor: 'info.main',
-                      transition: 'all 0.2s ease'
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Box sx={{ textAlign: 'center' }}>
+                    <Box sx={{
+                      width: 120,
+                      height: 120,
+                      borderRadius: '50%',
+                      backgroundColor: 'rgba(255,255,255,0.2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto',
+                      position: 'relative',
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: -8,
+                        left: -8,
+                        right: -8,
+                        bottom: -8,
+                        borderRadius: '50%',
+                        background: 'conic-gradient(from 0deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1), rgba(255,255,255,0.3))',
+                        animation: 'spin 8s linear infinite'
+                      },
+                      '@keyframes spin': {
+                        from: { transform: 'rotate(0deg)' },
+                        to: { transform: 'rotate(360deg)' }
+                      }
                     }}>
-                      <Typography variant="subtitle2" gutterBottom color="info.dark" fontWeight="bold">
-                        <InfoIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'middle' }} />
-                        Explanation:
-                      </Typography>
-                      <Typography variant="body2" color="info.dark" sx={{ lineHeight: 1.6 }}>
-                        {question.explanation}
+                      <Typography variant="h3" fontWeight={700} color="white">
+                        {score.toFixed(0)}%
                       </Typography>
                     </Box>
-                  )}
+                  </Box>
+                </Grid>
+              </Grid>
+            </motion.div>
+          </Container>
+        </Box>
 
-                  {/* Show grammar rule and category if available */}
-                  {(question.category || question.grammarRule) && (
-                    <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                      {question.category && (
-                        <Chip 
-                          label={`Category: ${question.category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}`} 
-                          color="secondary" 
-                          size="small"
-                          variant="outlined"
-                        />
-                      )}
-                      {question.grammarRule && (
-                        <Chip 
-                          label={`Rule: ${question.grammarRule}`} 
-                          color="info" 
-                          size="small"
-                          variant="outlined"
-                        />
-                      )}
-                    </Box>
-                  )}
-                </Paper>
-              </motion.div>
-            ))}
-
-            <Box sx={{ textAlign: 'center', mt: 4 }}>
-              <Button
-                variant="contained"
-                onClick={handleRetakeTest}
-                startIcon={<ReplayIcon />}
-                sx={{ mr: 2 }}
+        <Container maxWidth="xl" sx={{ py: 3 }}>
+          {/* Performance Stats Cards */}
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid item xs={12} sm={6} md={3}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1, duration: 0.5 }}
               >
-                Retake Test
-              </Button>
-              <Button variant="outlined" onClick={handleGoBack}>
-                Back to Grammar
-              </Button>
+                <Card sx={{
+                  p: 2,
+                  textAlign: 'center',
+                  borderRadius: 2,
+                  border: '2px solid #22c55e',
+                  backgroundColor: '#f0fdf4',
+                  boxShadow: '0 4px 12px rgba(34, 197, 94, 0.1)'
+                }}>
+                  <CheckCircleIcon sx={{ fontSize: '2rem', color: '#22c55e', mb: 1 }} />
+                  <Typography variant="h4" fontWeight={700} color="#22c55e">
+                    {performanceMetrics.correctAnswers}
+                  </Typography>
+                  <Typography variant="body1" color="#065f46" fontWeight={600}>
+                    Correct
+                  </Typography>
+                </Card>
+              </motion.div>
+            </Grid>
+            
+            <Grid item xs={12} sm={6} md={3}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.5 }}
+              >
+                <Card sx={{
+                  p: 2,
+                  textAlign: 'center',
+                  borderRadius: 2,
+                  border: '2px solid #ef4444',
+                  backgroundColor: '#fef2f2',
+                  boxShadow: '0 4px 12px rgba(239, 68, 68, 0.1)'
+                }}>
+                  <CancelIcon sx={{ fontSize: '2rem', color: '#ef4444', mb: 1 }} />
+                  <Typography variant="h4" fontWeight={700} color="#ef4444">
+                    {performanceMetrics.incorrectAnswers}
+                  </Typography>
+                  <Typography variant="body1" color="#991b1b" fontWeight={600}>
+                    Incorrect
+                  </Typography>
+                </Card>
+              </motion.div>
+            </Grid>
+            
+            <Grid item xs={12} sm={6} md={3}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
+              >
+                <Card sx={{
+                  p: 2,
+                  textAlign: 'center',
+                  borderRadius: 2,
+                  border: '2px solid #f59e0b',
+                  backgroundColor: '#fffbeb',
+                  boxShadow: '0 4px 12px rgba(245, 158, 11, 0.1)'
+                }}>
+                  <ErrorIcon sx={{ fontSize: '2rem', color: '#f59e0b', mb: 1 }} />
+                  <Typography variant="h4" fontWeight={700} color="#f59e0b">
+                    {performanceMetrics.unanswered}
+                  </Typography>
+                  <Typography variant="body1" color="#92400e" fontWeight={600}>
+                    Unanswered
+                  </Typography>
+                </Card>
+              </motion.div>
+            </Grid>
+            
+            <Grid item xs={12} sm={6} md={3}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.5 }}
+              >
+                <Card sx={{
+                  p: 2,
+                  textAlign: 'center',
+                  borderRadius: 2,
+                  border: '2px solid #3b82f6',
+                  backgroundColor: '#eff6ff',
+                  boxShadow: '0 4px 12px rgba(59, 130, 246, 0.1)'
+                }}>
+                  <TimerIcon sx={{ fontSize: '2rem', color: '#3b82f6', mb: 1 }} />
+                  <Typography variant="h4" fontWeight={700} color="#3b82f6">
+                    {formatTime(timeSpent)}
+                  </Typography>
+                  <Typography variant="body1" color="#1e40af" fontWeight={600}>
+                    Time
+                  </Typography>
+                </Card>
+              </motion.div>
+            </Grid>
+          </Grid>
+
+          {/* Action Buttons */}
+          <Box sx={{ textAlign: 'center', mb: 3 }}>
+            <Button
+              variant="contained"
+              onClick={handleRetakeTest}
+              startIcon={<ReplayIcon />}
+              sx={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                fontWeight: 600,
+                px: 4,
+                py: 1.5,
+                textTransform: 'none',
+                borderRadius: 2,
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%)',
+                }
+              }}
+            >
+              Retake Test
+            </Button>
+          </Box>
+
+          {/* Detailed Test Review Section */}
+          <Card sx={{
+            borderRadius: 3,
+            border: '2px solid #e5e7eb',
+            boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
+            overflow: 'hidden'
+          }}>
+            <Box sx={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              p: 3,
+              color: 'white'
+            }}>
+              <Typography variant="h5" fontWeight={700} gutterBottom>
+                Detailed Review
+              </Typography>
+              <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                Review each question to understand your performance and learn from explanations
+              </Typography>
             </Box>
-          </Paper>
-        </motion.div>
-      </Container>
+            
+            <CardContent sx={{ p: 3 }}>
+              <Grid container spacing={2}>
+                {reviewQuestions && reviewQuestions.map((question, index) => (
+                  <Grid item xs={12} md={6} key={index}>
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1, duration: 0.3 }}
+                    >
+                      <Card 
+                        sx={{ 
+                          height: '100%',
+                          border: '2px solid',
+                          borderColor: question.isCorrect ? '#22c55e' : (question.selectedOption ? '#ef4444' : '#f59e0b'),
+                          borderRadius: 2,
+                          overflow: 'hidden',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                          position: 'relative',
+                          '&::before': {
+                            content: '""',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '4px',
+                            height: '100%',
+                            backgroundColor: question.isCorrect ? '#22c55e' : (question.selectedOption ? '#ef4444' : '#f59e0b'),
+                          }
+                        }}
+                      >
+                        <CardContent sx={{ p: 2 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                            <Avatar sx={{
+                              backgroundColor: question.isCorrect ? '#22c55e' : (question.selectedOption ? '#ef4444' : '#f59e0b'),
+                              color: 'white',
+                              width: 32,
+                              height: 32,
+                              mr: 1.5,
+                              fontWeight: 600,
+                              fontSize: '0.9rem'
+                            }}>
+                              {index + 1}
+                            </Avatar>
+                            <Box sx={{ flex: 1 }}>
+                              <Typography variant="subtitle1" fontWeight={600} color="#1e293b">
+                                Question {index + 1}
+                              </Typography>
+                              <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
+                                {question.isCorrect ? (
+                                  <Chip icon={<CheckCircleIcon />} label="Correct" color="success" size="small" />
+                                ) : question.selectedOption ? (
+                                  <Chip icon={<CancelIcon />} label="Incorrect" color="error" size="small" />
+                                ) : (
+                                  <Chip icon={<ErrorIcon />} label="Not Answered" color="warning" size="small" />
+                                )}
+                              </Box>
+                            </Box>
+                          </Box>
+
+                          <Typography variant="body1" sx={{ mb: 2, fontWeight: 500, lineHeight: 1.5, color: '#374151' }}>
+                            {question.text}
+                          </Typography>
+
+                          <Grid container spacing={1} sx={{ mb: 2 }}>
+                            <Grid item xs={12}>
+                              <Box sx={{ 
+                                p: 2, 
+                                border: '1px solid', 
+                                borderColor: question.selectedOption ? 
+                                  (question.isCorrect ? '#22c55e' : '#ef4444') : 
+                                  '#f59e0b',
+                                borderRadius: 1,
+                                backgroundColor: question.selectedOption ? 
+                                  (question.isCorrect ? '#f0fdf4' : '#fef2f2') : 
+                                  '#fffbeb',
+                              }}>
+                                <Typography variant="caption" fontWeight={600} color="#1e293b">
+                                  {question.selectedOption ? 
+                                    (question.isCorrect ? '✅ Your Answer' : '❌ Your Answer') : 
+                                    '⚠️ Your Answer'
+                                  }
+                                </Typography>
+                                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                  {question.selectedOption || 'Not answered'}
+                                </Typography>
+                              </Box>
+                            </Grid>
+                            <Grid item xs={12}>
+                              <Box sx={{ 
+                                p: 2, 
+                                border: '1px solid #22c55e',
+                                borderRadius: 1,
+                                backgroundColor: '#f0fdf4',
+                              }}>
+                                <Typography variant="caption" fontWeight={600} color="#1e293b">
+                                  ✅ Correct Answer
+                                </Typography>
+                                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                  {question.correctOption}
+                                </Typography>
+                              </Box>
+                            </Grid>
+                          </Grid>
+
+                          {question.explanation && (
+                            <Box sx={{ 
+                              p: 2, 
+                              backgroundColor: '#eff6ff', 
+                              borderRadius: 1,
+                              border: '1px solid #3b82f6',
+                              mb: 1
+                            }}>
+                              <Typography variant="caption" color="#1e40af" fontWeight={600}>
+                                <InfoIcon sx={{ fontSize: 14, mr: 0.5, verticalAlign: 'middle' }} />
+                                Explanation
+                              </Typography>
+                              <Typography variant="body2" color="#1e40af" sx={{ lineHeight: 1.4 }}>
+                                {question.explanation}
+                              </Typography>
+                            </Box>
+                          )}
+
+                          {(question.category || question.grammarRule) && (
+                            <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                              {question.category && (
+                                <Chip 
+                                  label={question.category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())} 
+                                  color="secondary" 
+                                  size="small"
+                                  variant="outlined"
+                                />
+                              )}
+                              {question.grammarRule && (
+                                <Chip 
+                                  label={question.grammarRule} 
+                                  color="info" 
+                                  size="small"
+                                  variant="outlined"
+                                />
+                              )}
+                            </Box>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  </Grid>
+                ))}
+              </Grid>
+            </CardContent>
+          </Card>
+        </Container>
+      </Box>
     );
   }
 
@@ -658,138 +1053,410 @@ function GrammarTest() {
   const currentQuestion = questions[currentQuestionIndex];
   
   return (
-    <Container maxWidth="lg">
-      <Box sx={{ mt: 2, mb: 4 }}>
-        {/* Header */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h5" color="primary">
-            Grammar Test - {module.charAt(0).toUpperCase() + module.slice(1)}
-          </Typography>
-          <Chip
-            icon={<TimerIcon />}
-            label={formatTime(testTimeLeft)}
-            color={testTimeLeft < 300 ? 'error' : 'primary'}
-            variant="outlined"
-          />
-        </Box>
-
-        {/* Progress Bar */}
-        <Box sx={{ mb: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-            <Typography variant="body2" color="text.secondary">
-              Question {currentQuestionIndex + 1} of {questions.length}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {getCompletionPercentage().toFixed(0)}% Complete
-            </Typography>
-          </Box>
-          <LinearProgress variant="determinate" value={getCompletionPercentage()} sx={{ height: 8, borderRadius: 4 }} />
-        </Box>
-
-        {/* Question Card */}
-        <Paper elevation={2} sx={{ p: 4, mb: 3 }}>
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="h6" sx={{ mb: 2, lineHeight: 1.6 }}>
-              {currentQuestion?.questionText}
-            </Typography>
+    <Box sx={{ minHeight: '100vh', backgroundColor: '#f8fafc' }}>
+      {/* Fixed Header */}
+      <Box sx={{ 
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+        backgroundColor: 'white',
+        borderBottom: '1px solid #e5e7eb',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+      }}>
+        <Container maxWidth="xl" sx={{ py: 2 }}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} md={3}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Avatar sx={{ backgroundColor: '#667eea', width: 40, height: 40 }}>
+                  <QuizIcon />
+                </Avatar>
+                <Box>
+                  <Typography variant="h6" fontWeight={600} color="#1e293b">
+                    Grammar Test
+                  </Typography>
+                  <Typography variant="body2" color="#64748b">
+                    {module.charAt(0).toUpperCase() + module.slice(1)} Level
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
             
-            {currentQuestion?.category && (
-              <Chip 
-                label={currentQuestion.category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())} 
-                color="secondary" 
-                size="small"
-                sx={{ mr: 1 }}
-              />
-            )}
+            <Grid item xs={12} md={6}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="body1" fontWeight={600} color="#1e293b" gutterBottom>
+                  Question {currentQuestionIndex + 1} of {questions.length}
+                </Typography>
+                <LinearProgress 
+                  variant="determinate" 
+                  value={getCompletionPercentage()} 
+                  sx={{ 
+                    height: 8, 
+                    borderRadius: 4,
+                    backgroundColor: '#e5e7eb',
+                    '& .MuiLinearProgress-bar': {
+                      backgroundColor: '#667eea',
+                      borderRadius: 4
+                    }
+                  }} 
+                />
+                <Typography variant="body2" color="#6b7280" sx={{ mt: 1, mb: 2 }}>
+                  {getCompletionPercentage().toFixed(0)}% Complete
+                </Typography>
+                
+                {/* Navigation Buttons */}
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
+                  <Button
+                    variant="outlined"
+                    onClick={handlePrevQuestion}
+                    disabled={currentQuestionIndex === 0}
+                    startIcon={<ArrowBackIcon />}
+                    size="small"
+                    sx={{
+                      borderColor: '#667eea',
+                      color: '#667eea',
+                      fontWeight: 600,
+                      px: 2,
+                      py: 0.5,
+                      textTransform: 'none',
+                      borderRadius: 2,
+                      fontSize: '0.8rem',
+                      '&:hover': {
+                        backgroundColor: 'rgba(102, 126, 234, 0.05)',
+                        borderColor: '#667eea',
+                      },
+                      '&:disabled': {
+                        borderColor: '#cbd5e1',
+                        color: '#9ca3af'
+                      }
+                    }}
+                  >
+                    Previous
+                  </Button>
+
+                  {currentQuestionIndex === questions.length - 1 ? (
+                    <Button
+                      variant="contained"
+                      onClick={handleTestComplete}
+                      disabled={isSubmitting}
+                      startIcon={isSubmitting ? <CircularProgress size={16} /> : <SendIcon />}
+                      size="small"
+                      sx={{
+                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                        fontWeight: 600,
+                        px: 2,
+                        py: 0.5,
+                        textTransform: 'none',
+                        borderRadius: 2,
+                        fontSize: '0.8rem',
+                        '&:hover': {
+                          background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                        },
+                        '&:disabled': {
+                          background: '#9ca3af'
+                        }
+                      }}
+                    >
+                      {isSubmitting ? 'Submitting...' : 'Submit'}
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="contained"
+                      onClick={handleNextQuestion}
+                      endIcon={<ArrowForwardIcon />}
+                      size="small"
+                      sx={{
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        fontWeight: 600,
+                        px: 2,
+                        py: 0.5,
+                        textTransform: 'none',
+                        borderRadius: 2,
+                        fontSize: '0.8rem',
+                        '&:hover': {
+                          background: 'linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%)',
+                        }
+                      }}
+                    >
+                      Next
+                    </Button>
+                  )}
+                </Box>
+              </Box>
+            </Grid>
             
-            {currentQuestion?.grammarRule && (
-              <Chip 
-                label={currentQuestion.grammarRule} 
-                color="info" 
-                size="small"
-              />
-            )}
-          </Box>
-
-          {currentQuestion?.imageUrl && (
-            <Box sx={{ mb: 3, textAlign: 'center' }}>
-              <CardMedia
-                component="img"
-                sx={{ maxWidth: 400, maxHeight: 300, mx: 'auto', borderRadius: 1 }}
-                image={getFullImageUrl(currentQuestion.imageUrl)}
-                alt="Question image"
-              />
-            </Box>
-          )}
-
-          <FormControl component="fieldset" fullWidth>
-            <RadioGroup
-              value={answers[currentQuestionIndex] !== null ? answers[currentQuestionIndex] : ''}
-              onChange={(e) => handleAnswerSelect(currentQuestionIndex, parseInt(e.target.value))}
-            >
-              {currentQuestion?.options.map((option, index) => (
-                <FormControlLabel
-                  key={index}
-                  value={index}
-                  control={<Radio />}
-                  label={
-                    <Typography variant="body1" sx={{ py: 0.5 }}>
-                      {option}
-                    </Typography>
-                  }
-                  sx={{
-                    mb: 1,
-                    ml: 0,
-                    p: 2,
-                    border: '1px solid',
-                    borderColor: answers[currentQuestionIndex] === index ? 'primary.main' : 'grey.300',
-                    borderRadius: 1,
-                    backgroundColor: answers[currentQuestionIndex] === index ? 'primary.50' : 'transparent',
-                    '&:hover': {
-                      backgroundColor: 'grey.50',
-                    },
+            <Grid item xs={12} md={3}>
+              <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                <Chip
+                  icon={<TimerIcon />}
+                  label={formatTime(testTimeLeft)}
+                  color={testTimeLeft < 300 ? 'error' : 'primary'}
+                  variant="filled"
+                  sx={{ 
+                    fontSize: '1.1rem',
+                    fontWeight: 600,
+                    py: 2.5,
+                    px: 2,
+                    animation: testTimeLeft < 300 ? 'pulse 1s infinite' : 'none',
+                    '@keyframes pulse': {
+                      '0%': { opacity: 1 },
+                      '50%': { opacity: 0.7 },
+                      '100%': { opacity: 1 }
+                    }
                   }}
                 />
-              ))}
-            </RadioGroup>
-          </FormControl>
-        </Paper>
-
-        {/* Navigation Buttons */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Button
-            variant="outlined"
-            onClick={handlePrevQuestion}
-            disabled={currentQuestionIndex === 0}
-            startIcon={<ArrowBackIcon />}
-          >
-            Previous
-          </Button>
-
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            {currentQuestionIndex === questions.length - 1 ? (
-              <Button
-                variant="contained"
-                color="success"
-                onClick={handleTestComplete}
-                disabled={isSubmitting}
-                startIcon={isSubmitting ? <CircularProgress size={20} /> : <SendIcon />}
-              >
-                {isSubmitting ? 'Submitting...' : 'Submit Test'}
-              </Button>
-            ) : (
-              <Button
-                variant="contained"
-                onClick={handleNextQuestion}
-                endIcon={<ArrowForwardIcon />}
-              >
-                Next
-              </Button>
-            )}
-          </Box>
-        </Box>
+              </Box>
+            </Grid>
+          </Grid>
+        </Container>
       </Box>
-    </Container>
+
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Grid container spacing={4}>
+          {/* Question Panel */}
+          <Grid item xs={12} lg={8}>
+            {/* Question Card */}
+            <Card sx={{
+              borderRadius: 2,
+              border: '2px solid #e5e7eb',
+              backgroundColor: 'white',
+              position: 'relative',
+              overflow: 'hidden',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+              height: 'fit-content'
+            }}>
+              {/* Top indicator */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 6,
+                  background: 'linear-gradient(90deg, #667eea, #764ba2)'
+                }}
+              />
+
+              <CardContent sx={{ p: 3 }}>
+                {/* Question Header */}
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Avatar sx={{
+                    backgroundColor: '#667eea',
+                    width: 40,
+                    height: 40,
+                    mr: 2,
+                    fontSize: '1.1rem',
+                    fontWeight: 600
+                  }}>
+                    {currentQuestionIndex + 1}
+                  </Avatar>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="body2" color="#667eea" fontWeight={600} gutterBottom>
+                      Question {currentQuestionIndex + 1} of {questions.length}
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                      {currentQuestion?.category && (
+                        <Chip 
+                          label={currentQuestion.category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())} 
+                          color="secondary" 
+                          size="small"
+                          variant="outlined"
+                        />
+                      )}
+                      {currentQuestion?.grammarRule && (
+                        <Chip 
+                          label={currentQuestion.grammarRule} 
+                          color="info" 
+                          size="small"
+                          variant="outlined"
+                        />
+                      )}
+                    </Box>
+                  </Box>
+                </Box>
+
+                {/* Question Text */}
+                <Typography variant="h6" fontWeight={600} color="#1e293b" sx={{ mb: 3, lineHeight: 1.4 }}>
+                  {currentQuestion?.questionText}
+                </Typography>
+
+                {currentQuestion?.imageUrl && (
+                  <Box sx={{ mb: 2, textAlign: 'center' }}>
+                    <CardMedia
+                      component="img"
+                      sx={{ 
+                        maxWidth: 300, 
+                        maxHeight: 200, 
+                        mx: 'auto', 
+                        borderRadius: 2,
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                      }}
+                      image={getFullImageUrl(currentQuestion.imageUrl)}
+                      alt="Question image"
+                    />
+                  </Box>
+                )}
+
+                {/* Answer Options */}
+                <FormControl component="fieldset" fullWidth>
+                  <Typography variant="body1" fontWeight={600} color="#1e293b" sx={{ mb: 2 }}>
+                    Select your answer:
+                  </Typography>
+                  
+                  <RadioGroup
+                    value={answers[currentQuestionIndex] !== null ? answers[currentQuestionIndex] : ''}
+                    onChange={(e) => handleAnswerSelect(currentQuestionIndex, parseInt(e.target.value))}
+                  >
+                    <Grid container spacing={1}>
+                      {currentQuestion?.options.map((option, index) => (
+                        <Grid item xs={12} key={index}>
+                          <FormControlLabel
+                            value={index}
+                            control={<Radio color="primary" sx={{ display: 'none' }} />}
+                            label={
+                              <Box sx={{ 
+                                width: '100%',
+                                p: 2,
+                                border: '2px solid',
+                                borderColor: answers[currentQuestionIndex] === index ? '#667eea' : '#e5e7eb',
+                                borderRadius: 2,
+                                backgroundColor: answers[currentQuestionIndex] === index ? 'rgba(102, 126, 234, 0.08)' : 'white',
+                                transition: 'all 0.2s ease',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1.5,
+                                '&:hover': {
+                                  backgroundColor: answers[currentQuestionIndex] === index ? 'rgba(102, 126, 234, 0.12)' : '#f8fafc',
+                                  borderColor: answers[currentQuestionIndex] === index ? '#667eea' : '#cbd5e1',
+                                  transform: 'translateY(-1px)',
+                                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
+                                }
+                              }}>
+                                <Avatar sx={{
+                                  backgroundColor: answers[currentQuestionIndex] === index ? '#667eea' : '#e5e7eb',
+                                  color: answers[currentQuestionIndex] === index ? 'white' : '#6b7280',
+                                  width: 28,
+                                  height: 28,
+                                  fontSize: '0.9rem',
+                                  fontWeight: 600
+                                }}>
+                                  {String.fromCharCode(65 + index)}
+                                </Avatar>
+                                <Typography variant="body1" sx={{ fontWeight: 500, color: '#1e293b', flex: 1 }}>
+                                  {option}
+                                </Typography>
+                                {answers[currentQuestionIndex] === index && (
+                                  <CheckIcon sx={{ color: '#667eea', fontSize: '1.2rem' }} />
+                                )}
+                              </Box>
+                            }
+                            sx={{ 
+                              width: '100%',
+                              ml: 0,
+                              mr: 0
+                            }}
+                          />
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </RadioGroup>
+                </FormControl>
+              </CardContent>
+            </Card>
+
+
+          </Grid>
+
+          {/* Question Navigator Sidebar */}
+          <Grid item xs={12} lg={4}>
+            <Card sx={{
+              position: 'sticky',
+              top: 100,
+              borderRadius: 2,
+              border: '2px solid #e5e7eb',
+              backgroundColor: 'white',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
+            }}>
+              <CardContent sx={{ p: 2 }}>
+                <Typography variant="subtitle1" fontWeight={600} color="#1e293b" gutterBottom>
+                  Question Navigator
+                </Typography>
+                <Typography variant="caption" color="#64748b" sx={{ mb: 2, display: 'block' }}>
+                  Click any number to jump to that question
+                </Typography>
+
+                <Grid container spacing={0.5}>
+                  {questions.map((_, index) => (
+                    <Grid item xs={3} key={index}>
+                      <Button
+                        variant={index === currentQuestionIndex ? 'contained' : 'outlined'}
+                        onClick={() => setCurrentQuestionIndex(index)}
+                        sx={{
+                          width: '100%',
+                          height: 36,
+                          borderRadius: 1,
+                          fontWeight: 600,
+                          fontSize: '0.8rem',
+                          minWidth: 'unset',
+                          backgroundColor: 
+                            index === currentQuestionIndex ? '#667eea' :
+                            answers[index] !== null ? 'rgba(34, 197, 94, 0.1)' : 'white',
+                          borderColor: 
+                            index === currentQuestionIndex ? '#667eea' :
+                            answers[index] !== null ? '#22c55e' : '#e5e7eb',
+                          color: 
+                            index === currentQuestionIndex ? 'white' :
+                            answers[index] !== null ? '#22c55e' : '#6b7280',
+                          '&:hover': {
+                            backgroundColor: 
+                              index === currentQuestionIndex ? '#5a67d8' :
+                              answers[index] !== null ? 'rgba(34, 197, 94, 0.2)' : '#f8fafc',
+                            borderColor: 
+                              index === currentQuestionIndex ? '#5a67d8' :
+                              answers[index] !== null ? '#22c55e' : '#cbd5e1'
+                          }
+                        }}
+                      >
+                        {index + 1}
+                      </Button>
+                    </Grid>
+                  ))}
+                </Grid>
+
+                <Box sx={{ mt: 2, p: 2, backgroundColor: '#f8fafc', borderRadius: 1 }}>
+                  <Typography variant="caption" fontWeight={600} color="#1e293b" gutterBottom>
+                    Legend:
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 12, height: 12, backgroundColor: '#667eea', borderRadius: 0.5 }} />
+                      <Typography variant="caption" color="#64748b">Current</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 12, height: 12, backgroundColor: '#22c55e', borderRadius: 0.5 }} />
+                      <Typography variant="caption" color="#64748b">Answered</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 12, height: 12, border: '1px solid #e5e7eb', borderRadius: 0.5 }} />
+                      <Typography variant="caption" color="#64748b">Not Answered</Typography>
+                    </Box>
+                  </Box>
+                </Box>
+
+                <Box sx={{ mt: 2, p: 2, backgroundColor: '#fef3c7', borderRadius: 1, border: '1px solid #fbbf24' }}>
+                  <Typography variant="caption" fontWeight={600} color="#92400e" gutterBottom>
+                    💡 Pro Tip
+                  </Typography>
+                  <Typography variant="caption" color="#92400e">
+                    Review all questions before submitting.
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </Container>
+    </Box>
   );
 }
 

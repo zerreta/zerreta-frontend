@@ -120,22 +120,30 @@ const StyledListItemText = styled(ListItemText)(({ active, theme }) => ({
 
 const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/student-dashboard' },
-  { text: 'My Progress', icon: <SchoolIcon />, path: '/student-dashboard/progress' },
-  { text: 'Analytics', icon: <AnalyticsIcon />, path: '/student-dashboard/analytics' },
-  { text: 'Analytics Summary', icon: <AnalyticsIcon />, path: '/student-dashboard/analytics-summary' },
-  { text: 'Resources', icon: <BookmarkIcon />, path: '/student-dashboard/resources' },
-  { text: 'Test History', icon: <AssignmentIcon />, path: '/student-dashboard/test-history' },
-  { text: 'AI Help', icon: <LightbulbIcon />, path: '/student-dashboard/ai-help' },
-  { text: 'Leaderboard', icon: <TrophyIcon />, path: '/student-dashboard/leaderboard' },
   { 
-    text: 'Extras', 
+    text: 'Skills', 
     icon: <ExtrasIcon />, 
-    path: '/student-dashboard/extras',
+    path: '/student-dashboard/skills',
     subItems: [
       { text: 'Speaky', icon: <SpeakyIcon />, path: '/student-dashboard/speaky' },
       { text: 'Codezy', icon: <CodeIcon />, path: '/student-dashboard/codezy' },
       { text: 'Apti', icon: <AptiIcon />, path: '/student-dashboard/apti' }
     ]
+  },
+  { 
+    text: 'Curriculum', 
+    icon: <MenuBookIcon />, 
+    path: '/student-dashboard/curriculum'
+  },
+  { 
+    text: 'Career Guidance', 
+    icon: <AssignmentIcon />, 
+    path: '/student-dashboard/career-guidance'
+  },
+  { 
+    text: 'NEET', 
+    icon: <PsychologyIcon />, 
+    path: '/student-dashboard/neet'
   }
 ];
 

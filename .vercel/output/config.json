@@ -16,6 +16,14 @@
       "continue": true
     },
     {
+      "src": "^(?:/(.*))$",
+      "headers": {
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY"
+      },
+      "continue": true
+    },
+    {
       "src": "/sockjs-node/(.*)",
       "dest": "/sockjs-node/$1"
     },

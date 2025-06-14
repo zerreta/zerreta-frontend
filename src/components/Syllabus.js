@@ -15,7 +15,7 @@ import {
   useTheme
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { styled } from '@mui/material/styles';
+import { styled, alpha } from '@mui/material/styles';
 
 const StyledAccordion = styled(Accordion)(({ theme }) => ({
   marginBottom: theme.spacing(1),
@@ -40,6 +40,15 @@ const SubTopic = styled(ListItemText)(({ theme }) => ({
     fontSize: '0.9rem',
     color: theme.palette.text.secondary,
   },
+}));
+
+const StyledAccordionSummary = styled(AccordionSummary)(({ expanded }) => ({
+  backgroundColor: expanded ? '#e3f0ff' : 'inherit',
+  color: expanded ? '#174ea6' : 'inherit',
+  border: expanded ? '1.5px solid #90caf9' : '1.5px solid transparent',
+  borderRadius: expanded ? '8px 8px 0 0' : 8,
+  transition: 'background 0.2s, color 0.2s, border 0.2s',
+  fontWeight: expanded ? 700 : 500,
 }));
 
 const physicsTopics = [
@@ -958,10 +967,16 @@ const biologyTopics = [
 
 const Syllabus = () => {
   const [selectedSubject, setSelectedSubject] = useState(0);
+  const [expandedChapter, setExpandedChapter] = useState(false);
   const theme = useTheme();
 
   const handleSubjectChange = (event, newValue) => {
     setSelectedSubject(newValue);
+    setExpandedChapter(false);
+  };
+
+  const handleAccordionChange = (panel) => (event, isExpanded) => {
+    setExpandedChapter(isExpanded ? panel : false);
   };
 
   return (
@@ -983,17 +998,22 @@ const Syllabus = () => {
       {selectedSubject === 0 && (
         <Box>
           {physicsTopics.map((chapter, index) => (
-            <StyledAccordion key={index}>
-              <AccordionSummary
+            <StyledAccordion
+              key={index}
+              expanded={expandedChapter === `panel${index}`}
+              onChange={handleAccordionChange(`panel${index}`)}
+            >
+              <StyledAccordionSummary
                 expandIcon={<ExpandMoreIcon />}
                 aria-controls={`panel${index}-content`}
                 id={`panel${index}-header`}
+                expanded={expandedChapter === `panel${index}`}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <TopicNumber>{chapter.number}</TopicNumber>
                   <TopicTitle>{chapter.title}</TopicTitle>
                 </Box>
-              </AccordionSummary>
+              </StyledAccordionSummary>
               <AccordionDetails>
                 <List>
                   {chapter.topics.map((topic, topicIndex) => (
@@ -1011,17 +1031,22 @@ const Syllabus = () => {
       {selectedSubject === 1 && (
         <Box>
           {chemistryTopics.map((chapter, index) => (
-            <StyledAccordion key={index}>
-              <AccordionSummary
+            <StyledAccordion
+              key={index}
+              expanded={expandedChapter === `panel${index}`}
+              onChange={handleAccordionChange(`panel${index}`)}
+            >
+              <StyledAccordionSummary
                 expandIcon={<ExpandMoreIcon />}
                 aria-controls={`panel${index}-content`}
                 id={`panel${index}-header`}
+                expanded={expandedChapter === `panel${index}`}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <TopicNumber>{chapter.number}</TopicNumber>
                   <TopicTitle>{chapter.title}</TopicTitle>
                 </Box>
-              </AccordionSummary>
+              </StyledAccordionSummary>
               <AccordionDetails>
                 <List>
                   {chapter.topics.map((topic, topicIndex) => (
@@ -1039,17 +1064,22 @@ const Syllabus = () => {
       {selectedSubject === 2 && (
         <Box>
           {biologyTopics.map((chapter, index) => (
-            <StyledAccordion key={index}>
-              <AccordionSummary
+            <StyledAccordion
+              key={index}
+              expanded={expandedChapter === `panel${index}`}
+              onChange={handleAccordionChange(`panel${index}`)}
+            >
+              <StyledAccordionSummary
                 expandIcon={<ExpandMoreIcon />}
                 aria-controls={`panel${index}-content`}
                 id={`panel${index}-header`}
+                expanded={expandedChapter === `panel${index}`}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <TopicNumber>{chapter.number}</TopicNumber>
                   <TopicTitle>{chapter.title}</TopicTitle>
                 </Box>
-              </AccordionSummary>
+              </StyledAccordionSummary>
               <AccordionDetails>
                 <List>
                   {chapter.topics.map((topic, topicIndex) => (

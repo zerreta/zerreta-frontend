@@ -22,7 +22,6 @@ import {
 import codezyImage from '../assets/codezy.png';
 import speakyImage from '../assets/speaky.png';
 import aptiImage from '../assets/apti.png';
-import mathOrbitImage from '../assets/mathorbit.png';
 
 const ExtrasPage = () => {
   const navigate = useNavigate();
@@ -31,30 +30,26 @@ const ExtrasPage = () => {
     {
       title: 'Speaky',
       description: 'Improve your verbal communication with interactive speaking exercises and AI-powered feedback.',
-      icon: <img src={speakyImage} alt="Speaky" style={{ width: '100%', height: '200px', objectFit: 'cover', objectPosition: '0% 30%' }} />,
+      image: speakyImage,
       path: '/student-dashboard/speaky',
-      color: '#f8e9ff'
+      color: '#f8e9ff',
+      textColor: '#7b1fa2'
     },
     {
       title: 'Codezy',
       description: 'Learn to code with interactive programming exercises and challenges designed for beginners.',
-      icon: <img src={codezyImage} alt="Codezy" style={{ width: '100%', height: '200px', objectFit: 'cover', objectPosition: '0% 30%' }} />,
+      image: codezyImage,
       path: '/student-dashboard/codezy',
-      color: '#e6f7ff'
+      color: '#e6f7ff',
+      textColor: '#1976d2'
     },
     {
       title: 'Apti',
       description: 'Sharpen your aptitude skills with various problem-solving exercises and practice tests.',
-      icon: <img src={aptiImage} alt="Apti" style={{ width: '100%', height: '200px', objectFit: 'cover', objectPosition: '0% 30%' }} />,
+      image: aptiImage,
       path: '/student-dashboard/apti',
-      color: '#fff4e3'
-    },
-    {
-      title: 'MathOrbit',
-      description: 'Explore the solar system while solving math problems! Interactive orbital mechanics meets mathematics.',
-      icon: <img src={mathOrbitImage} alt="MathOrbit" style={{ width: '100%', height: '200px', objectFit: 'cover', objectPosition: '0% 30%' }} />,
-      path: '/student-dashboard/mathorbit',
-      color: '#f0f4ff'
+      color: '#fff4e3',
+      textColor: '#f57c00'
     }
   ];
 
@@ -84,16 +79,16 @@ const ExtrasPage = () => {
       
       <Box mb={4}>
         <Typography variant="h4" fontWeight={600} color="#333" gutterBottom>
-          Extras
+          Skills
         </Typography>
         <Typography variant="body1" color="text.secondary" mb={4}>
-          Explore additional learning tools and resources to enhance your skills
+          Develop essential skills with specialized tools and interactive learning modules
         </Typography>
       </Box>
 
       <Grid container spacing={3}>
         {extras.map((extra) => (
-          <Grid item xs={12} sm={6} md={3} key={extra.title}>
+          <Grid item xs={12} sm={6} md={4} key={extra.title}>
             <Card 
               sx={{ 
                 height: '100%', 
@@ -102,26 +97,104 @@ const ExtrasPage = () => {
                 borderRadius: 3,
                 boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
                 transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                cursor: 'pointer',
+                overflow: 'hidden',
                 '&:hover': {
                   transform: 'translateY(-8px)',
                   boxShadow: '0 12px 30px rgba(116, 69, 248, 0.15)',
+                  '& .hover-overlay': {
+                    opacity: 1,
+                    backdropFilter: 'blur(8px)'
+                  },
+                  '& .image-background': {
+                    filter: 'blur(2px)',
+                    transform: 'scale(1.05)'
+                  }
                 }
               }}
+              onClick={() => navigate(extra.path)}
             >
+              {/* Image Area with Hover Effect */}
               <Box 
                 sx={{ 
-                  p: 0, 
-                  display: 'flex', 
-                  justifyContent: 'center', 
-                  alignItems: 'center',
-                  backgroundColor: extra.color,
-                  overflow: 'hidden',
-                  height: 200
+                  height: 250,
+                  position: 'relative',
+                  overflow: 'hidden'
                 }}
               >
-                {extra.icon}
+                {/* Background Image */}
+                <Box
+                  className="image-background"
+                  sx={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundImage: `url(${extra.image})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat',
+                    transition: 'all 0.4s ease-in-out',
+                    backgroundColor: extra.color
+                  }}
+                />
+
+                {/* Hover overlay for title display */}
+                <Box
+                  className="hover-overlay"
+                  sx={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'linear-gradient(45deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 100%)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    opacity: 0,
+                    transition: 'all 0.4s ease-in-out',
+                    backdropFilter: 'blur(0px)',
+                    padding: 3
+                  }}
+                >
+                  <Typography 
+                    variant="h4" 
+                    component="div"
+                    sx={{
+                      color: 'white',
+                      fontWeight: 700,
+                      textAlign: 'center',
+                      textShadow: '3px 3px 6px rgba(0,0,0,0.8)',
+                      mb: 2,
+                      transform: 'translateY(20px)',
+                      transition: 'transform 0.4s ease-in-out'
+                    }}
+                  >
+                    {extra.title}
+                  </Typography>
+                  
+                  <Typography 
+                    variant="body1" 
+                    component="div"
+                    sx={{
+                      color: 'rgba(255,255,255,0.9)',
+                      fontWeight: 400,
+                      textAlign: 'center',
+                      textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                      lineHeight: 1.4,
+                      transform: 'translateY(20px)',
+                      transition: 'transform 0.4s ease-in-out 0.1s'
+                    }}
+                  >
+                    {extra.description}
+                  </Typography>
+                </Box>
               </Box>
-              <CardContent sx={{ flexGrow: 1 }}>
+
+              <CardContent sx={{ flexGrow: 1, p: 3 }}>
                 <Typography gutterBottom variant="h5" component="h2" fontWeight={600} color="#333">
                   {extra.title}
                 </Typography>
@@ -129,22 +202,23 @@ const ExtrasPage = () => {
                   {extra.description}
                 </Typography>
               </CardContent>
+              
               <CardActions sx={{ p: 2, pt: 0 }}>
                 <Button 
                   size="large" 
                   fullWidth
                   variant="contained"
-                  onClick={() => navigate(extra.path)}
                   sx={{
-                    backgroundColor: '#7445f8',
+                    backgroundColor: extra.textColor,
                     color: '#fff',
                     fontWeight: 600,
                     borderRadius: 2,
-                    py: 1,
-                    boxShadow: '0 4px 12px rgba(116, 69, 248, 0.2)',
+                    py: 1.5,
+                    boxShadow: `0 4px 12px ${extra.textColor}40`,
                     '&:hover': {
-                      backgroundColor: '#5c33d4',
-                      color: '#fff',
+                      backgroundColor: extra.textColor,
+                      filter: 'brightness(0.9)',
+                      transform: 'translateY(-2px)',
                     }
                   }}
                 >
